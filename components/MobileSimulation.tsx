@@ -20,19 +20,21 @@ import {
   ArrowLeft,
   Trash2,
   Phone,
-  MapPin
+  MapPin,
+  Briefcase
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
-import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus } from '../types';
+import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallSecurityStatus } from '../types';
 
 interface MobileSimulationProps {
   onClose: () => void;
   onSubmitReport: (data: Partial<RepairRequest>) => void;
+  onDisasterReport?: (disasterId: string, hallId: string, status: string, remark: string, reporter: string, position: string, phone: string) => void;
   activeDisaster?: DisasterReport | null;
   requests?: RepairRequest[];
 }
 
-const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitReport, activeDisaster, requests = [] }) => {
+const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitReport, onDisasterReport, activeDisaster, requests = [] }) => {
   const [activeForm, setActiveForm] = useState<'NONE' | 'REPAIR' | 'FINISH' | 'DISASTER'>('NONE');
 
   // 分離不同表單的數據
@@ -70,6 +72,16 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   const [finishImages, setFinishImages] = useState<ImageData[]>([]);
   const [repairErrors, setRepairErrors] = useState<{ name?: string; mission?: string; phone?: string; description?: string }>({});
   const [finishErrors, setFinishErrors] = useState<{ selectedRequestId?: string; name?: string; position?: string; phone?: string; workDescription?: string }>({});
+  
+  const [disasterFormData, setDisasterFormData] = useState({
+    hallName: MOCK_HALLS[0].name,
+    status: HallSecurityStatus.SAFE,
+    remark: '',
+    reporter: '',
+    position: '',
+    phone: ''
+  });
+  const [disasterErrors, setDisasterErrors] = useState<{ reporter?: string; position?: string; phone?: string; remark?: string }>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reporterInputRef = useRef<HTMLInputElement>(null);
@@ -348,6 +360,77 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       completionDate: new Date().toISOString().split('T')[0],
     });
     setFinishErrors({});
+  };
+
+  // 驗證災害回報表單
+  const validateDisasterForm = () => {
+    const newErrors: { reporter?: string; position?: string; phone?: string; remark?: string } = {};
+
+    if (!disasterFormData.reporter.trim()) {
+      newErrors.reporter = '請輸入姓名';
+    } else if (disasterFormData.reporter.length > NAME_MAX_LENGTH) {
+      newErrors.reporter = `姓名不能超過 ${NAME_MAX_LENGTH} 個字`;
+    }
+
+    if (!disasterFormData.position.trim()) {
+      newErrors.position = '請輸入職稱';
+    } else if (disasterFormData.position.length > REPORTER_MAX_LENGTH) {
+      newErrors.position = `職稱不能超過 ${REPORTER_MAX_LENGTH} 個字`;
+    }
+
+    if (!disasterFormData.phone.trim()) {
+      newErrors.phone = '請輸入手機號碼';
+    } else if (disasterFormData.phone.length > PHONE_MAX_LENGTH) {
+      newErrors.phone = `手機號碼不能超過 ${PHONE_MAX_LENGTH} 個字`;
+    } else if (!/^[0-9-+()]+$/.test(disasterFormData.phone)) {
+      newErrors.phone = '手機號碼格式不正確';
+    }
+
+    setDisasterErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 處理災害回報提交
+  const handleDisasterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateDisasterForm()) {
+      return;
+    }
+
+    if (!activeDisaster) {
+      alert('目前無進行中之災情報告');
+      return;
+    }
+
+    const selectedHall = MOCK_HALLS.find(h => h.name === disasterFormData.hallName);
+    if (!selectedHall) {
+      alert('請選擇會館');
+      return;
+    }
+
+    if (onDisasterReport) {
+      onDisasterReport(
+        activeDisaster.id,
+        selectedHall.id,
+        disasterFormData.status,
+        disasterFormData.remark,
+        disasterFormData.reporter,
+        disasterFormData.position,
+        disasterFormData.phone
+      );
+      alert('災害回報已提交！感謝您的回報。');
+      setActiveForm('NONE');
+      setDisasterFormData({
+        hallName: MOCK_HALLS[0].name,
+        status: HallSecurityStatus.SAFE,
+        remark: '',
+        reporter: '',
+        position: '',
+        phone: ''
+      });
+      setDisasterErrors({});
+    }
   };
 
   // 獲取尚未完工的工單
@@ -852,6 +935,219 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     </div>
   );
 
+  // 災害回報表單 JSX
+  const disasterFormJSX = (
+    <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-[30] flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
+      <div className="p-6 flex items-center justify-between border-b border-slate-50">
+        <div className="flex items-center gap-3">
+          <button onClick={() => { 
+            setActiveForm('NONE'); 
+            setDisasterFormData({
+              hallName: MOCK_HALLS[0].name,
+              status: HallSecurityStatus.SAFE,
+              remark: '',
+              reporter: '',
+              position: '',
+              phone: ''
+            });
+            setDisasterErrors({});
+          }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <h3 className="text-lg font-black text-slate-800">災害狀況回報</h3>
+        </div>
+        <button onClick={() => { 
+          setActiveForm('NONE'); 
+          setDisasterFormData({
+            hallName: MOCK_HALLS[0].name,
+            status: HallSecurityStatus.SAFE,
+            remark: '',
+            reporter: '',
+            position: '',
+            phone: ''
+          });
+          setDisasterErrors({});
+        }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
+          <X size={20} />
+        </button>
+      </div>
+      <form onSubmit={handleDisasterSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 pb-32 custom-scrollbar">
+        {!activeDisaster ? (
+          <div className="text-center py-12 space-y-4">
+            <div className="p-6 bg-slate-50 rounded-2xl inline-block">
+              <ShieldAlert size={48} className="text-slate-300" />
+            </div>
+            <p className="text-slate-400 font-bold">目前沒有進行中的災害回報</p>
+            <p className="text-xs text-slate-300">請等待總務局發布災害回報要求</p>
+          </div>
+        ) : (
+          <>
+            <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl space-y-2">
+              <div className="flex items-center gap-2">
+                <ShieldAlert size={18} className="text-rose-600" />
+                <span className="font-black text-rose-600">緊急災害通報</span>
+              </div>
+              <p className="text-sm font-bold text-rose-800">{activeDisaster.name}</p>
+              <p className="text-xs text-rose-600">災害種類：{activeDisaster.type}</p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">選擇會館 *</label>
+              <div className="relative">
+                <select
+                  required
+                  className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                  value={disasterFormData.hallName}
+                  onChange={e => setDisasterFormData(prev => ({ ...prev, hallName: e.target.value }))}
+                >
+                  {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">會館狀況 *</label>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.values(HallSecurityStatus).filter(s => s !== HallSecurityStatus.NONE).map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setDisasterFormData(prev => ({ ...prev, status }))}
+                    className={`px-4 py-3 rounded-2xl font-black transition-all ${
+                      disasterFormData.status === status
+                        ? status === HallSecurityStatus.SAFE
+                          ? 'bg-emerald-600 text-white shadow-lg'
+                          : status === HallSecurityStatus.LIGHT
+                          ? 'bg-amber-600 text-white shadow-lg'
+                          : 'bg-rose-600 text-white shadow-lg'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名 *</label>
+                <span className={`text-[10px] font-bold ${disasterFormData.reporter.length > NAME_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {disasterFormData.reporter.length}/{NAME_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  required
+                  maxLength={NAME_MAX_LENGTH}
+                  placeholder="請輸入您的姓名"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${disasterErrors.reporter ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={disasterFormData.reporter}
+                  onChange={e => setDisasterFormData(prev => ({ ...prev, reporter: e.target.value }))}
+                />
+              </div>
+              {disasterErrors.reporter && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {disasterErrors.reporter}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">職稱 *</label>
+                <span className={`text-[10px] font-bold ${disasterFormData.position.length > REPORTER_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {disasterFormData.position.length}/{REPORTER_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  required
+                  maxLength={REPORTER_MAX_LENGTH}
+                  placeholder="請輸入您的職稱"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${disasterErrors.position ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={disasterFormData.position}
+                  onChange={e => setDisasterFormData(prev => ({ ...prev, position: e.target.value }))}
+                />
+              </div>
+              {disasterErrors.position && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {disasterErrors.position}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">手機號碼 *</label>
+                <span className={`text-[10px] font-bold ${disasterFormData.phone.length > PHONE_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {disasterFormData.phone.length}/{PHONE_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  required
+                  type="tel"
+                  maxLength={PHONE_MAX_LENGTH}
+                  placeholder="請輸入手機號碼"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${disasterErrors.phone ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={disasterFormData.phone}
+                  onChange={e => setDisasterFormData(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+              {disasterErrors.phone && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {disasterErrors.phone}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">狀況說明</label>
+                <span className={`text-[10px] font-bold ${disasterFormData.remark.length > DESCRIPTION_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {disasterFormData.remark.length}/{DESCRIPTION_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <MessageCircle className="absolute left-4 top-4 text-slate-400" size={18} />
+                <textarea
+                  maxLength={DESCRIPTION_MAX_LENGTH}
+                  rows={4}
+                  placeholder="請說明會館目前的狀況..."
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold resize-none transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${disasterErrors.remark ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={disasterFormData.remark}
+                  onChange={e => setDisasterFormData(prev => ({ ...prev, remark: e.target.value }))}
+                />
+              </div>
+              {disasterErrors.remark && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {disasterErrors.remark}
+                </p>
+              )}
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={!disasterFormData.reporter.trim() || !disasterFormData.phone.trim()}
+              className="w-full py-5 bg-rose-600 text-white font-black rounded-3xl shadow-xl shadow-rose-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              <ShieldAlert size={18} /> 送出災害回報
+            </button>
+          </>
+        )}
+      </form>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 overflow-hidden">
 
@@ -909,7 +1205,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         </div>
 
         {/* LINE Rich Menu (選單區) */}
-        <div className="bg-[#2a303c] p-0.5 border-t border-slate-800 grid grid-cols-3 h-48 gap-0.5">
+        <div className="bg-[#2a303c] p-0.5 border-t border-slate-800 grid grid-cols-3 h-48 gap-0.5 relative z-20">
           <button onClick={() => setActiveForm('REPAIR')} className="bg-[#3a4455] text-white flex flex-col items-center justify-center gap-3 hover:bg-[#4a5568] transition-all active:scale-95 group">
             <div className="p-4 bg-indigo-500/20 rounded-2xl group-hover:bg-indigo-500/30 transition-colors">
               <Wrench size={28} className="text-indigo-400" />
@@ -923,7 +1219,15 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             <span className="text-[10px] font-black tracking-widest uppercase">完工回報</span>
           </button>
           <button
-            onClick={() => activeDisaster ? setActiveForm('DISASTER') : alert('目前無進行中之災情報告')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (activeDisaster) {
+                setActiveForm('DISASTER');
+              } else {
+                alert('目前無進行中之災情報告');
+              }
+            }}
             className={`bg-[#3a4455] text-white flex flex-col items-center justify-center gap-3 hover:bg-[#4a5568] transition-all active:scale-95 group ${!activeDisaster ? 'opacity-30' : ''}`}
           >
             <div className="p-4 bg-rose-500/20 rounded-2xl group-hover:bg-rose-500/30 transition-colors">
@@ -943,7 +1247,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         {/* 表單 Modal 容器 */}
         {activeForm === 'REPAIR' && repairFormJSX}
         {activeForm === 'FINISH' && finishFormJSX}
-        {activeForm === 'DISASTER' && repairFormJSX}
+        {activeForm === 'DISASTER' && disasterFormJSX}
       </div>
 
       {/* 底部裝飾物 (Home Indicator) */}

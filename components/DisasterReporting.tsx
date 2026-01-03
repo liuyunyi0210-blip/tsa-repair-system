@@ -17,17 +17,24 @@ import {
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { DisasterReport, DisasterType, HallSecurityStatus, HallDisasterStatus, Language } from '../types';
+import { storageService } from '../services/storageService';
 
 interface DisasterReportingProps {
   onDirtyChange?: (isDirty: boolean) => void;
+  onDisasterUpdate?: () => void;
   language: Language;
 }
 
-const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, language }) => {
+const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, onDisasterUpdate, language }) => {
   const [reports, setReports] = useState<DisasterReport[]>([]);
   const [view, setView] = useState<'LIST' | 'DETAIL'>('LIST');
   const [selectedReport, setSelectedReport] = useState<DisasterReport | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [publishForm, setPublishForm] = useState({
+    type: DisasterType.EARTHQUAKE,
+    name: '',
+    date: new Date().toISOString().split('T')[0]
+  });
 
   const translations = {
     [Language.ZH]: {
@@ -50,7 +57,15 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, la
       statusLight: '輕微受損',
       statusHeavy: '嚴重損壞',
       statusNone: '尚未回報',
-      remarkEmpty: '暫無具體回報內容'
+      remarkEmpty: '暫無具體回報內容',
+      reporterLabel: '回報人',
+      positionLabel: '職稱',
+      phoneLabel: '手機',
+      reportedAtLabel: '回報時間',
+      hallNameHeader: '會館名稱',
+      statusHeader: '狀況',
+      remarkHeader: '狀況說明',
+      reporterHeader: '回報人資訊'
     },
     [Language.JA]: {
       title: '全会館災害報告システム',
@@ -72,7 +87,15 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, la
       statusLight: '輕微な損傷',
       statusHeavy: '重大な損傷',
       statusNone: '未報告',
-      remarkEmpty: '具體的な報告はありません'
+      remarkEmpty: '具體的な報告はありません',
+      reporterLabel: '報告者',
+      positionLabel: '役職',
+      phoneLabel: '携帯電話',
+      reportedAtLabel: '報告時間',
+      hallNameHeader: '会館名称',
+      statusHeader: '状況',
+      remarkHeader: '状況説明',
+      reporterHeader: '報告者情報'
     }
   };
 
@@ -90,9 +113,38 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, la
     loadData();
   }, []);
 
-  const handlePublish = () => {
-    // 邏輯略...
+  const handlePublish = async () => {
+    if (!publishForm.name.trim()) {
+      alert('請輸入災害名稱');
+      return;
+    }
+
+    const newReport: DisasterReport = {
+      id: `DIS-${Date.now()}`,
+      type: publishForm.type,
+      name: publishForm.name,
+      createdAt: new Date().toISOString(),
+      hallsStatus: MOCK_HALLS.map(hall => ({
+        hallId: hall.id,
+        hallName: hall.name,
+        status: HallSecurityStatus.NONE,
+        remark: ''
+      }))
+    };
+
+    const updatedReports = [newReport, ...reports];
+    setReports(updatedReports);
+    await storageService.saveDisasterReports(updatedReports);
     setIsPublishing(false);
+    setPublishForm({
+      type: DisasterType.EARTHQUAKE,
+      name: '',
+      date: new Date().toISOString().split('T')[0]
+    });
+    alert('災害回報已成功發布！');
+    if (onDisasterUpdate) {
+      onDisasterUpdate();
+    }
   };
 
   const DetailView = () => {
@@ -111,40 +163,159 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, la
              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-slate-200"></div><span className="text-[10px] font-black text-slate-500">{t.statusNone}</span></div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {selectedReport.hallsStatus.map((h) => (
-            <div key={h.hallId} className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm flex flex-col gap-4">
-              <div className="flex items-center justify-between"><h4 className="font-black text-slate-800">{h.hallName}</h4><span className={`px-3 py-1 rounded-full text-[10px] font-black ${h.status === HallSecurityStatus.SAFE ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>{h.status}</span></div>
-              <div className="bg-slate-50 p-4 rounded-2xl min-h-[60px] flex items-center justify-center"><p className="text-xs text-slate-600 font-medium italic">{h.remark || t.remarkEmpty}</p></div>
-            </div>
-          ))}
+        <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-x-auto">
+          <table className="w-full text-left min-w-[1000px]">
+            <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4 whitespace-nowrap">{t.hallNameHeader}</th>
+                <th className="px-6 py-4 whitespace-nowrap">{t.statusHeader}</th>
+                <th className="px-6 py-4 whitespace-nowrap">{t.remarkHeader}</th>
+                <th className="px-6 py-4 whitespace-nowrap">{t.reporterHeader}</th>
+                <th className="px-6 py-4 whitespace-nowrap">{t.reportedAtLabel}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {selectedReport.hallsStatus.map((h) => (
+                <tr key={h.hallId} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-5 whitespace-nowrap">
+                    <span className="font-black text-slate-800 text-base">{h.hallName}</span>
+                  </td>
+                  <td className="px-6 py-5 whitespace-nowrap">
+                    <span className={`px-3 py-1.5 rounded-full text-[11px] font-black ${
+                      h.status === HallSecurityStatus.SAFE 
+                        ? 'bg-emerald-50 text-emerald-600' 
+                        : h.status === HallSecurityStatus.LIGHT
+                        ? 'bg-amber-50 text-amber-600'
+                        : h.status === HallSecurityStatus.HEAVY
+                        ? 'bg-rose-50 text-rose-600'
+                        : 'bg-slate-50 text-slate-400'
+                    }`}>{h.status}</span>
+                  </td>
+                  <td className="px-6 py-5">
+                    <p className="text-sm text-slate-600 font-medium max-w-md">{h.remark || t.remarkEmpty}</p>
+                  </td>
+                  <td className="px-6 py-5">
+                    {h.reporter ? (
+                      <div className="space-y-1.5 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-bold">{t.reporterLabel}:</span>
+                          <span className="text-slate-700 font-black">{h.reporter}</span>
+                        </div>
+                        {h.position && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 font-bold">{t.positionLabel}:</span>
+                            <span className="text-slate-700 font-black">{h.position}</span>
+                          </div>
+                        )}
+                        {h.phone && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 font-bold">{t.phoneLabel}:</span>
+                            <span className="text-slate-700 font-black">{h.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-300 text-sm italic">尚未回報</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-5 whitespace-nowrap">
+                    {h.reportedAt ? (
+                      <span className="text-sm text-slate-500 font-medium">{new Date(h.reportedAt).toLocaleString()}</span>
+                    ) : (
+                      <span className="text-slate-300 text-sm">-</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );
   };
 
   const ListView = () => (
-    <div className="space-y-8 animate-in fade-in pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div><h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3"><ShieldAlert className="text-rose-500" /> {t.title}</h1><p className="text-slate-500 mt-1 font-medium">{t.subtitle}</p></div>
-        <button onClick={() => setIsPublishing(true)} className="flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-[24px] font-black shadow-lg hover:bg-indigo-700 transition-all"><Plus size={20} /> {t.publishBtn}</button>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+      <div className="space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+              <ShieldAlert className="text-rose-500" /> {t.title}
+            </h1>
+            <p className="text-slate-500 font-medium">{t.subtitle}</p>
+          </div>
+        </div>
+        <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-end">
+          <button 
+            onClick={() => setIsPublishing(true)} 
+            className="flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-[24px] font-black shadow-lg hover:bg-indigo-700 transition-all w-full md:w-auto"
+          >
+            <Plus size={20} /> {t.publishBtn}
+          </button>
+        </div>
       </div>
-      <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left">
+      <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-x-auto">
+        <table className="w-full text-left min-w-[800px]">
           <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
-            {/* Fix: Replaced undefined 'actionView' with 't.actionView' */}
-            <tr><th className="px-8 py-5">{t.headerType}</th><th className="px-8 py-5">{t.headerName}</th><th className="px-8 py-5">{t.headerTime}</th><th className="px-8 py-5">{t.headerProgress}</th><th className="px-8 py-5 text-right">{t.actionView}</th></tr>
+            <tr>
+              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerType}</th>
+              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerName}</th>
+              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerTime}</th>
+              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerProgress}</th>
+              <th className="px-4 md:px-8 py-5 text-right whitespace-nowrap">{t.actionView}</th>
+            </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {reports.map(r => (
+            {reports.map(r => {
+              // 只計算有實際回報的會館
+              // 檢查條件：有回報時間（reportedAt）或有回報人資訊（reporter）
+              // 這樣可以兼容舊資料（只有 reporter）和新資料（有 reportedAt）
+              const reportedCount = r.hallsStatus.filter(h => {
+                const hasReportedAt = h.reportedAt && h.reportedAt.trim() !== '';
+                const hasReporter = h.reporter && h.reporter.trim() !== '';
+                const hasStatus = h.status && h.status !== HallSecurityStatus.NONE;
+                // 只要有回報時間，或者（有回報人且狀態不是「尚未回報」），就視為已回報
+                return hasReportedAt || (hasReporter && hasStatus);
+              }).length;
+              const progress = r.hallsStatus.length > 0 ? (reportedCount / r.hallsStatus.length) * 100 : 0;
+              return (
               <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-8 py-5"><span className="px-3 py-1 rounded-xl text-[10px] font-black text-white bg-indigo-500">{r.type}</span></td>
-                <td className="px-8 py-5 font-black text-slate-900 text-lg">{r.name}</td>
-                <td className="px-8 py-5 text-sm font-medium text-slate-500">{new Date(r.createdAt).toLocaleString()}</td>
-                <td className="px-8 py-5"><div className="flex flex-col gap-2 min-w-[120px]"><div className="w-full h-1.5 bg-slate-100 rounded-full"><div className="h-full bg-indigo-500" style={{ width: '50%' }}></div></div></div></td>
-                <td className="px-8 py-5 text-right"><button onClick={() => {setSelectedReport(r); setView('DETAIL');}} className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-indigo-600 font-black rounded-2xl border border-indigo-100 shadow-sm">{t.actionView}</button></td>
+                <td className="px-4 md:px-8 py-5 whitespace-nowrap">
+                  <span className="px-3 py-1 rounded-xl text-[10px] font-black text-white bg-indigo-500 whitespace-nowrap">{r.type}</span>
+                </td>
+                <td className="px-4 md:px-8 py-5 font-black text-slate-900 text-lg whitespace-nowrap">{r.name}</td>
+                <td className="px-4 md:px-8 py-5 text-sm font-medium text-slate-500 whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
+                <td className="px-4 md:px-8 py-5 whitespace-nowrap">
+                  <div className="flex items-center gap-2 min-w-[120px]">
+                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full">
+                      <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400">{reportedCount}/{r.hallsStatus.length}</span>
+                  </div>
+                </td>
+                <td className="px-4 md:px-8 py-5 text-right whitespace-nowrap">
+                  <button 
+                    onClick={async () => {
+                      // 在切換視圖前重新載入資料以確保顯示最新資訊
+                      const saved = await storageService.loadDisasterReports();
+                      if (saved) {
+                        const updated = saved.find(report => report.id === r.id);
+                        setSelectedReport(updated || r);
+                      } else {
+                        setSelectedReport(r);
+                      }
+                      setView('DETAIL');
+                    }} 
+                    className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-white text-indigo-600 font-black rounded-2xl border border-indigo-100 shadow-sm hover:bg-indigo-50 transition-all text-sm md:text-base"
+                  >
+                    <Eye size={16} className="md:hidden" />
+                    <span className="hidden md:inline">{t.actionView}</span>
+                    <span className="md:hidden">檢視</span>
+                  </button>
+                </td>
               </tr>
-            ))}
+              );
+            })}
             {reports.length === 0 && <tr><td colSpan={5} className="px-8 py-24 text-center text-slate-300 font-black">{t.noData}</td></tr>}
           </tbody>
         </table>
@@ -152,7 +323,88 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, la
     </div>
   );
 
-  return view === 'DETAIL' ? <DetailView /> : <ListView />;
+  return (
+    <>
+      {view === 'DETAIL' ? <DetailView /> : <ListView />}
+      
+      {/* 發布回報 Modal */}
+      {isPublishing && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-[40px] p-8 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-start border-b border-slate-100 pb-6 mb-6">
+              <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                <ShieldAlert className="text-rose-500" size={24} />
+                {t.modalTitle}
+              </h3>
+              <button onClick={() => setIsPublishing(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <X size={24} className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.step1}</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.values(DisasterType).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setPublishForm(prev => ({ ...prev, type }))}
+                      className={`px-4 py-3 rounded-2xl font-black transition-all ${
+                        publishForm.type === type
+                          ? 'bg-indigo-600 text-white shadow-lg'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.step2}</label>
+                <input
+                  type="text"
+                  placeholder="例如：2024年1月1日地震"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white font-bold"
+                  value={publishForm.name}
+                  onChange={e => setPublishForm(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">災害日期</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    type="date"
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white font-bold"
+                    value={publishForm.date}
+                    onChange={e => setPublishForm(prev => ({ ...prev, date: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-8 mt-6 border-t border-slate-100 flex gap-4">
+              <button
+                onClick={() => setIsPublishing(false)}
+                className="flex-1 py-4 rounded-3xl font-black text-slate-500 bg-slate-50 hover:bg-slate-100 transition-colors"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={handlePublish}
+                className="flex-1 py-4 rounded-3xl font-black text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95"
+              >
+                {t.publishNow}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default DisasterReporting;

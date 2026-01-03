@@ -27,6 +27,7 @@ interface LayoutProps {
   setActiveTab: (tab: string) => void;
   onSimulateVolunteer: () => void;
   onLogout: () => void;
+  hasPermission?: (moduleId: string, action?: string) => boolean;
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -34,7 +35,8 @@ const Layout: React.FC<LayoutProps> = ({
   activeTab,
   setActiveTab,
   onSimulateVolunteer,
-  onLogout
+  onLogout,
+  hasPermission
 }) => {
   const t = {
     title: 'TSA會館設施維護系統',
@@ -56,20 +58,25 @@ const Layout: React.FC<LayoutProps> = ({
     admin: '測試管理員'
   };
 
-  const menuItems = [
-    { id: 'dashboard', label: t.dashboard, icon: <Home size={18} /> },
-    { id: 'halls', label: t.halls, icon: <Building size={18} /> },
-    { id: 'reports', label: t.reports, icon: <MessageSquare size={18} /> },
-    { id: 'requests', label: t.requests, icon: <ClipboardList size={18} /> },
-    { id: 'contract', label: t.contract, icon: <FileText size={18} /> },
-    { id: 'equipment', label: t.equipment, icon: <Box size={18} /> },
-    { id: 'water', label: t.water, icon: <Droplets size={18} /> },
-    { id: 'aed', label: t.aed, icon: <HeartPulse size={18} /> },
-    { id: 'vehicle', label: t.vehicle, icon: <Car size={18} /> },
-    { id: 'disaster', label: t.disaster, icon: <ShieldAlert size={18} /> },
-    { id: 'monthly_submission', label: t.monthlySubmission, icon: <FileSignature size={18} /> },
-    { id: 'monthly_management', label: t.monthlyManagement, icon: <Calendar size={18} /> },
+  const allMenuItems = [
+    { id: 'dashboard', label: t.dashboard, icon: <Home size={18} />, module: 'dashboard' },
+    { id: 'halls', label: t.halls, icon: <Building size={18} />, module: 'halls' },
+    { id: 'reports', label: t.reports, icon: <MessageSquare size={18} />, module: 'reports' },
+    { id: 'requests', label: t.requests, icon: <ClipboardList size={18} />, module: 'requests' },
+    { id: 'contract', label: t.contract, icon: <FileText size={18} />, module: 'contract' },
+    { id: 'equipment', label: t.equipment, icon: <Box size={18} />, module: 'equipment' },
+    { id: 'water', label: t.water, icon: <Droplets size={18} />, module: 'water' },
+    { id: 'aed', label: t.aed, icon: <HeartPulse size={18} />, module: 'aed' },
+    { id: 'vehicle', label: t.vehicle, icon: <Car size={18} />, module: 'vehicle' },
+    { id: 'disaster', label: t.disaster, icon: <ShieldAlert size={18} />, module: 'disaster' },
+    { id: 'monthly_submission', label: t.monthlySubmission, icon: <FileSignature size={18} />, module: 'reports' },
+    { id: 'monthly_management', label: t.monthlyManagement, icon: <Calendar size={18} />, module: 'reports' },
   ];
+
+  // 根據權限過濾選單項目
+  const menuItems = hasPermission
+    ? allMenuItems.filter(item => hasPermission(item.module, 'view'))
+    : allMenuItems;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">

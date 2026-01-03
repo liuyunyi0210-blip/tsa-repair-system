@@ -215,7 +215,7 @@ export interface Contract {
 
 export enum DisasterType {
   EARTHQUAKE = '地震',
-  FIRE = '火災',
+  POWER_OUTAGE = '停電',
   TYPHOON = '颱風',
   OTHER = '其他'
 }
@@ -232,6 +232,10 @@ export interface HallDisasterStatus {
   hallName: string;
   status: HallSecurityStatus;
   remark?: string;
+  reporter?: string;
+  position?: string;
+  phone?: string;
+  reportedAt?: string;
 }
 
 export interface DisasterReport {

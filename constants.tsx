@@ -258,7 +258,7 @@ export const DEFAULT_ROLES = [
   },
   {
     id: 'hall_manager',
-    name: '會館管理員',
+    name: '執行秘書',
     description: '僅能管理所屬會館的資料',
     permissions: [
       'dashboard:view',

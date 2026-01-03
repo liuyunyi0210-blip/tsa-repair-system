@@ -21,8 +21,9 @@ import UserManagement from './components/UserManagement';
 import StorageSettings from './components/StorageSettings';
 import MonthlyReportSubmission from './components/MonthlyReportSubmission';
 import MonthlyReportManagement from './components/MonthlyReportManagement';
-import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterReport, Language, OperationLog, MonthlyReport } from './types';
+import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterReport, Language, OperationLog, MonthlyReport, User, Role, HallSecurityStatus } from './types';
 import { storageService } from './services/storageService';
+import { MOCK_HALLS } from './constants';
 
 const INITIAL_REQUESTS: RepairRequest[] = [
   {
@@ -79,6 +80,23 @@ const App: React.FC = () => {
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showStorageSettings, setShowStorageSettings] = useState(false);
   const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentRole, setCurrentRole] = useState<Role | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+
+  // 當打開 MobileSimulation 時，重新載入災害回報資料
+  useEffect(() => {
+    if (showMobileSim) {
+      const reloadDisasters = async () => {
+        const savedDisasters = await storageService.loadDisasterReports();
+        if (savedDisasters) {
+          setDisasterReports(savedDisasters);
+        }
+      };
+      reloadDisasters();
+    }
+  }, [showMobileSim]);
+
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
     if (token) setIsAuthenticated(true);
@@ -96,6 +114,30 @@ const App: React.FC = () => {
 
       const savedMonthly = await storageService.loadMonthlyReports();
       if (savedMonthly) setMonthlyReports(savedMonthly);
+
+      // 載入用戶和角色資料
+      const savedUsers = await storageService.loadUsers();
+      const savedRoles = await storageService.loadRoles();
+      if (savedRoles) {
+        setRoles(savedRoles);
+        // 預設使用系統管理員角色（如果沒有用戶資料）
+        if (savedUsers && savedUsers.length > 0) {
+          const adminUser = savedUsers.find(u => u.account === 'admin') || savedUsers[0];
+          setCurrentUser(adminUser);
+          const userRole = savedRoles.find(r => r.id === adminUser.roleId);
+          if (userRole) setCurrentRole(userRole);
+        } else {
+          // 如果沒有用戶資料，使用預設的系統管理員角色
+          const adminRole = savedRoles.find(r => r.id === 'admin') || savedRoles[0];
+          if (adminRole) setCurrentRole(adminRole);
+        }
+      } else {
+        // 如果沒有角色資料，使用預設角色
+        const { DEFAULT_ROLES } = await import('./constants');
+        setRoles(DEFAULT_ROLES);
+        const adminRole = DEFAULT_ROLES.find(r => r.id === 'admin');
+        if (adminRole) setCurrentRole(adminRole);
+      }
     };
     loadData();
   }, []);
@@ -200,6 +242,62 @@ const App: React.FC = () => {
     alert('已成功核實回報並轉入工單管理！');
   };
 
+  const handleDisasterReport = async (disasterId: string, hallId: string, status: string, remark: string, reporter: string, position: string, phone: string) => {
+    const disaster = disasterReports.find(d => d.id === disasterId);
+    if (!disaster) {
+      alert('找不到對應的災害回報');
+      return;
+    }
+
+    const hall = MOCK_HALLS.find(h => h.id === hallId);
+    if (!hall) {
+      alert('找不到對應的會館');
+      return;
+    }
+
+    // 更新或添加會館狀態
+    const updatedHallsStatus = [...disaster.hallsStatus];
+    const existingIndex = updatedHallsStatus.findIndex(h => h.hallId === hallId);
+    
+    if (existingIndex >= 0) {
+      // 更新現有狀態
+      updatedHallsStatus[existingIndex] = {
+        ...updatedHallsStatus[existingIndex],
+        status: status as HallSecurityStatus,
+        remark: remark || undefined,
+        reporter: reporter || undefined,
+        position: position || undefined,
+        phone: phone || undefined,
+        reportedAt: new Date().toISOString()
+      };
+    } else {
+      // 添加新狀態
+      updatedHallsStatus.push({
+        hallId,
+        hallName: hall.name,
+        status: status as HallSecurityStatus,
+        remark: remark || undefined,
+        reporter: reporter || undefined,
+        position: position || undefined,
+        phone: phone || undefined,
+        reportedAt: new Date().toISOString()
+      });
+    }
+
+    const updatedDisaster: DisasterReport = {
+      ...disaster,
+      hallsStatus: updatedHallsStatus
+    };
+
+    const updatedDisasters = disasterReports.map(d => d.id === disasterId ? updatedDisaster : d);
+    setDisasterReports(updatedDisasters);
+    await storageService.saveDisasterReports(updatedDisasters);
+    
+    // 重新載入以確保資料同步
+    const reloadedDisasters = await storageService.loadDisasterReports();
+    if (reloadedDisasters) setDisasterReports(reloadedDisasters);
+  };
+
   const renderContent = () => {
     if (bulkReportingIds || reportingRequestId) {
       const targetIds = bulkReportingIds || [reportingRequestId!];
@@ -284,7 +382,10 @@ const App: React.FC = () => {
       case 'aed': return <AEDManagement key={`aed-${resetKey}`} language={language} />;
       case 'vehicle': return <VehicleManagement key={`vehicle-${resetKey}`} language={language} />;
       case 'contract': return <ContractManagement key={`contract-${resetKey}`} language={language} />;
-      case 'disaster': return <DisasterReporting key={`disaster-${resetKey}`} language={language} />;
+      case 'disaster': return <DisasterReporting key={`disaster-${resetKey}`} language={language} onDisasterUpdate={async () => {
+        const savedDisasters = await storageService.loadDisasterReports();
+        if (savedDisasters) setDisasterReports(savedDisasters);
+      }} />;
       case 'monthly_submission': return (
         <MonthlyReportSubmission
           key={`monthly-sub-${resetKey}`}
@@ -379,6 +480,13 @@ const App: React.FC = () => {
     }
   };
 
+  // 檢查用戶是否有特定模組的權限
+  const hasPermission = (moduleId: string, action: string = 'view'): boolean => {
+    if (!currentRole) return true; // 如果沒有角色，預設允許（向後兼容）
+    const permissionId = `${moduleId}:${action}`;
+    return currentRole.permissions.includes(permissionId);
+  };
+
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} />;
   }
@@ -389,6 +497,7 @@ const App: React.FC = () => {
       setActiveTab={handleTabChangeRequest}
       onSimulateVolunteer={() => setShowMobileSim(true)}
       onLogout={handleLogout}
+      hasPermission={hasPermission}
     >
       {renderContent()}
 
@@ -417,9 +526,11 @@ const App: React.FC = () => {
 
       {showMobileSim && (
         <MobileSimulation
-          activeDisaster={disasterReports.length > 0 ? disasterReports[0] : null}
+          key={`mobile-sim-${disasterReports.length}`}
+          activeDisaster={disasterReports && disasterReports.length > 0 ? disasterReports[0] : null}
           requests={requests}
           onClose={() => setShowMobileSim(false)}
+          onDisasterReport={handleDisasterReport}
           onSubmitReport={async (data) => {
             if (data.id) {
               // Existing request being completed
@@ -447,7 +558,24 @@ const App: React.FC = () => {
       <PermissionManagement
         language={language}
         isOpen={showPermissionPanel}
-        onClose={() => setShowPermissionPanel(false)}
+        onClose={() => {
+          setShowPermissionPanel(false);
+          // 重新載入角色資料以更新權限
+          const reloadRoles = async () => {
+            const savedRoles = await storageService.loadRoles();
+            if (savedRoles) {
+              setRoles(savedRoles);
+              if (currentUser) {
+                const userRole = savedRoles.find(r => r.id === currentUser.roleId);
+                if (userRole) setCurrentRole(userRole);
+              } else {
+                const adminRole = savedRoles.find(r => r.id === 'admin') || savedRoles[0];
+                if (adminRole) setCurrentRole(adminRole);
+              }
+            }
+          };
+          reloadRoles();
+        }}
         onLogOperation={handleLogOperation}
       />
 
