@@ -325,6 +325,7 @@ export interface MonthlyReport {
   content: string;
   reporter: string;
   managerRemark?: string;
+  photoUrls?: string[];
   createdAt: string;
   updatedAt: string;
   isDeleted?: boolean;

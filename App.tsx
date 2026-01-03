@@ -21,6 +21,8 @@ import UserManagement from './components/UserManagement';
 import StorageSettings from './components/StorageSettings';
 import MonthlyReportSubmission from './components/MonthlyReportSubmission';
 import MonthlyReportManagement from './components/MonthlyReportManagement';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterReport, Language, OperationLog, MonthlyReport, User, Role, HallSecurityStatus } from './types';
 import { storageService } from './services/storageService';
 import { MOCK_HALLS } from './constants';
@@ -80,23 +82,6 @@ const App: React.FC = () => {
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showStorageSettings, setShowStorageSettings] = useState(false);
   const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentRole, setCurrentRole] = useState<Role | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
-
-  // 當打開 MobileSimulation 時，重新載入災害回報資料
-  useEffect(() => {
-    if (showMobileSim) {
-      const reloadDisasters = async () => {
-        const savedDisasters = await storageService.loadDisasterReports();
-        if (savedDisasters) {
-          setDisasterReports(savedDisasters);
-        }
-      };
-      reloadDisasters();
-    }
-  }, [showMobileSim]);
-
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
     if (token) setIsAuthenticated(true);
@@ -488,7 +473,9 @@ const App: React.FC = () => {
   };
 
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} />;
+    if (publicView === 'privacy') return <div className="bg-slate-950 min-h-screen"><PrivacyPolicy onBack={() => setPublicView(null)} /></div>;
+    if (publicView === 'terms') return <div className="bg-slate-950 min-h-screen"><TermsOfService onBack={() => setPublicView(null)} /></div>;
+    return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} onShowPrivacy={() => setPublicView('privacy')} onShowTerms={() => setPublicView('terms')} />;
   }
 
   return (

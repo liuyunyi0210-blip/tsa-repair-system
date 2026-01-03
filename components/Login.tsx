@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { 
-  Wrench, 
-  Lock, 
-  User, 
+import {
+  Wrench,
+  Lock,
+  User,
   AlertCircle,
   ArrowRight,
   Globe
@@ -14,9 +14,11 @@ interface LoginProps {
   onLogin: (token: string) => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
+  onShowPrivacy: () => void;
+  onShowTerms: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onShowPrivacy, onShowTerms }) => {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +35,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) =>
       loginBtn: '登入系統',
       quickLogin: '測試員快速登入',
       errorMsg: '帳號或密碼輸入錯誤，請重新確認',
-      footer: '© 2025 台灣創價學會 總務局 版權所有'
+      footer: '© 2025 台灣創價學會 總務局 版權所有',
+      privacy: '隱私權政策',
+      terms: '服務條款'
     },
     [Language.JA]: {
       systemName: '会館施設管理・修繕システム',
@@ -45,7 +49,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) =>
       loginBtn: 'ログイン',
       quickLogin: 'テストログイン',
       errorMsg: 'IDまたはパスワードが正しくありません',
-      footer: '© 2025 台湾創価学会 総務局 All Rights Reserved.'
+      footer: '© 2025 台湾創価学会 総務局 All Rights Reserved.',
+      privacy: 'プライバシーポリシー',
+      terms: '利用規約'
     }
   };
 
@@ -70,27 +76,27 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) =>
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-950 font-['Inter','Noto_Sans_TC']">
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-600/10 blur-[120px] rounded-full"></div>
-      
+
       <div className="w-full max-w-lg p-6 relative z-10 animate-in fade-in zoom-in duration-700">
         <div className="flex justify-end mb-8">
-           <button 
-             onClick={() => onLanguageChange(language === Language.ZH ? Language.JA : Language.ZH)}
-             className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all text-xs font-bold"
-           >
-             <Globe size={14} />
-             {language === Language.ZH ? '日本語' : '中文'}
-           </button>
+          <button
+            onClick={() => onLanguageChange(language === Language.ZH ? Language.JA : Language.ZH)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all text-xs font-bold"
+          >
+            <Globe size={14} />
+            {language === Language.ZH ? '日本語' : '中文'}
+          </button>
         </div>
 
         <div className="bg-white rounded-[48px] shadow-2xl p-10 md:p-14 space-y-10 border border-slate-100">
           <div className="text-center space-y-4">
-             <div className="inline-flex p-4 bg-indigo-600 text-white rounded-[24px] shadow-xl shadow-indigo-200 mb-2">
-                <Wrench size={32} />
-             </div>
-             <div>
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t.systemName}</h1>
-                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">{t.organization}</p>
-             </div>
+            <div className="inline-flex p-4 bg-indigo-600 text-white rounded-[24px] shadow-xl shadow-indigo-200 mb-2">
+              <Wrench size={32} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t.systemName}</h1>
+              <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">{t.organization}</p>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -100,33 +106,33 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) =>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
-               <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.accountLabel}</label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                    <input 
-                      type="text" 
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-[20px] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 font-bold transition-all"
-                      placeholder="Admin ID"
-                      value={account}
-                      onChange={e => setAccount(e.target.value)}
-                    />
-                  </div>
-               </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.accountLabel}</label>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                  <input
+                    type="text"
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-[20px] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 font-bold transition-all"
+                    placeholder="Admin ID"
+                    value={account}
+                    onChange={e => setAccount(e.target.value)}
+                  />
+                </div>
+              </div>
 
-               <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.passwordLabel}</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                    <input 
-                      type="password" 
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-[20px] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 font-bold transition-all"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                    />
-                  </div>
-               </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.passwordLabel}</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                  <input
+                    type="password"
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-[20px] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 font-bold transition-all"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             {error && (
@@ -136,8 +142,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) =>
               </div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full bg-slate-900 text-white font-black py-5 rounded-[24px] shadow-2xl shadow-slate-200 flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all active:scale-95 disabled:opacity-50"
             >
@@ -153,7 +159,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) =>
           </form>
 
           <div className="pt-6 border-t border-slate-50">
-            <button 
+            <button
               onClick={() => {
                 setAccount('admin');
                 setPassword('tsa2025');
@@ -165,9 +171,20 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange }) =>
           </div>
         </div>
 
-        <p className="text-center mt-12 text-white/30 text-[10px] font-bold uppercase tracking-widest leading-loose">
-          {t.footer}
-        </p>
+        <div className="mt-12 flex flex-col items-center gap-4">
+          <div className="flex gap-6">
+            <button onClick={onShowPrivacy} className="text-white/40 hover:text-white/80 text-[10px] font-bold uppercase tracking-widest transition-colors">
+              {t.privacy}
+            </button>
+            <div className="w-px h-3 bg-white/10 self-center"></div>
+            <button onClick={onShowTerms} className="text-white/40 hover:text-white/80 text-[10px] font-bold uppercase tracking-widest transition-colors">
+              {t.terms}
+            </button>
+          </div>
+          <p className="text-white/20 text-[10px] font-bold uppercase tracking-widest leading-loose">
+            {t.footer}
+          </p>
+        </div>
       </div>
     </div>
   );
