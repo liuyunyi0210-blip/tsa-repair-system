@@ -112,15 +112,14 @@ export default defineConfig(({ mode }) => {
             manualChunks: (id) => {
               // 優化代碼分割：將 node_modules 中的大型依賴分離
               if (id.includes('node_modules')) {
+                // 將 recharts 與其他 vendor 放在一起，避免載入順序問題
                 if (id.includes('react') || id.includes('react-dom')) {
                   return 'vendor-react';
                 }
                 if (id.includes('@google/genai')) {
                   return 'vendor-gemini';
                 }
-                if (id.includes('recharts')) {
-                  return 'vendor-recharts';
-                }
+                // recharts 和其他依賴一起打包，避免分割導致的載入問題
                 return 'vendor';
               }
             },
