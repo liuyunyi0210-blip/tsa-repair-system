@@ -62,6 +62,8 @@ const RequestList: React.FC<RequestListProps> = ({
 
   const translations = {
     [Language.ZH]: {
+      title: '工單管理',
+      description: '管理所有報修工單與例行性維護工單',
       all: '全部顯示',
       deleted: '已刪除',
       allHalls: '全部會館清單',
@@ -84,6 +86,8 @@ const RequestList: React.FC<RequestListProps> = ({
       catRepair: '修繕報修'
     },
     [Language.JA]: {
+      title: '工單管理',
+      description: 'すべての修理依頼と定期メンテナンス案件を管理',
       all: 'すべて表示',
       deleted: '削除済み',
       allHalls: '全会館リスト',
@@ -126,11 +130,16 @@ const RequestList: React.FC<RequestListProps> = ({
     return matchesDeletedStatus && matchesStatus && matchesSearch && matchesCategory && matchesHall;
   });
 
+  // 尚未完工的工單（用於完工回報選擇）
+  const unfinishedRequests = filteredRequests.filter(req => req.status !== RepairStatus.CLOSED);
+
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredRequests.length && filteredRequests.length > 0) {
+    // 只選擇尚未完工的工單
+    const selectableIds = unfinishedRequests.map(r => r.id);
+    if (selectedIds.size === selectableIds.length && selectableIds.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredRequests.map(r => r.id)));
+      setSelectedIds(new Set(selectableIds));
     }
   };
 
@@ -190,7 +199,18 @@ const RequestList: React.FC<RequestListProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-24 relative min-h-[600px]">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+      <div className="space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+              <ClipboardList className="text-indigo-600" /> {t.title}
+            </h1>
+            <p className="text-slate-500 font-medium">{t.description}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
         <div className="flex flex-wrap gap-3">
           <CategoryTab id={Category.AC} icon={<Wind size={20} />} color="bg-cyan-500" label={t.catAc} count={requests.filter(r => r.category === Category.AC && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
@@ -206,11 +226,11 @@ const RequestList: React.FC<RequestListProps> = ({
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-3 rounded-[32px] border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-          <button onClick={() => { setFilter('ALL'); setCategoryFilter('ALL'); setHallFilter('ALL'); }} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filter === 'ALL' && categoryFilter === 'ALL' && hallFilter === 'ALL' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>{t.all}</button>
+          <button onClick={() => { setFilter('ALL'); setCategoryFilter('ALL'); setHallFilter('ALL'); }} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === 'ALL' && categoryFilter === 'ALL' && hallFilter === 'ALL' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>{t.all}</button>
           {(Object.keys(STATUS_CONFIG) as RepairStatus[]).map((status) => (
             <button key={status} onClick={() => setFilter(status)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === status ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>{getStatusLabel(status)}</button>
           ))}
-          <button onClick={() => setFilter('DELETED')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all ${filter === 'DELETED' ? 'bg-rose-600 text-white' : 'text-rose-400 hover:bg-rose-50'}`}><Trash2 size={14} /> {t.deleted}</button>
+          <button onClick={() => setFilter('DELETED')} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all whitespace-nowrap ${filter === 'DELETED' ? 'bg-rose-600 text-white' : 'text-rose-400 hover:bg-rose-50'}`}><Trash2 size={14} /> {t.deleted}</button>
         </div>
         <div className="flex items-center gap-3 flex-1 lg:max-w-xl">
           <div className="relative flex-1">
@@ -232,19 +252,28 @@ const RequestList: React.FC<RequestListProps> = ({
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
-                <th className="px-6 py-5 w-16 text-center">#</th>
-                <th className="px-6 py-5">{t.headerTitle}</th>
-                <th className="px-6 py-5">{t.headerHall}</th>
-                <th className="px-6 py-5">{t.headerCat}</th>
-                <th className="px-6 py-5">{t.headerStatus}</th>
-                <th className="px-6 py-5 text-right">{t.headerDetail}</th>
+                <th className="px-6 py-5 w-16 text-center whitespace-nowrap">#</th>
+                <th className="px-6 py-5 whitespace-nowrap">{t.headerTitle}</th>
+                <th className="px-6 py-5 whitespace-nowrap">{t.headerHall}</th>
+                <th className="px-6 py-5 whitespace-nowrap">{t.headerCat}</th>
+                <th className="px-6 py-5 whitespace-nowrap">{t.headerStatus}</th>
+                <th className="px-6 py-5 text-right whitespace-nowrap">{t.headerDetail}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredRequests.map((req) => (
-                <tr key={req.id} onClick={() => onView(req.id)} className="group cursor-pointer hover:bg-slate-50 transition-all">
-                  <td className="px-6 py-5 text-center" onClick={(e) => toggleSelection(req.id, e as any)}>
-                    <div className={selectedIds.has(req.id) ? 'text-indigo-600' : 'text-slate-200'}>
+              {filteredRequests.map((req) => {
+                const isFinished = req.status === RepairStatus.CLOSED;
+                const canSelect = !isFinished;
+                return (
+                <tr key={req.id} onClick={() => onView(req.id)} className={`group cursor-pointer hover:bg-slate-50 transition-all ${isFinished ? 'opacity-50' : ''}`}>
+                  <td className="px-6 py-5 text-center" onClick={(e) => {
+                    if (canSelect) {
+                      toggleSelection(req.id, e as any);
+                    } else {
+                      e.stopPropagation();
+                    }
+                  }}>
+                    <div className={selectedIds.has(req.id) ? 'text-indigo-600' : canSelect ? 'text-slate-200' : 'text-slate-100'}>
                       {selectedIds.has(req.id) ? <CheckSquare size={20} /> : <Square size={20} />}
                     </div>
                   </td>
@@ -263,15 +292,18 @@ const RequestList: React.FC<RequestListProps> = ({
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-5 font-bold text-slate-600">{req.hallName}</td>
-                  <td className="px-6 py-5 flex items-center gap-2">
-                    {CATEGORY_ICONS[req.category]}
-                    <span className="text-[10px] font-black text-slate-500 uppercase">{req.category}</span>
+                  <td className="px-6 py-5 font-bold text-slate-600 whitespace-nowrap">{req.hallName}</td>
+                  <td className="px-6 py-5 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {CATEGORY_ICONS[req.category]}
+                      <span className="text-[10px] font-black text-slate-500 uppercase">{req.category}</span>
+                    </div>
                   </td>
-                  <td className="px-6 py-5"><span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${STATUS_CONFIG[req.status].color}`}>{getStatusLabel(req.status)}</span></td>
+                  <td className="px-6 py-5 whitespace-nowrap"><span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${STATUS_CONFIG[req.status].color}`}>{getStatusLabel(req.status)}</span></td>
                   <td className="px-6 py-5 text-right"><ChevronRight size={18} className="text-slate-300 opacity-0 group-hover:opacity-100 inline" /></td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
           {filteredRequests.length === 0 && <div className="py-20 text-center text-slate-300 font-black">{t.noData}</div>}
@@ -286,7 +318,23 @@ const RequestList: React.FC<RequestListProps> = ({
           </div>
           <div><p className="text-3xl font-black">{selectedIds.size}</p><p className="text-[10px] text-slate-400 uppercase tracking-widest">{t.bulkSelect}</p></div>
           <div className="space-y-3">
-            <button onClick={() => onBulkReport(Array.from(selectedIds))} className="w-full flex items-center justify-between px-6 py-4 bg-indigo-600 rounded-[20px] font-black hover:bg-indigo-700 transition-all"><span>{t.bulkUpdate}</span><Wrench size={18} /></button>
+            <button 
+              onClick={() => {
+                // 只傳遞尚未完工的工單 ID
+                const unfinishedIds = Array.from(selectedIds).filter(id => {
+                  const req = requests.find(r => r.id === id);
+                  return req && req.status !== RepairStatus.CLOSED;
+                });
+                if (unfinishedIds.length > 0) {
+                  onBulkReport(unfinishedIds);
+                } else {
+                  alert('請選擇尚未完工的工單進行回報');
+                }
+              }} 
+              className="w-full flex items-center justify-between px-6 py-4 bg-indigo-600 rounded-[20px] font-black hover:bg-indigo-700 transition-all"
+            >
+              <span>{t.bulkUpdate}</span><Wrench size={18} />
+            </button>
             <button onClick={handleBulkExport} className="w-full flex items-center justify-between px-6 py-4 bg-white/10 border border-white/10 rounded-[20px] font-black hover:bg-white/20 transition-all"><span>{t.export}</span><Download size={18} /></button>
           </div>
         </div>

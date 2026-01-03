@@ -400,8 +400,16 @@ const App: React.FC = () => {
             await saveRequests(requests.map(r => r.id === id ? { ...r, status } : r));
           }}
           onReportWork={(id) => {
-            setSelectedRequestId(null);
-            setReportingRequestId(id);
+            const req = requests.find(r => r.id === id);
+            if (req) {
+              // 只允許尚未完工的工單進行回報
+              if (req.status !== RepairStatus.CLOSED) {
+                setSelectedRequestId(null);
+                setReportingRequestId(id);
+              } else {
+                alert('此工單已完成，無法進行完工回報');
+              }
+            }
           }}
           language={language}
         />

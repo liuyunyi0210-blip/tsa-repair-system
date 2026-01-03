@@ -270,12 +270,16 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
 
   const ListView = () => (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">會館合約管理</h1>
-          <p className="text-slate-500 mt-1 font-medium">追蹤各會館外包廠商年度合約狀態、種類與進度</p>
+      <div className="space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+              <FileText className="text-indigo-600" /> 會館合約管理
+            </h1>
+            <p className="text-slate-500 font-medium">追蹤各會館外包廠商年度合約狀態、種類與進度</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-end">
           <div className="bg-white p-1 rounded-2xl border border-slate-200 flex shadow-sm">
              <button onClick={() => setViewMode('TABLE')} className={`p-2 rounded-xl transition-all ${viewMode === 'TABLE' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>
                 <ListIcon size={20} />
@@ -284,7 +288,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
                 <LayoutGrid size={20} />
              </button>
           </div>
-          <button onClick={() => setView('ADD')} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+          <button onClick={() => setView('ADD')} className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all w-full md:w-auto">
             <FilePlus size={18} /> 新增合約
           </button>
         </div>
@@ -348,12 +352,12 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4">廠商與概述</th>
-                  <th className="px-6 py-4">會館</th>
-                  <th className="px-6 py-4">日期區間</th>
-                  <th className="px-6 py-4">合約費用</th>
-                  <th className="px-6 py-4">狀態</th>
-                  <th className="px-6 py-4 text-right">操作</th>
+                  <th className="px-6 py-4 whitespace-nowrap">廠商與概述</th>
+                  <th className="px-6 py-4 whitespace-nowrap">會館</th>
+                  <th className="px-6 py-4 whitespace-nowrap">日期區間</th>
+                  <th className="px-6 py-4 whitespace-nowrap">合約費用</th>
+                  <th className="px-6 py-4 whitespace-nowrap">狀態</th>
+                  <th className="px-6 py-4 text-right whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -372,16 +376,18 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
                           <span className="text-xs text-slate-500">{c.summary}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-600">{c.hallName}</td>
-                      <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="flex items-center gap-1"><Calendar size={10}/> {c.startDate}</span>
-                          <span className="flex items-center gap-1"><Calendar size={10}/> {c.endDate}</span>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-600 whitespace-nowrap">{c.hallName}</td>
+                      <td className="px-6 py-4 text-xs font-medium text-slate-500 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={12} className="text-slate-300 flex-shrink-0"/>
+                          <span>{c.startDate}</span>
+                          <span className="text-slate-300">~</span>
+                          <span>{c.endDate}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-black text-slate-900">${c.fee.toLocaleString()}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black ${
+                      <td className="px-6 py-4 font-black text-slate-900 whitespace-nowrap">${c.fee.toLocaleString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${
                           status === ContractStatus.IN_PROGRESS ? 'bg-indigo-600 text-white' :
                           status === ContractStatus.NOT_STARTED ? 'bg-amber-100 text-amber-700' :
                           'bg-slate-200 text-slate-400'
