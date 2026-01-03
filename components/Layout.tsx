@@ -20,6 +20,7 @@ import {
   Calendar,
   FileSignature
 } from 'lucide-react';
+import { User, Role } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -28,6 +29,8 @@ interface LayoutProps {
   onSimulateVolunteer: () => void;
   onLogout: () => void;
   hasPermission?: (moduleId: string, action?: string) => boolean;
+  currentUser?: User | null;
+  currentRole?: Role | null;
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -36,7 +39,9 @@ const Layout: React.FC<LayoutProps> = ({
   setActiveTab,
   onSimulateVolunteer,
   onLogout,
-  hasPermission
+  hasPermission,
+  currentUser,
+  currentRole
 }) => {
   const t = {
     title: 'TSA會館設施維護系統',
@@ -139,10 +144,16 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-xs font-black text-slate-900">{t.admin}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">System Operator</p>
+              <p className="text-xs font-black text-slate-900">
+                {currentUser?.name || t.admin}
+              </p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">
+                {currentRole?.name || 'System Operator'}
+              </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black shadow-sm">TSA</div>
+            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black shadow-sm">
+              {currentUser?.name ? currentUser.name.charAt(0) : 'TSA'}
+            </div>
           </div>
         </header>
 

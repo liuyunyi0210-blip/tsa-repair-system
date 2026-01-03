@@ -102,8 +102,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
-    if (token) setIsAuthenticated(true);
-
+    
     const loadData = async () => {
       const savedRequests = await storageService.loadRepairRequests();
       if (savedRequests) setRequests(savedRequests);
@@ -121,6 +120,41 @@ const App: React.FC = () => {
       // 載入用戶和角色資料
       const savedUsers = await storageService.loadUsers();
       const savedRoles = await storageService.loadRoles();
+      
+      if (token) {
+        // 從 token 中提取用戶 ID（格式：token-${userId}）
+        const userId = token.startsWith('token-') ? token.replace('token-', '') : null;
+        const userIdFromMock = token === 'mock-token-12345' ? 'user-admin' : null;
+        const targetUserId = userId || userIdFromMock;
+        
+        if (targetUserId && savedUsers) {
+          const user = savedUsers.find(u => u.id === targetUserId);
+          if (user) {
+            setCurrentUser(user);
+            setIsAuthenticated(true);
+            
+            // 載入對應的角色
+            if (savedRoles) {
+              setRoles(savedRoles);
+              const role = savedRoles.find(r => r.id === user.roleId);
+              if (role) {
+                setCurrentRole(role);
+              }
+            } else {
+              // 如果沒有角色資料，載入預設角色
+              const { DEFAULT_ROLES } = await import('./constants');
+              setRoles(DEFAULT_ROLES);
+              const role = DEFAULT_ROLES.find(r => r.id === user.roleId);
+              if (role) {
+                setCurrentRole(role);
+              }
+            }
+            return;
+          }
+        }
+      }
+      
+      // 如果沒有 token 或找不到用戶，使用預設邏輯
       if (savedRoles) {
         setRoles(savedRoles);
         // 預設使用系統管理員角色（如果沒有用戶資料）
@@ -166,8 +200,36 @@ const App: React.FC = () => {
     await storageService.saveMonthlyReports(newReports);
   };
 
-  const handleLogin = (token: string) => {
+  const handleLogin = async (token: string, userId: string) => {
     localStorage.setItem('tsa_auth_token', token);
+    
+    // 載入用戶和角色資料
+    const savedUsers = await storageService.loadUsers();
+    const savedRoles = await storageService.loadRoles();
+    
+    if (savedUsers) {
+      const user = savedUsers.find(u => u.id === userId);
+      if (user) {
+        setCurrentUser(user);
+        
+        // 載入對應的角色
+        if (savedRoles) {
+          const role = savedRoles.find(r => r.id === user.roleId);
+          if (role) {
+            setCurrentRole(role);
+          }
+        } else {
+          // 如果沒有角色資料，載入預設角色
+          const { DEFAULT_ROLES } = await import('./constants');
+          const role = DEFAULT_ROLES.find(r => r.id === user.roleId);
+          if (role) {
+            setCurrentRole(role);
+            setRoles(DEFAULT_ROLES);
+          }
+        }
+      }
+    }
+    
     setIsAuthenticated(true);
   };
 
@@ -175,6 +237,8 @@ const App: React.FC = () => {
     if (window.confirm('確定要登出系統嗎？')) {
       localStorage.removeItem('tsa_auth_token');
       setIsAuthenticated(false);
+      setCurrentUser(null);
+      setCurrentRole(null);
     }
   };
 
@@ -503,6 +567,8 @@ const App: React.FC = () => {
       onSimulateVolunteer={() => setShowMobileSim(true)}
       onLogout={handleLogout}
       hasPermission={hasPermission}
+      currentUser={currentUser}
+      currentRole={currentRole}
     >
       {renderContent()}
 

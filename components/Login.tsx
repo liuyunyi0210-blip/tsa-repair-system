@@ -12,7 +12,7 @@ import { Language } from '../types';
 import { storageService } from '../services/storageService';
 
 interface LoginProps {
-  onLogin: (token: string) => void;
+  onLogin: (token: string, userId: string) => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
   onShowPrivacy: () => void;
@@ -83,7 +83,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
             lastLoginAt: new Date().toISOString()
           };
           await storageService.saveUsers([defaultUser]);
-          onLogin('mock-token-12345');
+          onLogin('mock-token-12345', defaultUser.id);
           return;
         } else {
           setError(t.errorMsg);
@@ -124,7 +124,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
       await storageService.saveUsers(updatedUsers);
 
       // 登入成功
-      onLogin(`token-${user.id}`);
+      onLogin(`token-${user.id}`, user.id);
     } catch (error) {
       console.error('登入錯誤:', error);
       setError('登入時發生錯誤，請稍後再試');
@@ -173,7 +173,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
                   <input
                     type="text"
                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-[20px] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 font-bold transition-all"
-                    placeholder="Admin ID"
+                    placeholder="User ID"
                     value={account}
                     onChange={e => setAccount(e.target.value)}
                   />
