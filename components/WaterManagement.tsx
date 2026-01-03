@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { MOCK_HALLS, WATER_PRICE_LIST as DEFAULT_PRICE_LIST } from '../constants';
 import { WaterDispenser, WaterMaintenanceRecord, Language } from '../types';
+import { storageService } from '../services/storageService';
 
 interface WaterManagementProps {
   onDirtyChange?: (isDirty: boolean) => void;
@@ -41,17 +42,20 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ onDirtyChange, langua
   const [showRecordForm, setShowRecordForm] = useState(false);
 
   useEffect(() => {
-    const savedD = localStorage.getItem('tsa_water_dispensers_v3');
-    const savedH = localStorage.getItem('tsa_water_history_v3');
-    if (savedD) setDispensers(JSON.parse(savedD));
-    if (savedH) setMaintenanceHistory(JSON.parse(savedH));
+    const loadData = async () => {
+      const savedD = await storageService.loadWaterDispensers();
+      const savedH = await storageService.loadWaterHistory();
+      if (savedD) setDispensers(savedD);
+      if (savedH) setMaintenanceHistory(savedH);
+    };
+    loadData();
   }, []);
 
-  const saveData = (d: WaterDispenser[], h: WaterMaintenanceRecord[]) => {
+  const saveData = async (d: WaterDispenser[], h: WaterMaintenanceRecord[]) => {
     setDispensers(d);
     setMaintenanceHistory(h);
-    localStorage.setItem('tsa_water_dispensers_v3', JSON.stringify(d));
-    localStorage.setItem('tsa_water_history_v3', JSON.stringify(h));
+    await storageService.saveWaterDispensers(d);
+    await storageService.saveWaterHistory(h);
   };
 
   const filteredDispensers = dispensers.filter(d => selectedHall === 'ALL' || d.hallName === selectedHall);

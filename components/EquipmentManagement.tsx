@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { MOCK_HALLS, EQUIPMENT_CODES, EQUIPMENT_CATEGORIES } from '../constants';
 import { Equipment, EquipmentChange, EquipmentChangeType, Language } from '../types';
+import { storageService } from '../services/storageService';
 
 interface EquipmentManagementProps {
   onDirtyChange?: (isDirty: boolean) => void;
@@ -74,20 +75,23 @@ const EquipmentManagement: React.FC<EquipmentManagementProps> = ({ onDirtyChange
   }, [view, onDirtyChange]);
 
   useEffect(() => {
-    const savedEquip = localStorage.getItem('tsa_equipments_v1');
-    const savedChanges = localStorage.getItem('tsa_equip_changes_v1');
-    if (savedEquip) setEquipments(JSON.parse(savedEquip));
-    if (savedChanges) setChanges(JSON.parse(savedChanges));
+    const loadData = async () => {
+      const savedEquip = await storageService.loadEquipments();
+      const savedChanges = await storageService.loadEquipmentChanges();
+      if (savedEquip) setEquipments(savedEquip);
+      if (savedChanges) setChanges(savedChanges);
+    };
+    loadData();
   }, []);
 
-  const saveEquip = (data: Equipment[]) => {
+  const saveEquip = async (data: Equipment[]) => {
     setEquipments(data);
-    localStorage.setItem('tsa_equipments_v1', JSON.stringify(data));
+    await storageService.saveEquipments(data);
   };
 
-  const saveChange = (data: EquipmentChange[]) => {
+  const saveChange = async (data: EquipmentChange[]) => {
     setChanges(data);
-    localStorage.setItem('tsa_equip_changes_v1', JSON.stringify(data));
+    await storageService.saveEquipmentChanges(data);
   };
 
   const isWarrantyValid = (purchaseDate: string, years: number) => {
@@ -134,10 +138,10 @@ const EquipmentManagement: React.FC<EquipmentManagementProps> = ({ onDirtyChange
       hallName: MOCK_HALLS[0].name, location: '', category: '一般', productName: Object.keys(EQUIPMENT_CODES)[0], model: '',
       quantity: 1, purchaseDate: new Date().toISOString().split('T')[0], price: 0, warrantyYears: 1, photoUrl: ''
     });
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       const id = generateId(form.hallName!, form.productName!, form.purchaseDate!, equipments);
-      saveEquip([{...form as Equipment, id, createdAt: new Date().toISOString()}, ...equipments]);
+      await saveEquip([{...form as Equipment, id, createdAt: new Date().toISOString()}, ...equipments]);
       setView('HOME');
     };
     return (
