@@ -33,7 +33,7 @@ const INITIAL_REQUESTS: RepairRequest[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     lastExecutedDate: '2024-04-01',
-    maintenanceCycle: 30, 
+    maintenanceCycle: 30,
     staffInCharge: '李組長',
     isDeleted: false,
     isVerified: true
@@ -64,11 +64,11 @@ const App: React.FC = () => {
   const [disasterReports, setDisasterReports] = useState<DisasterReport[]>([]);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [reportingRequestId, setReportingRequestId] = useState<string | null>(null);
-  const [bulkReportingIds, setBulkReportingIds] = useState<string[] | null>(null); 
-  const [showForm, setShowForm] = useState<{show: boolean, type: OrderType}>({show: false, type: OrderType.VOLUNTEER});
+  const [bulkReportingIds, setBulkReportingIds] = useState<string[] | null>(null);
+  const [showForm, setShowForm] = useState<{ show: boolean, type: OrderType }>({ show: false, type: OrderType.VOLUNTEER });
   const [showMobileSim, setShowMobileSim] = useState(false);
   const [resetKey, setResetKey] = useState(0);
-  
+
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
     if (token) setIsAuthenticated(true);
@@ -102,8 +102,8 @@ const App: React.FC = () => {
     setReportingRequestId(null);
     setBulkReportingIds(null);
     setSelectedRequestId(null);
-    setShowForm({show: false, type: OrderType.VOLUNTEER});
-    
+    setShowForm({ show: false, type: OrderType.VOLUNTEER });
+
     if (activeTab === newTab) {
       setResetKey(prev => prev + 1);
     } else {
@@ -120,7 +120,7 @@ const App: React.FC = () => {
       return req;
     });
     saveRequests(updated);
-    
+
     if (shouldClose) {
       // 結案後的關鍵跳轉邏輯
       setReportingRequestId(null);
@@ -145,12 +145,13 @@ const App: React.FC = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isDeleted: false,
-      isVerified: data.isVerified ?? (data.type === OrderType.ROUTINE)
+      isVerified: data.isVerified ?? (data.type === OrderType.ROUTINE),
+      photoUrls: data.photoUrls || []
     };
-    
+
     saveRequests([newReq, ...requests]);
-    setShowForm({show: false, type: OrderType.VOLUNTEER});
-    
+    setShowForm({ show: false, type: OrderType.VOLUNTEER });
+
     if (newReq.isVerified) {
       setActiveTab('requests');
     } else {
@@ -169,7 +170,7 @@ const App: React.FC = () => {
       const targetIds = bulkReportingIds || [reportingRequestId!];
       const templateRequest = requests.find(r => r.id === targetIds[0]) || requests[0];
       return (
-        <WorkReportForm 
+        <WorkReportForm
           key="work-report-form"
           request={templateRequest}
           allRequests={requests}
@@ -186,11 +187,11 @@ const App: React.FC = () => {
 
     if (showForm.show) {
       return (
-        <NewRequestForm 
+        <NewRequestForm
           key="new-request-form"
           initialType={showForm.type}
-          onSubmit={handleAddRequest} 
-          onCancel={() => setShowForm({show: false, type: OrderType.VOLUNTEER})} 
+          onSubmit={handleAddRequest}
+          onCancel={() => setShowForm({ show: false, type: OrderType.VOLUNTEER })}
           language={language}
         />
       );
@@ -203,7 +204,7 @@ const App: React.FC = () => {
         return <HallManagement key={`hall-${resetKey}`} />;
       case 'reports':
         return (
-          <ReportManagement 
+          <ReportManagement
             key={`report-${resetKey}`}
             requests={requests}
             language={language}
@@ -217,23 +218,23 @@ const App: React.FC = () => {
         );
       case 'requests':
         return (
-          <RequestList 
+          <RequestList
             key={`req-${resetKey}`}
-            requests={requests.filter(r => r.isVerified)} 
+            requests={requests.filter(r => r.isVerified)}
             language={language}
             onView={(id) => setSelectedRequestId(id)}
             onDelete={(id) => {
-               if (window.confirm('確定要移至回收站？')) {
-                 saveRequests(requests.map(r => r.id === id ? {...r, isDeleted: true} : r));
-               }
+              if (window.confirm('確定要移至回收站？')) {
+                saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: true } : r));
+              }
             }}
-            onRestore={(id) => saveRequests(requests.map(r => r.id === id ? {...r, isDeleted: false} : r))}
+            onRestore={(id) => saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: false } : r))}
             onPermanentDelete={(id) => {
               if (window.confirm('永久刪除？')) {
                 saveRequests(requests.filter(r => r.id !== id));
               }
             }}
-            onNewRoutine={() => setShowForm({show: true, type: OrderType.ROUTINE})}
+            onNewRoutine={() => setShowForm({ show: true, type: OrderType.ROUTINE })}
             onBulkReport={(ids) => setBulkReportingIds(ids)}
           />
         );
@@ -252,20 +253,20 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout 
-      activeTab={activeTab} 
-      setActiveTab={handleTabChangeRequest} 
+    <Layout
+      activeTab={activeTab}
+      setActiveTab={handleTabChangeRequest}
       onSimulateVolunteer={() => setShowMobileSim(true)}
       onLogout={handleLogout}
     >
       {renderContent()}
-      
+
       {selectedRequestId && (
-        <RequestDetail 
+        <RequestDetail
           request={requests.find(r => r.id === selectedRequestId)!}
           onClose={() => setSelectedRequestId(null)}
           onUpdateStatus={(id, status) => {
-             saveRequests(requests.map(r => r.id === id ? {...r, status} : r));
+            saveRequests(requests.map(r => r.id === id ? { ...r, status } : r));
           }}
           onReportWork={(id) => {
             setSelectedRequestId(null);
@@ -276,7 +277,7 @@ const App: React.FC = () => {
       )}
 
       {showMobileSim && (
-        <MobileSimulation 
+        <MobileSimulation
           activeDisaster={disasterReports.length > 0 ? disasterReports[0] : null}
           onClose={() => setShowMobileSim(false)}
           onSubmitReport={(data) => handleAddRequest({ ...data, isVerified: false })}

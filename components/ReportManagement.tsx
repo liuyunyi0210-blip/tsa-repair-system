@@ -1,19 +1,23 @@
 
 import React, { useState } from 'react';
-import { 
-  MessageSquare, 
-  CheckCircle2, 
-  Trash2, 
-  Search, 
-  Calendar, 
-  MapPin, 
-  User, 
+import {
+  MessageSquare,
+  CheckCircle2,
+  Trash2,
+  Search,
+  Calendar,
+  MapPin,
+  User,
   ChevronRight,
   ShieldCheck,
   AlertCircle,
   Clock,
   ExternalLink,
-  Check
+  Check,
+  Image as ImageIcon,
+  X,
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 import { RepairRequest, RepairStatus, Category, OrderType, Language } from '../types';
 import { CATEGORY_ICONS, MOCK_HALLS } from '../constants';
@@ -27,12 +31,14 @@ interface ReportManagementProps {
 
 const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify, onDelete, language }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [selectedPhotos, setSelectedPhotos] = useState<string[] | null>(null);
+  const [selectedReport, setSelectedReport] = useState<RepairRequest | null>(null);
+
   // 篩選出尚未審核的回報 (來自手機端的 VOLUNTEER 類型)
   const unverifiedReports = requests.filter(r => r.type === OrderType.VOLUNTEER && !r.isDeleted);
 
-  const filteredReports = unverifiedReports.filter(r => 
-    r.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredReports = unverifiedReports.filter(r =>
+    r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.hallName.includes(searchTerm) ||
     r.reporter.includes(searchTerm)
   );
@@ -48,9 +54,9 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
         </div>
         <div className="relative w-full md:w-80">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="搜尋回報人或會館..." 
+          <input
+            type="text"
+            placeholder="搜尋回報人或會館..."
             className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -82,6 +88,12 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                       <div className="flex flex-col gap-0.5">
                         <span className={`font-black text-lg ${report.isVerified ? 'text-slate-400' : 'text-slate-900'}`}>{report.title}</span>
                         <span className="text-xs font-bold text-slate-400 line-clamp-1">{report.description}</span>
+                        {report.photoUrls && report.photoUrls.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1 text-xs font-bold text-indigo-500 cursor-pointer hover:underline" onClick={() => setSelectedPhotos(report.photoUrls || [])}>
+                            <ImageIcon size={12} />
+                            <span>查看 {report.photoUrls.length} 張照片</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -117,17 +129,11 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                   <td className="px-8 py-6 text-right">
                     {!report.isVerified ? (
                       <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => onVerify(report.id)}
+                        <button
+                          onClick={() => setSelectedReport(report)}
                           className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
                         >
-                          <ShieldCheck size={16} /> 確認核實
-                        </button>
-                        <button 
-                          onClick={() => onDelete(report.id)}
-                          className="p-2.5 text-rose-400 hover:bg-rose-50 hover:text-rose-600 rounded-2xl transition-all"
-                        >
-                          <Trash2 size={20} />
+                          <FileText size={16} /> 審核案件
                         </button>
                       </div>
                     ) : (
@@ -148,6 +154,92 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
           )}
         </div>
       </div>
+      {selectedPhotos && (
+        <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedPhotos(null)}>
+          <button className="absolute top-8 right-8 text-white hover:text-rose-400 transition-colors">
+            <X size={32} />
+          </button>
+          <div className="w-full max-w-5xl h-[80vh] flex gap-4 overflow-x-auto snap-x snap-mandatory p-4" onClick={e => e.stopPropagation()}>
+            {selectedPhotos.map((url, i) => (
+              <div key={i} className="flex-shrink-0 w-full h-full flex items-center justify-center snap-center relative">
+                <img src={url} alt={`Photo ${i + 1}`} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+                <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-bold">
+                  {i + 1} / {selectedPhotos.length}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 詳細審核 Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-[40px] p-8 shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-start border-b border-slate-100 pb-6 mb-6">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                  {CATEGORY_ICONS[selectedReport.category] || <AlertCircle size={24} />}
+                  {selectedReport.title}
+                </h3>
+                <div className="flex items-center gap-3 mt-2 text-sm font-bold text-slate-500">
+                  <span className="flex items-center gap-1"><MapPin size={14} /> {selectedReport.hallName}</span>
+                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                  <span className="flex items-center gap-1"><User size={14} /> {selectedReport.reporter}</span>
+                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                  <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(selectedReport.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <button onClick={() => setSelectedReport(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={24} className="text-slate-400" /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">狀況描述</label>
+                <p className="text-slate-700 font-bold leading-relaxed bg-slate-50 p-4 rounded-2xl">
+                  {selectedReport.description}
+                </p>
+              </div>
+
+              {selectedReport.photoUrls && selectedReport.photoUrls.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">現場照片 ({selectedReport.photoUrls.length})</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {selectedReport.photoUrls.map((url, i) => (
+                      <div key={i} className="aspect-square rounded-xl overflow-hidden border border-slate-100 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setSelectedPhotos(selectedReport.photoUrls || [])}>
+                        <img src={url} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-8 mt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+              <button
+                onClick={() => {
+                  if (confirm('確定要退回此案件嗎？此操作無法復原。')) {
+                    onDelete(selectedReport.id);
+                    setSelectedReport(null);
+                  }
+                }}
+                className="flex items-center justify-center gap-2 py-4 rounded-3xl font-black text-rose-500 bg-rose-50 hover:bg-rose-100 transition-colors"
+              >
+                <Trash2 size={20} /> 退件 (刪除)
+              </button>
+              <button
+                onClick={() => {
+                  onVerify(selectedReport.id);
+                  setSelectedReport(null);
+                }}
+                className="flex items-center justify-center gap-2 py-4 rounded-3xl font-black text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95"
+              >
+                <ShieldCheck size={20} /> 確認導入
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

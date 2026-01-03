@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { 
-  Eye, 
-  Trash2, 
+import {
+  Eye,
+  Trash2,
   ClipboardList,
   Plus,
   QrCode,
@@ -25,7 +25,8 @@ import {
   Search,
   Hammer,
   ChevronDown,
-  HeartPulse
+  HeartPulse,
+  Image as ImageIcon
 } from 'lucide-react';
 import { RepairRequest, RepairStatus, OrderType, Urgency, Category, Language } from '../types';
 import { STATUS_CONFIG, CATEGORY_ICONS, MOCK_HALLS } from '../constants';
@@ -38,17 +39,17 @@ interface RequestListProps {
   onRestore: (id: string) => void;
   onPermanentDelete: (id: string) => void;
   onNewRoutine: () => void;
-  onBulkReport: (ids: string[]) => void; 
+  onBulkReport: (ids: string[]) => void;
 }
 
-const RequestList: React.FC<RequestListProps> = ({ 
-  requests, 
+const RequestList: React.FC<RequestListProps> = ({
+  requests,
   language,
-  onView, 
-  onDelete, 
+  onView,
+  onDelete,
   onRestore,
   onPermanentDelete,
-  onNewRoutine, 
+  onNewRoutine,
   onBulkReport
 }) => {
   const [filter, setFilter] = useState<RepairStatus | 'ALL' | 'DELETED'>('ALL');
@@ -57,6 +58,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedPhotos, setSelectedPhotos] = useState<string[] | null>(null);
 
   const translations = {
     [Language.ZH]: {
@@ -110,7 +112,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const filteredRequests = requests.filter(req => {
     const matchesDeletedStatus = filter === 'DELETED' ? req.isDeleted : !req.isDeleted;
     const matchesStatus = filter === 'ALL' || filter === 'DELETED' || req.status === filter;
-    
+
     let matchesCategory = true;
     if (categoryFilter === 'VOLUNTEER_ONLY') {
       matchesCategory = req.type === OrderType.VOLUNTEER;
@@ -120,7 +122,7 @@ const RequestList: React.FC<RequestListProps> = ({
 
     const matchesHall = hallFilter === 'ALL' || req.hallName === hallFilter;
     const matchesSearch = req.title.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesDeletedStatus && matchesStatus && matchesSearch && matchesCategory && matchesHall;
   });
 
@@ -142,7 +144,7 @@ const RequestList: React.FC<RequestListProps> = ({
 
   const handleBulkExport = () => {
     const selectedRequests = requests.filter(r => selectedIds.has(r.id));
-    const headers = language === Language.ZH 
+    const headers = language === Language.ZH
       ? ['工單編號', '會館', '類別', '標題', '狀態', '報修人', '金額', '廠商']
       : ['依頼番号', '会館', 'タイプ', 'タイトル', '状態', '報告者', '金額', '業者'];
     const rows = selectedRequests.map(r => [
@@ -159,11 +161,10 @@ const RequestList: React.FC<RequestListProps> = ({
   const CategoryTab = ({ id, icon, color, label, count }: { id: any, icon: React.ReactNode, color: string, label: string, count: number }) => {
     const isActive = categoryFilter === id;
     return (
-      <button 
+      <button
         onClick={() => setCategoryFilter(isActive ? 'ALL' : id)}
-        className={`flex items-center gap-4 px-6 py-4 rounded-[28px] border transition-all relative overflow-hidden ${
-          isActive ? `bg-white border-transparent shadow-xl ring-2 ring-indigo-500` : 'bg-white border-slate-100 hover:border-indigo-200'
-        }`}
+        className={`flex items-center gap-4 px-6 py-4 rounded-[28px] border transition-all relative overflow-hidden ${isActive ? `bg-white border-transparent shadow-xl ring-2 ring-indigo-500` : 'bg-white border-slate-100 hover:border-indigo-200'
+          }`}
       >
         <div className={`p-3 rounded-2xl ${color} text-white shadow-lg`}>
           {icon}
@@ -192,11 +193,11 @@ const RequestList: React.FC<RequestListProps> = ({
     <div className="space-y-6 pb-24 relative min-h-[600px]">
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
         <div className="flex flex-wrap gap-3">
-          <CategoryTab id={Category.AC} icon={<Wind size={20}/>} color="bg-cyan-500" label={t.catAc} count={requests.filter(r => r.category === Category.AC && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
-          <CategoryTab id={Category.ELECTRICAL} icon={<Zap size={20}/>} color="bg-amber-500" label={t.catElec} count={requests.filter(r => r.category === Category.ELECTRICAL && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
-          <CategoryTab id={Category.FIRE} icon={<ShieldCheck size={20}/>} color="bg-rose-500" label={t.catFire} count={requests.filter(r => r.category === Category.FIRE && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
-          <CategoryTab id={Category.AED} icon={<HeartPulse size={20}/>} color="bg-rose-600" label={t.catAed} count={requests.filter(r => r.category === Category.AED && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
-          <CategoryTab id="VOLUNTEER_ONLY" icon={<Hammer size={20}/>} color="bg-indigo-500" label={t.catRepair} count={requests.filter(r => r.type === OrderType.VOLUNTEER && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
+          <CategoryTab id={Category.AC} icon={<Wind size={20} />} color="bg-cyan-500" label={t.catAc} count={requests.filter(r => r.category === Category.AC && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
+          <CategoryTab id={Category.ELECTRICAL} icon={<Zap size={20} />} color="bg-amber-500" label={t.catElec} count={requests.filter(r => r.category === Category.ELECTRICAL && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
+          <CategoryTab id={Category.FIRE} icon={<ShieldCheck size={20} />} color="bg-rose-500" label={t.catFire} count={requests.filter(r => r.category === Category.FIRE && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
+          <CategoryTab id={Category.AED} icon={<HeartPulse size={20} />} color="bg-rose-600" label={t.catAed} count={requests.filter(r => r.category === Category.AED && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
+          <CategoryTab id="VOLUNTEER_ONLY" icon={<Hammer size={20} />} color="bg-indigo-500" label={t.catRepair} count={requests.filter(r => r.type === OrderType.VOLUNTEER && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
         </div>
         <button onClick={onNewRoutine} className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-[24px] font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
           <Plus size={18} /> {t.addRoutine}
@@ -205,7 +206,7 @@ const RequestList: React.FC<RequestListProps> = ({
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-3 rounded-[32px] border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-          <button onClick={() => {setFilter('ALL'); setCategoryFilter('ALL'); setHallFilter('ALL');}} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filter === 'ALL' && categoryFilter === 'ALL' && hallFilter === 'ALL' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>{t.all}</button>
+          <button onClick={() => { setFilter('ALL'); setCategoryFilter('ALL'); setHallFilter('ALL'); }} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${filter === 'ALL' && categoryFilter === 'ALL' && hallFilter === 'ALL' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>{t.all}</button>
           {(Object.keys(STATUS_CONFIG) as RepairStatus[]).map((status) => (
             <button key={status} onClick={() => setFilter(status)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === status ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>{getStatusLabel(status)}</button>
           ))}
@@ -244,13 +245,22 @@ const RequestList: React.FC<RequestListProps> = ({
                 <tr key={req.id} onClick={() => onView(req.id)} className="group cursor-pointer hover:bg-slate-50 transition-all">
                   <td className="px-6 py-5 text-center" onClick={(e) => toggleSelection(req.id, e as any)}>
                     <div className={selectedIds.has(req.id) ? 'text-indigo-600' : 'text-slate-200'}>
-                      {selectedIds.has(req.id) ? <CheckSquare size={20}/> : <Square size={20}/>}
+                      {selectedIds.has(req.id) ? <CheckSquare size={20} /> : <Square size={20} />}
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex flex-col gap-1">
                       <span className="font-black text-slate-900 flex items-center gap-2">{req.title} {req.type === OrderType.ROUTINE && <span className="text-[8px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 border border-purple-100 uppercase font-black">{t.routine}</span>}</span>
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">#{req.id} • {req.reporter}</span>
+                      {req.photoUrls && req.photoUrls.length > 0 && (
+                        <div
+                          className="flex items-center gap-1 mt-1 text-xs font-bold text-indigo-500 cursor-pointer hover:underline w-fit"
+                          onClick={(e) => { e.stopPropagation(); setSelectedPhotos(req.photoUrls || []); }}
+                        >
+                          <ImageIcon size={12} />
+                          <span>{req.photoUrls.length} 張照片</span>
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-5 font-bold text-slate-600">{req.hallName}</td>
@@ -272,12 +282,30 @@ const RequestList: React.FC<RequestListProps> = ({
         <div className="fixed top-32 right-8 z-[100] w-72 bg-slate-900 rounded-[32px] p-8 shadow-2xl space-y-8 border border-slate-800 text-white animate-in slide-in-from-right-10">
           <div className="flex items-center justify-between">
             <div className="p-3 bg-indigo-600 rounded-2xl"><CheckSquare size={24} /></div>
-            <button onClick={() => setSelectedIds(new Set())} className="text-slate-500 hover:text-white"><X size={20}/></button>
+            <button onClick={() => setSelectedIds(new Set())} className="text-slate-500 hover:text-white"><X size={20} /></button>
           </div>
           <div><p className="text-3xl font-black">{selectedIds.size}</p><p className="text-[10px] text-slate-400 uppercase tracking-widest">{t.bulkSelect}</p></div>
           <div className="space-y-3">
-            <button onClick={() => onBulkReport(Array.from(selectedIds))} className="w-full flex items-center justify-between px-6 py-4 bg-indigo-600 rounded-[20px] font-black hover:bg-indigo-700 transition-all"><span>{t.bulkUpdate}</span><Wrench size={18}/></button>
-            <button onClick={handleBulkExport} className="w-full flex items-center justify-between px-6 py-4 bg-white/10 border border-white/10 rounded-[20px] font-black hover:bg-white/20 transition-all"><span>{t.export}</span><Download size={18}/></button>
+            <button onClick={() => onBulkReport(Array.from(selectedIds))} className="w-full flex items-center justify-between px-6 py-4 bg-indigo-600 rounded-[20px] font-black hover:bg-indigo-700 transition-all"><span>{t.bulkUpdate}</span><Wrench size={18} /></button>
+            <button onClick={handleBulkExport} className="w-full flex items-center justify-between px-6 py-4 bg-white/10 border border-white/10 rounded-[20px] font-black hover:bg-white/20 transition-all"><span>{t.export}</span><Download size={18} /></button>
+          </div>
+        </div>
+      )}
+
+      {selectedPhotos && (
+        <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedPhotos(null)}>
+          <button className="absolute top-8 right-8 text-white hover:text-rose-400 transition-colors">
+            <X size={32} />
+          </button>
+          <div className="w-full max-w-5xl h-[80vh] flex gap-4 overflow-x-auto snap-x snap-mandatory p-4" onClick={e => e.stopPropagation()}>
+            {selectedPhotos.map((url, i) => (
+              <div key={i} className="flex-shrink-0 w-full h-full flex items-center justify-center snap-center relative">
+                <img src={url} alt={`Photo ${i + 1}`} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+                <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-bold">
+                  {i + 1} / {selectedPhotos.length}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
