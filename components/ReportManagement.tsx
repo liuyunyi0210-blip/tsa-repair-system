@@ -69,8 +69,8 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
           <button
             onClick={() => setShowTrash(!showTrash)}
             className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black transition-all ${showTrash
-                ? 'bg-rose-500 text-white shadow-lg shadow-rose-200'
-                : 'bg-white text-slate-400 border border-slate-200 hover:border-rose-300 hover:text-rose-500'
+              ? 'bg-rose-500 text-white shadow-lg shadow-rose-200'
+              : 'bg-white text-slate-400 border border-slate-200 hover:border-rose-300 hover:text-rose-500'
               }`}
           >
             <Trash2 size={20} />
@@ -169,8 +169,15 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                         </button>
                       </div>
                     ) : (
-                      <div className="text-slate-300 font-black text-xs italic pr-4">
-                        審核完畢
+                      <div className="flex items-center justify-end gap-3 pr-4">
+                        <span className="text-slate-300 font-black text-xs italic">審核完畢</span>
+                        <button
+                          onClick={() => onDelete(report.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                          title="移至回收桶"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     )}
                   </td>
