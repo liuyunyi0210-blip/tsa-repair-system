@@ -37,27 +37,35 @@ export default defineConfig(({ mode }) => {
         },
         {
           name: 'fix-asset-paths',
-          transformIndexHtml(html, ctx) {
-            // 在構建時確保所有資源路徑都使用正確的 base path
-            if (mode === 'production') {
-              const base = '/tsa-repair-system/';
-              // 修復所有資源路徑（scripts, links, images 等）
-              html = html.replace(
-                /(href|src)="([^"]+)"/g,
-                (match, attr, url) => {
-                  // 跳過外部 URL
-                  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+          transformIndexHtml: {
+            enforce: 'post', // 在 Vite 處理之後運行
+            transform(html, ctx) {
+              // 在構建時確保所有資源路徑都使用正確的 base path
+              if (mode === 'production') {
+                const base = '/tsa-repair-system/';
+                // 修復所有資源路徑（scripts, links, images 等）
+                // 但跳過已經正確的路徑
+                html = html.replace(
+                  /(href|src)="([^"]+)"/g,
+                  (match, attr, url) => {
+                    // 跳過外部 URL
+                    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+                      return match;
+                    }
+                    // 如果路徑已經包含 base，跳過
+                    if (url.startsWith(base)) {
+                      return match;
+                    }
+                    // 如果路徑以 / 開頭但不是 base，則添加 base
+                    if (url.startsWith('/') && !url.startsWith(base)) {
+                      return `${attr}="${base}${url.substring(1)}"`;
+                    }
                     return match;
                   }
-                  // 如果路徑不是以 base 開頭，則添加 base
-                  if (!url.startsWith(base) && url.startsWith('/')) {
-                    return `${attr}="${base}${url.substring(1)}"`;
-                  }
-                  return match;
-                }
-              );
-            }
-            return html;
+                );
+              }
+              return html;
+            },
           },
         },
         {
@@ -100,9 +108,6 @@ export default defineConfig(({ mode }) => {
         minify: 'esbuild',
         cssMinify: true,
         rollupOptions: {
-          input: {
-            main: path.resolve(__dirname, 'index.html'),
-          },
           output: {
             manualChunks: (id) => {
               // 優化代碼分割：將 node_modules 中的大型依賴分離
