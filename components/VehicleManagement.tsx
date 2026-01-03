@@ -8,6 +8,7 @@ import {
 import { MOCK_HALLS } from '../constants';
 // Add Language to imports from types
 import { OfficialVehicle, VehicleRecord, Language } from '../types';
+import { storageService } from '../services/storageService';
 
 // Define props interface to include language
 interface VehicleManagementProps {
@@ -49,7 +50,7 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ language }) => {
     await storageService.saveVehicles(data);
   };
 
-  const handleAddVehicle = (e: React.FormEvent) => {
+  const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
     const newV: OfficialVehicle = { ...formData as OfficialVehicle, id: `V-${Date.now()}`, purchaseDate: new Date().toISOString().split('T')[0], records: [] };
     await saveVehicles([newV, ...vehicles]);

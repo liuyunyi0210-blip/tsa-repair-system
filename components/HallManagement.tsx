@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { Hall, TechnicalEntry } from '../types';
+import { storageService } from '../services/storageService';
 
 const HallManagement: React.FC = () => {
   const [halls, setHalls] = useState<Hall[]>([]);
@@ -197,15 +198,11 @@ const HallManagement: React.FC = () => {
           </div>
           
           <div className="flex gap-4 pt-4">
-<<<<<<< HEAD
-             <button onClick={async () => { await saveHalls(halls.map(h => h.id === temp.id ? temp : h)); setEditingHallId(null); }} className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-3xl shadow-xl">儲存所有變更</button>
-=======
-             <button onClick={() => { 
-               if (isNew) saveHalls([...halls, temp]);
-               else saveHalls(halls.map(h => h.id === temp.id ? temp : h)); 
+             <button onClick={async () => { 
+               if (isNew) await saveHalls([...halls, temp]);
+               else await saveHalls(halls.map(h => h.id === temp.id ? temp : h)); 
                setEditingHallId(null); 
              }} className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-3xl shadow-xl">儲存所有變更</button>
->>>>>>> de1a187df98da0dc5c7d4467c7c3e91521790f80
              <button onClick={() => setEditingHallId(null)} className="px-10 bg-white border border-slate-200 rounded-3xl font-bold">取消</button>
           </div>
         </div>

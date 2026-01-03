@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { AED, Language, AEDHistoryItem } from '../types';
+import { storageService } from '../services/storageService';
 
 interface AEDManagementProps {
   language: Language;
@@ -77,7 +78,7 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
     setFormData({ hallName: MOCK_HALLS[0].name });
   };
 
-  const handleUpdateExpiry = (aedId: string, type: 'BATTERY' | 'PADS', newDate: string, cost: number) => {
+  const handleUpdateExpiry = async (aedId: string, type: 'BATTERY' | 'PADS', newDate: string, cost: number) => {
     const updated = aeds.map(a => {
       if (a.id === aedId) {
         const historyItem: AEDHistoryItem = {

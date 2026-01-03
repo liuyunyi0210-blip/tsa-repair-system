@@ -72,15 +72,10 @@ const App: React.FC = () => {
   const [showForm, setShowForm] = useState<{ show: boolean, type: OrderType }>({ show: false, type: OrderType.VOLUNTEER });
   const [showMobileSim, setShowMobileSim] = useState(false);
   const [resetKey, setResetKey] = useState(0);
-<<<<<<< HEAD
-
-=======
   const [showPermissionPanel, setShowPermissionPanel] = useState(false);
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showStorageSettings, setShowStorageSettings] = useState(false);
   const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
-  
->>>>>>> c68c064fcbc0af200bfa6836b94128da6e71d3bc
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
     if (token) setIsAuthenticated(true);
@@ -148,13 +143,8 @@ const App: React.FC = () => {
       }
       return req;
     });
-<<<<<<< HEAD
-    saveRequests(updated);
-
-=======
     await saveRequests(updated);
     
->>>>>>> c68c064fcbc0af200bfa6836b94128da6e71d3bc
     if (shouldClose) {
       // 結案後的關鍵跳轉邏輯
       setReportingRequestId(null);
@@ -182,17 +172,10 @@ const App: React.FC = () => {
       isVerified: data.isVerified ?? (data.type === OrderType.ROUTINE),
       photoUrls: data.photoUrls || []
     };
-<<<<<<< HEAD
-
-    saveRequests([newReq, ...requests]);
-    setShowForm({ show: false, type: OrderType.VOLUNTEER });
-
-=======
     
     await saveRequests([newReq, ...requests]);
     setShowForm({show: false, type: OrderType.VOLUNTEER});
     
->>>>>>> c68c064fcbc0af200bfa6836b94128da6e71d3bc
     if (newReq.isVerified) {
       setActiveTab('requests');
     } else {
@@ -264,15 +247,6 @@ const App: React.FC = () => {
             requests={requests.filter(r => r.isVerified)}
             language={language}
             onView={(id) => setSelectedRequestId(id)}
-<<<<<<< HEAD
-            onDelete={(id) => {
-              if (window.confirm('確定要移至回收站？')) {
-                saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: true } : r));
-              }
-            }}
-            onRestore={(id) => saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: false } : r))}
-            onPermanentDelete={(id) => {
-=======
             onDelete={async (id) => {
                if (window.confirm('確定要移至回收站？')) {
                  await saveRequests(requests.map(r => r.id === id ? {...r, isDeleted: true} : r));
@@ -280,7 +254,6 @@ const App: React.FC = () => {
             }}
             onRestore={async (id) => await saveRequests(requests.map(r => r.id === id ? {...r, isDeleted: false} : r))}
             onPermanentDelete={async (id) => {
->>>>>>> c68c064fcbc0af200bfa6836b94128da6e71d3bc
               if (window.confirm('永久刪除？')) {
                 await saveRequests(requests.filter(r => r.id !== id));
               }
@@ -374,13 +347,8 @@ const App: React.FC = () => {
         <RequestDetail
           request={requests.find(r => r.id === selectedRequestId)!}
           onClose={() => setSelectedRequestId(null)}
-<<<<<<< HEAD
-          onUpdateStatus={(id, status) => {
-            saveRequests(requests.map(r => r.id === id ? { ...r, status } : r));
-=======
           onUpdateStatus={async (id, status) => {
              await saveRequests(requests.map(r => r.id === id ? {...r, status} : r));
->>>>>>> c68c064fcbc0af200bfa6836b94128da6e71d3bc
           }}
           onReportWork={(id) => {
             setSelectedRequestId(null);
