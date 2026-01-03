@@ -22,6 +22,24 @@ export default defineConfig(({ mode }) => {
             return html;
           },
         },
+        {
+          name: 'generate-404',
+          closeBundle() {
+            // 在構建完成後創建 404.html 用於 GitHub Pages SPA 路由
+            if (mode === 'production') {
+              const fs = require('fs');
+              const path = require('path');
+              const distPath = path.resolve(__dirname, 'dist');
+              const indexPath = path.join(distPath, 'index.html');
+              const notFoundPath = path.join(distPath, '404.html');
+              
+              if (fs.existsSync(indexPath)) {
+                fs.copyFileSync(indexPath, notFoundPath);
+                console.log('Created 404.html for GitHub Pages SPA routing');
+              }
+            }
+          },
+        },
       ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
