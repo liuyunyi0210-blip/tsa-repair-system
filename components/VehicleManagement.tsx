@@ -37,28 +37,31 @@ const VehicleManagement: React.FC<VehicleManagementProps> = ({ language }) => {
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem('tsa_vehicles_v6');
-    if (saved) setVehicles(JSON.parse(saved));
+    const loadData = async () => {
+      const saved = await storageService.loadVehicles();
+      if (saved) setVehicles(saved);
+    };
+    loadData();
   }, []);
 
-  const saveVehicles = (data: OfficialVehicle[]) => {
+  const saveVehicles = async (data: OfficialVehicle[]) => {
     setVehicles(data);
-    localStorage.setItem('tsa_vehicles_v6', JSON.stringify(data));
+    await storageService.saveVehicles(data);
   };
 
   const handleAddVehicle = (e: React.FormEvent) => {
     e.preventDefault();
     const newV: OfficialVehicle = { ...formData as OfficialVehicle, id: `V-${Date.now()}`, purchaseDate: new Date().toISOString().split('T')[0], records: [] };
-    saveVehicles([newV, ...vehicles]);
+    await saveVehicles([newV, ...vehicles]);
     setShowModal(false);
   };
 
-  const handleAddRecord = (e: React.FormEvent) => {
+  const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showRecordModal) return;
     const newRecord: VehicleRecord = { ...recordForm as VehicleRecord, id: `R-${Date.now()}` };
     const updated = vehicles.map(v => v.id === showRecordModal.id ? { ...v, records: [newRecord, ...v.records] } : v);
-    saveVehicles(updated);
+    await saveVehicles(updated);
     setShowRecordModal(null);
   };
 

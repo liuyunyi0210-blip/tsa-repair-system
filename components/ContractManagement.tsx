@@ -27,6 +27,7 @@ import {
 import { MOCK_HALLS, CATEGORY_ICONS } from '../constants';
 // Import Language type
 import { Contract, ContractStatus, Category, Language } from '../types';
+import { storageService } from '../services/storageService';
 
 interface ContractManagementProps {
   onDirtyChange?: (isDirty: boolean) => void;
@@ -69,11 +70,12 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
   }, [view, onDirtyChange]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('tsa_contracts_v2');
-    if (saved) {
-      setContracts(JSON.parse(saved));
-    } else {
-      const initial: Contract[] = [
+    const loadData = async () => {
+      const saved = await storageService.loadContracts();
+      if (saved) {
+        setContracts(saved);
+      } else {
+        const initial: Contract[] = [
         {
           id: 'CTR-2024-001',
           category: '空調',
@@ -112,13 +114,15 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
         }
       ];
       setContracts(initial);
-      localStorage.setItem('tsa_contracts_v2', JSON.stringify(initial));
-    }
+      await storageService.saveContracts(initial);
+      }
+    };
+    loadData();
   }, []);
 
-  const saveContracts = (data: Contract[]) => {
+  const saveContracts = async (data: Contract[]) => {
     setContracts(data);
-    localStorage.setItem('tsa_contracts_v2', JSON.stringify(data));
+    await storageService.saveContracts(data);
   };
 
   const getContractStatus = (start: string, end: string): ContractStatus => {
@@ -163,7 +167,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
       remarks: ''
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       const newContract: Contract = {
         ...form as Contract,

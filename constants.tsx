@@ -18,7 +18,7 @@ import {
   Paintbrush,
   ShieldCheck
 } from 'lucide-react';
-import { RepairStatus, Urgency, Category, Hall } from './types';
+import { RepairStatus, Urgency, Category, Hall, Permission, PermissionAction } from './types';
 
 export const STATUS_CONFIG = {
   [RepairStatus.PENDING]: { label: '待處理', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock size={14} /> },
@@ -197,3 +197,149 @@ export const WATER_PRICE_LIST = {
     { name: '水質檢驗', price: 1200 },
   ]
 };
+
+// 權限管理相關常數
+export const MODULES = [
+  { id: 'dashboard', name: '首頁', nameEn: 'Dashboard' },
+  { id: 'halls', name: '會館基本資料', nameEn: 'Halls' },
+  { id: 'reports', name: '回報管理', nameEn: 'Reports' },
+  { id: 'requests', name: '工單管理', nameEn: 'Requests' },
+  { id: 'equipment', name: '會館設施', nameEn: 'Equipment' },
+  { id: 'water', name: '飲水機保養', nameEn: 'Water' },
+  { id: 'aed', name: 'AED管理', nameEn: 'AED' },
+  { id: 'vehicle', name: '公務車管理', nameEn: 'Vehicle' },
+  { id: 'contract', name: '合約管理', nameEn: 'Contract' },
+  { id: 'disaster', name: '災害回報', nameEn: 'Disaster' },
+  { id: 'settings', name: '系統設定', nameEn: 'Settings' },
+  { id: 'permissions', name: '權限管理', nameEn: 'Permissions' },
+];
+
+export const PERMISSION_ACTIONS = [
+  { id: 'view', name: '查看', nameEn: 'View' },
+  { id: 'create', name: '新增', nameEn: 'Create' },
+  { id: 'edit', name: '編輯', nameEn: 'Edit' },
+  { id: 'delete', name: '刪除', nameEn: 'Delete' },
+  { id: 'verify', name: '核實', nameEn: 'Verify' },
+  { id: 'manage', name: '管理', nameEn: 'Manage' },
+];
+
+// 生成所有權限
+export const ALL_PERMISSIONS: Permission[] = MODULES.flatMap(module =>
+  PERMISSION_ACTIONS.map(action => ({
+    id: `${module.id}:${action.id}`,
+    name: `${module.name} - ${action.name}`,
+    module: module.id,
+    action: action.id as PermissionAction,
+    description: `${module.nameEn} ${action.nameEn} permission`
+  }))
+);
+
+// 預設角色
+export const DEFAULT_ROLES = [
+  {
+    id: 'admin',
+    name: '系統管理員',
+    description: '擁有所有模組的完整權限',
+    permissions: ALL_PERMISSIONS.map(p => p.id),
+    isSystem: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'manager',
+    name: '總務管理員',
+    description: '可管理所有會館的工單、設施、合約等',
+    permissions: [
+      ...MODULES.filter(m => ['dashboard', 'halls', 'reports', 'requests', 'equipment', 'water', 'aed', 'vehicle', 'contract', 'disaster'].includes(m.id))
+        .flatMap(m => PERMISSION_ACTIONS.filter(a => a.id !== 'manage').map(a => `${m.id}:${a.id}`)),
+      'settings:view'
+    ],
+    isSystem: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'hall_manager',
+    name: '會館管理員',
+    description: '僅能管理所屬會館的資料',
+    permissions: [
+      'dashboard:view',
+      'halls:view',
+      'reports:view',
+      'reports:create',
+      'reports:verify',
+      'requests:view',
+      'requests:create',
+      'requests:edit',
+      'equipment:view',
+      'equipment:create',
+      'equipment:edit',
+      'water:view',
+      'water:create',
+      'water:edit',
+      'aed:view',
+      'aed:create',
+      'aed:edit',
+      'vehicle:view',
+      'contract:view',
+      'disaster:view',
+      'disaster:create',
+    ],
+    isSystem: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'user',
+    name: '一般使用者',
+    description: '僅能查看和新增回報',
+    permissions: [
+      'dashboard:view',
+      'reports:view',
+      'reports:create',
+      'requests:view',
+      'equipment:view',
+      'water:view',
+      'aed:view',
+      'vehicle:view',
+      'contract:view',
+      'disaster:view',
+      'disaster:create',
+    ],
+    isSystem: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'tester',
+    name: '系統測試員',
+    description: '可查看除系統設定外的所有畫面',
+    permissions: [
+      'dashboard:view',
+      'halls:view',
+      'reports:view',
+      'reports:create',
+      'reports:edit',
+      'reports:verify',
+      'requests:view',
+      'requests:create',
+      'requests:edit',
+      'equipment:view',
+      'equipment:create',
+      'equipment:edit',
+      'water:view',
+      'water:create',
+      'water:edit',
+      'aed:view',
+      'aed:create',
+      'aed:edit',
+      'vehicle:view',
+      'vehicle:create',
+      'vehicle:edit',
+      'contract:view',
+      'contract:create',
+      'contract:edit',
+      'disaster:view',
+      'disaster:create',
+      'disaster:edit',
+    ],
+    isSystem: true,
+    createdAt: new Date().toISOString()
+  }
+];

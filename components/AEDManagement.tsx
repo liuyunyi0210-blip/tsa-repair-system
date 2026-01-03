@@ -43,16 +43,19 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem('tsa_aeds_v16');
-    if (saved) setAeds(JSON.parse(saved));
+    const loadData = async () => {
+      const saved = await storageService.loadAEDs();
+      if (saved) setAeds(saved);
+    };
+    loadData();
   }, []);
 
-  const saveAeds = (data: AED[]) => {
+  const saveAeds = async (data: AED[]) => {
     setAeds(data);
-    localStorage.setItem('tsa_aeds_v16', JSON.stringify(data));
+    await storageService.saveAEDs(data);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newAed: AED = {
       ...formData as AED,
@@ -69,7 +72,7 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
         }
       ]
     };
-    saveAeds([newAed, ...aeds]);
+    await saveAeds([newAed, ...aeds]);
     setShowModal(false);
     setFormData({ hallName: MOCK_HALLS[0].name });
   };
@@ -92,7 +95,7 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
       }
       return a;
     });
-    saveAeds(updated);
+    await saveAeds(updated);
     setShowUpdateModal(null);
   };
 

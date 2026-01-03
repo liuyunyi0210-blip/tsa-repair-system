@@ -245,3 +245,60 @@ export interface WaterMaintenanceRecord {
   description: string;
   amount?: number;
 }
+
+// 權限管理相關類型
+export type PermissionAction = 'view' | 'create' | 'edit' | 'delete' | 'verify' | 'manage';
+
+export interface Permission {
+  id: string; // 格式：'module:action'，例如：'dashboard:view'
+  name: string;
+  module: string;
+  action: PermissionAction;
+  description?: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  permissions: string[]; // Permission ID 列表
+  isSystem: boolean; // 是否為系統預設角色
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface User {
+  id: string;
+  account: string;
+  password: string; // 加密後的密碼（實際應用中應該加密）
+  name: string;
+  email?: string;
+  roleId: string;
+  hallName?: string; // 所屬會館限制
+  allowedHalls?: string[]; // 允許存取的會館列表（空陣列表示全部）
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt?: string;
+}
+
+export interface OperationLog {
+  id: string;
+  userId: string;
+  userName: string;
+  userAccount: string;
+  module: string; // 操作的模組
+  action: string; // 操作類型
+  targetType?: string; // 目標類型（如：'user', 'role', 'request'）
+  targetId?: string; // 目標ID
+  targetName?: string; // 目標名稱
+  description: string; // 操作描述
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  changes?: { // 變更記錄
+    field: string;
+    oldValue: any;
+    newValue: any;
+  }[];
+}

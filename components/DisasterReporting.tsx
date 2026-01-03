@@ -83,8 +83,11 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, la
   }, [isPublishing, onDirtyChange]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('tsa_disaster_reports_v1');
-    if (saved) setReports(JSON.parse(saved));
+    const loadData = async () => {
+      const saved = await storageService.loadDisasterReports();
+      if (saved) setReports(saved);
+    };
+    loadData();
   }, []);
 
   const handlePublish = () => {
