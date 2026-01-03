@@ -12,6 +12,7 @@ import {
     Filter,
     Download
 } from 'lucide-react';
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, ImageRun, Media, TableLayoutType } from 'docx';
 import { MonthlyReport } from '../types';
 
 interface MonthlyReportManagementProps {
@@ -48,88 +49,225 @@ const MonthlyReportManagement: React.FC<MonthlyReportManagementProps> = ({ repor
         }
     };
 
-    const generateWord = (selectedReports: MonthlyReport[]) => {
+    const generateWord = async (selectedReports: MonthlyReport[]) => {
         if (selectedReports.length === 0) return;
 
         const reporters = Array.from(new Set(selectedReports.map(r => r.reporter)));
         const reporterDisplay = reporters.join(', ');
         const monthDisplay = selectedReports[0].yearMonth;
 
-        const htmlContent = `
-            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body { font-family: "Microsoft JhengHei", "PMingLiU", "新細明體", serif; margin: 2.54cm; }
-                    .reporter-box { text-align: right; font-size: 12pt; font-weight: bold; margin-bottom: 10pt; }
-                    .title { text-align: center; font-size: 24pt; font-weight: bold; margin-bottom: 20pt; font-family: "標楷體", serif; }
-                    table { width: 100%; border: 1pt solid black; border-collapse: collapse; table-layout: fixed; }
-                    th, td { border: 1pt solid black; padding: 8pt; vertical-align: middle; word-wrap: break-word; }
-                    th { font-size: 14pt; font-weight: bold; text-align: center; background-color: #ffffff; }
-                    td { font-size: 12pt; line-height: 1.5; }
-                    .col-hall { width: 100pt; text-align: center; font-weight: bold; }
-                    .col-content { text-align: left; }
-                </style>
-            </head>
-            <body>
-                <div class="reporter-box">提報人：${reporterDisplay}</div>
-                <div class="title">管理局月報表</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="col-hall">會館/講堂</th>
-                            <th class="col-content">報告內容</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${selectedReports.map(r => `
-                            <tr>
-                                <td class="col-hall">${r.hallName}</td>
-                                <td class="col-content">
-                                    <div style="margin-bottom: 5pt;">${r.content.replace(/\n/g, '<br/>')}</div>
-                                    ${r.photoUrls && r.photoUrls.length > 0 ? `
-                                        <div style="margin-top: 10pt;">
-                                            <p style="font-size: 10pt; color: #555; font-weight: bold; margin-bottom: 4pt;">現場照片回報：</p>
-                                            <div style="display: flex; flex-wrap: wrap;">
-                                                ${r.photoUrls.map(url => `<img src="${url}" width="160" style="margin-right: 5pt; margin-bottom: 5pt; border: 1pt solid #ddd;"/>`).join('')}
-                                            </div>
-                                        </div>
-                                    ` : ''}
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </body>
-            </html>
-        `;
+        // 使用絕對寬度（twips）確保在 Pages 和 Word 中都能正確顯示
+        // 1 cm = 567 twips，使用稍大的值確保不會太窄
+        // A4 紙寬度約 11906 twips (21cm)，減去左右邊距 1440 twips (1 inch * 2) = 10026 twips 可用
+        // 設置欄寬：4cm / 12cm / 6cm (比原本稍大，確保不會太窄)
+        const col1Width = 4 * 567;   // 4cm = 2268 twips
+        const col2Width = 12 * 567;  // 12cm = 6804 twips
+        const col3Width = 6 * 567;    // 6cm = 3402 twips
+        const totalTableWidth = col1Width + col2Width + col3Width; // 12474 twips
 
-        const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+        // 處理圖片：將 base64 轉換為可以嵌入的格式
+        const processImage = async (url: string): Promise<ImageRun | null> => {
+            if (!url.startsWith('data:image')) {
+                return null; // 外部 URL 無法直接嵌入
+            }
+
+            try {
+                // 提取 base64 數據和圖片類型
+                const matches = url.match(/^data:image\/(\w+);base64,(.+)$/);
+                if (!matches) return null;
+                
+                const imageType = matches[1];
+                const base64Data = matches[2];
+                
+                // 轉換 base64 為 Buffer (Uint8Array)
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                // 創建圖片，設置適當的尺寸（約 3cm 寬度，保持比例）
+                // 3cm ≈ 113 pixels (96 DPI) 或 85 points
+                return new ImageRun({
+                    data: bytes,
+                    transformation: {
+                        width: 340,  // 約 3cm (1cm = 113 pixels)
+                        height: 340, // 保持正方形，或根據實際圖片比例調整
+                    },
+                });
+            } catch (e) {
+                console.error('處理圖片失敗:', e);
+                return null;
+            }
+        };
+
+        // 創建表格行
+        const tableRows = [
+            // 表頭
+            new TableRow({
+                children: [
+                    new TableCell({
+                        children: [new Paragraph({
+                            text: '會館',
+                            alignment: AlignmentType.CENTER,
+                        })],
+                        width: { size: col1Width, type: WidthType.DXA },
+                        shading: { fill: 'FFFFFF' },
+                    }),
+                    new TableCell({
+                        children: [new Paragraph({
+                            text: '回報內容（包含照片）',
+                            alignment: AlignmentType.CENTER,
+                        })],
+                        width: { size: col2Width, type: WidthType.DXA },
+                        shading: { fill: 'FFFFFF' },
+                    }),
+                    new TableCell({
+                        children: [new Paragraph({
+                            text: '主管備注',
+                            alignment: AlignmentType.CENTER,
+                        })],
+                        width: { size: col3Width, type: WidthType.DXA },
+                        shading: { fill: 'FFFFFF' },
+                    }),
+                ],
+            }),
+            // 資料行
+            ...await Promise.all(selectedReports.map(async (r) => {
+                const contentParagraphs: Paragraph[] = [
+                    new Paragraph({
+                        text: r.content,
+                        alignment: AlignmentType.LEFT,
+                    }),
+                ];
+
+                if (r.photoUrls && r.photoUrls.length > 0) {
+                    contentParagraphs.push(
+                        new Paragraph({
+                            text: '現場照片回報：',
+                            alignment: AlignmentType.LEFT,
+                            spacing: { before: 200 },
+                        })
+                    );
+                    
+                    // 處理每張照片
+                    for (let idx = 0; idx < r.photoUrls.length; idx++) {
+                        const url = r.photoUrls[idx];
+                        const imageRun = await processImage(url);
+                        
+                        if (imageRun) {
+                            // 嵌入圖片
+                            contentParagraphs.push(
+                                new Paragraph({
+                                    children: [imageRun],
+                                    alignment: AlignmentType.LEFT,
+                                    spacing: { before: 100 },
+                                })
+                            );
+                        } else {
+                            // 如果無法嵌入，顯示文字說明
+                            const photoInfo = url.startsWith('data:image') 
+                                ? `照片 ${idx + 1}（已上傳）`
+                                : `照片 ${idx + 1}: ${url}`;
+                            contentParagraphs.push(
+                                new Paragraph({
+                                    text: photoInfo,
+                                    alignment: AlignmentType.LEFT,
+                                    spacing: { before: 100 },
+                                })
+                            );
+                        }
+                    }
+                }
+
+                return new TableRow({
+                    children: [
+                        new TableCell({
+                            children: [new Paragraph({
+                                text: r.hallName,
+                                alignment: AlignmentType.CENTER,
+                            })],
+                            width: { size: col1Width, type: WidthType.DXA },
+                        }),
+                        new TableCell({
+                            children: contentParagraphs,
+                            width: { size: col2Width, type: WidthType.DXA },
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({
+                                text: r.managerRemark || '',
+                                alignment: AlignmentType.LEFT,
+                            })],
+                            width: { size: col3Width, type: WidthType.DXA },
+                        }),
+                    ],
+                });
+            })),
+        ];
+
+        // 創建 Word 文件
+        // 設置頁面邊距，確保表格有足夠空間且能在 Pages 中正確顯示
+        const doc = new Document({
+            sections: [{
+                properties: {
+                    page: {
+                        margin: {
+                            top: 1440, // 1 inch = 1440 twips
+                            right: 720, // 0.5 inch
+                            bottom: 1440,
+                            left: 720, // 0.5 inch
+                        },
+                    },
+                },
+                children: [
+                    // 標題
+                    new Paragraph({
+                        text: `月報表 ${monthDisplay}`,
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 },
+                        heading: 'Heading1',
+                    }),
+                    // 表格（使用固定佈局和欄寬，確保在 Pages 和 Word 中都能正確顯示）
+                    new Table({
+                        rows: tableRows,
+                        width: {
+                            size: totalTableWidth,
+                            type: WidthType.DXA,
+                        },
+                        columnWidths: [col1Width, col2Width, col3Width], // 設置每欄的固定寬度
+                        layout: TableLayoutType.FIXED, // 使用固定佈局
+                    }),
+                ],
+            }],
+        });
+
+        // 生成並下載文件
+        const blob = await Packer.toBlob(doc);
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `管理局月報表_${monthDisplay}.doc`;
+        link.download = `管理局月報表_${monthDisplay}.docx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
 
-    const handleExportSelected = () => {
+    const handleExportSelected = async () => {
         if (selectedIds.length === 0) {
             alert('請先勾選要匯出的報表');
             return;
         }
         const selectedReports = reports.filter(r => selectedIds.includes(r.id));
-        generateWord(selectedReports);
+        await generateWord(selectedReports);
     };
 
-    const handleExportAll = () => {
+    const handleExportAll = async () => {
         if (filteredReports.length === 0) {
             alert('目前沒有可以匯出的報表');
             return;
         }
-        generateWord(filteredReports);
+        await generateWord(filteredReports);
     };
 
     const startEditingRemark = (report: MonthlyReport) => {
