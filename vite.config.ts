@@ -36,6 +36,31 @@ export default defineConfig(({ mode }) => {
           },
         },
         {
+          name: 'fix-asset-paths',
+          transformIndexHtml(html, ctx) {
+            // 在構建時確保所有資源路徑都使用正確的 base path
+            if (mode === 'production') {
+              const base = '/tsa-repair-system/';
+              // 修復所有資源路徑（scripts, links, images 等）
+              html = html.replace(
+                /(href|src)="([^"]+)"/g,
+                (match, attr, url) => {
+                  // 跳過外部 URL
+                  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+                    return match;
+                  }
+                  // 如果路徑不是以 base 開頭，則添加 base
+                  if (!url.startsWith(base) && url.startsWith('/')) {
+                    return `${attr}="${base}${url.substring(1)}"`;
+                  }
+                  return match;
+                }
+              );
+            }
+            return html;
+          },
+        },
+        {
           name: 'generate-404',
           closeBundle() {
             // 在構建完成後創建 404.html 用於 GitHub Pages SPA 路由
@@ -45,8 +70,14 @@ export default defineConfig(({ mode }) => {
               const notFoundPath = path.join(distPath, '404.html');
               
               if (fs.existsSync(indexPath)) {
+                // 複製為 404.html
                 fs.copyFileSync(indexPath, notFoundPath);
                 console.log('Created 404.html for GitHub Pages SPA routing');
+                
+                // 輸出調試信息
+                const htmlContent = fs.readFileSync(indexPath, 'utf-8');
+                console.log('--- Built index.html preview (first 800 chars) ---');
+                console.log(htmlContent.substring(0, 800));
               }
             }
           },
