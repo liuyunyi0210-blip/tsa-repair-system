@@ -233,8 +233,14 @@ const App: React.FC = () => {
             requests={requests}
             language={language}
             onVerify={handleVerifyReport}
+            onRestore={async (id) => await saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: false } : r))}
             onDelete={async (id) => {
-              if (window.confirm('確定要刪除此回報嗎？')) {
+              if (window.confirm('確定要將此回報移至回收桶嗎？')) {
+                await saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: true } : r));
+              }
+            }}
+            onPermanentDelete={async (id) => {
+              if (window.confirm('確定要永久刪除此回報嗎？此操作無法復原。')) {
                 await saveRequests(requests.filter(r => r.id !== id));
               }
             }}

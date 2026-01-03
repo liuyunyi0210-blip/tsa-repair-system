@@ -26,16 +26,19 @@ interface ReportManagementProps {
   requests: RepairRequest[];
   onVerify: (id: string) => void;
   onDelete: (id: string) => void;
+  onRestore: (id: string) => void;
+  onPermanentDelete: (id: string) => void;
   language: Language;
 }
 
-const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify, onDelete, language }) => {
+const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify, onDelete, onRestore, onPermanentDelete, language }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<string[] | null>(null);
   const [selectedReport, setSelectedReport] = useState<RepairRequest | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
 
-  // 篩選出尚未審核的回報 (來自手機端的 VOLUNTEER 類型)
-  const unverifiedReports = requests.filter(r => r.type === OrderType.VOLUNTEER && !r.isDeleted);
+  // 篩選出回報 (來自手機端的 VOLUNTEER 類型)
+  const unverifiedReports = requests.filter(r => r.type === OrderType.VOLUNTEER && r.isDeleted === showTrash);
 
   const filteredReports = unverifiedReports.filter(r =>
     r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,15 +55,27 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
           </h1>
           <p className="text-slate-500 font-medium">審核由 LINE 或手機瀏覽器送出的初步報修資料</p>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="搜尋回報人或會館..."
-            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="搜尋回報人或會館..."
+              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => setShowTrash(!showTrash)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black transition-all ${showTrash
+                ? 'bg-rose-500 text-white shadow-lg shadow-rose-200'
+                : 'bg-white text-slate-400 border border-slate-200 hover:border-rose-300 hover:text-rose-500'
+              }`}
+          >
+            <Trash2 size={20} />
+            {showTrash ? '回到列表' : '查看回收桶'}
+          </button>
         </div>
       </div>
 
@@ -74,7 +89,7 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                 <th className="px-8 py-5">提報人</th>
                 <th className="px-8 py-5">日期</th>
                 <th className="px-8 py-5">狀態</th>
-                <th className="px-8 py-5 text-right">核實操作</th>
+                <th className="px-8 py-5 text-right">{showTrash ? '回收操作' : '核實操作'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -127,7 +142,24 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                     )}
                   </td>
                   <td className="px-8 py-6 text-right">
-                    {!report.isVerified ? (
+                    {showTrash ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => onRestore(report.id)}
+                          className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                          title="復原"
+                        >
+                          <Clock size={18} />
+                        </button>
+                        <button
+                          onClick={() => onPermanentDelete(report.id)}
+                          className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                          title="永久刪除"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ) : !report.isVerified ? (
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setSelectedReport(report)}
@@ -148,8 +180,12 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
           </table>
           {filteredReports.length === 0 && (
             <div className="py-32 text-center space-y-4">
-              <div className="flex justify-center"><MessageSquare size={64} className="text-slate-100" /></div>
-              <p className="text-slate-300 font-black text-xl">目前尚無待審核的回報項目</p>
+              <div className="flex justify-center">
+                {showTrash ? <Trash2 size={64} className="text-slate-100" /> : <MessageSquare size={64} className="text-slate-100" />}
+              </div>
+              <p className="text-slate-300 font-black text-xl">
+                {showTrash ? '回收桶內空空如也' : '目前尚無待審核的回報項目'}
+              </p>
             </div>
           )}
         </div>
@@ -218,14 +254,12 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
             <div className="pt-8 mt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
               <button
                 onClick={() => {
-                  if (confirm('確定要退回此案件嗎？此操作無法復原。')) {
-                    onDelete(selectedReport.id);
-                    setSelectedReport(null);
-                  }
+                  onDelete(selectedReport.id);
+                  setSelectedReport(null);
                 }}
                 className="flex items-center justify-center gap-2 py-4 rounded-3xl font-black text-rose-500 bg-rose-50 hover:bg-rose-100 transition-colors"
               >
-                <Trash2 size={20} /> 退件 (刪除)
+                <Trash2 size={20} /> 移至回收桶
               </button>
               <button
                 onClick={() => {
