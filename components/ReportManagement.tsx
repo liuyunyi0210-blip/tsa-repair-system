@@ -48,14 +48,16 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-            <MessageSquare className="text-indigo-600" /> 手機端回報管理
-          </h1>
-          <p className="text-slate-500 font-medium">審核由 LINE 或手機瀏覽器送出的初步報修資料</p>
+      <div className="space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+              <MessageSquare className="text-indigo-600" /> 手機端回報管理
+            </h1>
+            <p className="text-slate-500 font-medium">審核由 LINE 或手機瀏覽器送出的初步報修資料</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-end">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
@@ -68,7 +70,7 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
           </div>
           <button
             onClick={() => setShowTrash(!showTrash)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black transition-all ${showTrash
+            className={`flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-black transition-all w-full md:w-auto ${showTrash
               ? 'bg-rose-500 text-white shadow-lg shadow-rose-200'
               : 'bg-white text-slate-400 border border-slate-200 hover:border-rose-300 hover:text-rose-500'
               }`}
@@ -228,13 +230,13 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                       <span className="whitespace-nowrap">{new Date(report.createdAt).toLocaleDateString()}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-8 py-6 whitespace-nowrap">
                     {report.isVerified ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap">
                         <Check size={12} /> 已轉工單
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse whitespace-nowrap">
                         <Clock size={12} /> 待核實
                       </span>
                     )}

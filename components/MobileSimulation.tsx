@@ -46,8 +46,11 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   });
 
   const [finishFormData, setFinishFormData] = useState({
+    selectedRequestId: '',
     hallName: MOCK_HALLS[0].name,
-    reporter: '',
+    name: '',
+    position: '',
+    phone: '',
     workDescription: '',
     completionDate: new Date().toISOString().split('T')[0],
   });
@@ -66,7 +69,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   const [repairImages, setRepairImages] = useState<ImageData[]>([]);
   const [finishImages, setFinishImages] = useState<ImageData[]>([]);
   const [repairErrors, setRepairErrors] = useState<{ name?: string; mission?: string; phone?: string; description?: string }>({});
-  const [finishErrors, setFinishErrors] = useState<{ reporter?: string; workDescription?: string }>({});
+  const [finishErrors, setFinishErrors] = useState<{ selectedRequestId?: string; name?: string; position?: string; phone?: string; workDescription?: string }>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reporterInputRef = useRef<HTMLInputElement>(null);
@@ -232,12 +235,30 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
   // 驗證完工表單
   const validateFinishForm = () => {
-    const newErrors: { reporter?: string; workDescription?: string } = {};
+    const newErrors: { selectedRequestId?: string; name?: string; position?: string; phone?: string; workDescription?: string } = {};
 
-    if (!finishFormData.reporter.trim()) {
-      newErrors.reporter = '請輸入姓名或職稱';
-    } else if (finishFormData.reporter.length > REPORTER_MAX_LENGTH) {
-      newErrors.reporter = `姓名或職稱不能超過 ${REPORTER_MAX_LENGTH} 個字`;
+    if (!finishFormData.selectedRequestId) {
+      newErrors.selectedRequestId = '請選擇要回報的工單';
+    }
+
+    if (!finishFormData.name.trim()) {
+      newErrors.name = '請輸入姓名';
+    } else if (finishFormData.name.length > NAME_MAX_LENGTH) {
+      newErrors.name = `姓名不能超過 ${NAME_MAX_LENGTH} 個字`;
+    }
+
+    if (!finishFormData.position.trim()) {
+      newErrors.position = '請輸入職稱';
+    } else if (finishFormData.position.length > MISSION_MAX_LENGTH) {
+      newErrors.position = `職稱不能超過 ${MISSION_MAX_LENGTH} 個字`;
+    }
+
+    if (!finishFormData.phone.trim()) {
+      newErrors.phone = '請輸入電話號碼';
+    } else if (finishFormData.phone.length > PHONE_MAX_LENGTH) {
+      newErrors.phone = `電話號碼不能超過 ${PHONE_MAX_LENGTH} 個字`;
+    } else if (!/^[0-9-+()]+$/.test(finishFormData.phone)) {
+      newErrors.phone = '電話號碼格式不正確';
     }
 
     if (!finishFormData.workDescription.trim()) {
@@ -300,10 +321,13 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       return;
     }
 
+
     onSubmitReport({
       ...finishFormData,
+      id: finishFormData.selectedRequestId,
       type: OrderType.VOLUNTEER,
       title: `${finishFormData.hallName} 修繕完工回報`,
+      reporter: `${finishFormData.name} (${finishFormData.position})`,
       processingDescription: finishFormData.workDescription,
       photoUrls: finishImages.map(img => img.url),
       photoMetadata: finishImages.map(img => ({
@@ -315,13 +339,19 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     setActiveForm('NONE');
     setFinishImages([]);
     setFinishFormData({
+      selectedRequestId: '',
       hallName: MOCK_HALLS[0].name,
-      reporter: '',
+      name: '',
+      position: '',
+      phone: '',
       workDescription: '',
       completionDate: new Date().toISOString().split('T')[0],
     });
     setFinishErrors({});
   };
+
+  // 獲取尚未完工的工單
+  const unfinishedRequests = requests.filter(req => req.status !== RepairStatus.CLOSED && req.isVerified);
 
   // 當表單打開時自動聚焦
   useEffect(() => {
@@ -543,60 +573,177 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-[30] flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
       <div className="p-6 flex items-center justify-between border-b border-slate-50">
         <div className="flex items-center gap-3">
-          <button onClick={() => { setActiveForm('NONE'); setFinishImages([]); }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
+          <button onClick={() => { 
+            setActiveForm('NONE'); 
+            setFinishImages([]);
+            setFinishFormData({
+              selectedRequestId: '',
+              hallName: MOCK_HALLS[0].name,
+              reporter: '',
+              workDescription: '',
+              completionDate: new Date().toISOString().split('T')[0],
+            });
+            setFinishErrors({});
+          }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
             <ArrowLeft size={20} />
           </button>
           <h3 className="text-lg font-black text-slate-800">修繕完工回報</h3>
         </div>
-        <button onClick={() => { setActiveForm('NONE'); setFinishImages([]); }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
+        <button onClick={() => { 
+          setActiveForm('NONE'); 
+          setFinishImages([]);
+          setFinishFormData({
+            selectedRequestId: '',
+            hallName: MOCK_HALLS[0].name,
+            name: '',
+            position: '',
+            phone: '',
+            workDescription: '',
+            completionDate: new Date().toISOString().split('T')[0],
+          });
+          setFinishErrors({});
+        }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
           <X size={20} />
         </button>
       </div>
       <form onSubmit={handleFinishSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 pb-32 custom-scrollbar">
-        <div className="space-y-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">選擇會館</label>
-          <div className="relative">
-            <select
-              className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
-              value={finishFormData.hallName}
-              onChange={e => setFinishFormData(prev => ({ ...prev, hallName: e.target.value }))}
-            >
-              {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+        {unfinishedRequests.length === 0 ? (
+          <div className="text-center py-12 space-y-4">
+            <div className="p-6 bg-slate-50 rounded-2xl inline-block">
+              <CheckCircle2 size={48} className="text-slate-300" />
+            </div>
+            <p className="text-slate-400 font-bold">目前沒有尚未完工的工單</p>
+            <p className="text-xs text-slate-300">所有工單皆已完成</p>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">選擇工單 *</label>
+              <div className="relative">
+                <select
+                  required
+                  className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                  value={finishFormData.selectedRequestId}
+                  onChange={e => {
+                    const selectedRequest = unfinishedRequests.find(r => r.id === e.target.value);
+                    setFinishFormData(prev => ({
+                      ...prev,
+                      selectedRequestId: e.target.value,
+                      hallName: selectedRequest?.hallName || prev.hallName
+                    }));
+                  }}
+                >
+                  <option value="">請選擇要回報的工單</option>
+                  {unfinishedRequests.map(req => (
+                    <option key={req.id} value={req.id}>
+                      {req.id} - {req.title} ({req.hallName})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+              </div>
+              {finishErrors.selectedRequestId && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {finishErrors.selectedRequestId}
+                </p>
+              )}
+            </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名 / 職稱</label>
-            <span className={`text-[10px] font-bold ${finishFormData.reporter.length > REPORTER_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
-              {finishFormData.reporter.length}/{REPORTER_MAX_LENGTH}
-            </span>
-          </div>
-          <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              required
-              maxLength={REPORTER_MAX_LENGTH}
-              placeholder="請輸入您的姓名或職稱"
-              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${finishErrors.reporter ? 'ring-2 ring-rose-500 bg-rose-50' : ''
-                }`}
-              value={finishFormData.reporter}
-              onChange={e => setFinishFormData(prev => ({ ...prev, reporter: e.target.value }))}
-            />
-          </div>
-          {finishErrors.reporter && (
-            <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-              <X size={12} /> {finishErrors.reporter}
-            </p>
-          )}
-        </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">會館</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  readOnly
+                  className="w-full px-4 py-4 bg-slate-100 rounded-2xl border-none outline-none font-bold text-slate-600"
+                  value={finishFormData.hallName}
+                />
+              </div>
+            </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工日期</label>
-          </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名 *</label>
+                <span className={`text-[10px] font-bold ${finishFormData.name.length > NAME_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {finishFormData.name.length}/{NAME_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  required
+                  maxLength={NAME_MAX_LENGTH}
+                  placeholder="請輸入您的姓名"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${finishErrors.name ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={finishFormData.name}
+                  onChange={e => setFinishFormData(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              {finishErrors.name && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {finishErrors.name}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">職稱 *</label>
+                <span className={`text-[10px] font-bold ${finishFormData.position.length > MISSION_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {finishFormData.position.length}/{MISSION_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  required
+                  maxLength={MISSION_MAX_LENGTH}
+                  placeholder="請輸入您的職稱"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${finishErrors.position ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={finishFormData.position}
+                  onChange={e => setFinishFormData(prev => ({ ...prev, position: e.target.value }))}
+                />
+              </div>
+              {finishErrors.position && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {finishErrors.position}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">電話號碼 *</label>
+                <span className={`text-[10px] font-bold ${finishFormData.phone.length > PHONE_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {finishFormData.phone.length}/{PHONE_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  required
+                  type="tel"
+                  maxLength={PHONE_MAX_LENGTH}
+                  placeholder="請輸入電話號碼"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${finishErrors.phone ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={finishFormData.phone}
+                  onChange={e => setFinishFormData(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+              {finishErrors.phone && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {finishErrors.phone}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工日期</label>
+              </div>
           <div className="relative">
             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
@@ -692,13 +839,15 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           </button>
         </div>
 
-        <button
-          type="submit"
-          disabled={!finishFormData.reporter.trim() || !finishFormData.workDescription.trim()}
-          className="w-full py-5 bg-emerald-600 text-white font-black rounded-3xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-        >
-          <CheckCircle2 size={18} /> 送出完工回報
-        </button>
+            <button
+              type="submit"
+              disabled={!finishFormData.selectedRequestId || !finishFormData.name.trim() || !finishFormData.position.trim() || !finishFormData.phone.trim() || !finishFormData.workDescription.trim()}
+              className="w-full py-5 bg-emerald-600 text-white font-black rounded-3xl shadow-xl shadow-emerald-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              <CheckCircle2 size={18} /> 送出完工回報
+            </button>
+          </>
+        )}
       </form>
     </div>
   );

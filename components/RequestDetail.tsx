@@ -201,8 +201,8 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdat
 
             <button
               onClick={() => onReportWork(request.id)}
-              disabled={request.status === RepairStatus.PENDING}
-              className={`flex items-center justify-center gap-2 px-6 py-4 font-black rounded-3xl shadow-xl transition-all active:scale-95 ${request.status !== RepairStatus.PENDING
+              disabled={request.status === RepairStatus.PENDING || request.status === RepairStatus.CLOSED}
+              className={`flex items-center justify-center gap-2 px-6 py-4 font-black rounded-3xl shadow-xl transition-all active:scale-95 ${request.status !== RepairStatus.PENDING && request.status !== RepairStatus.CLOSED
                 ? 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700'
                 : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed'
                 }`}
