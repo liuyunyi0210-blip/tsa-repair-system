@@ -1,10 +1,11 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import {
-  X,
-  Send,
-  Camera,
-  User,
+import exifr from 'exifr';
+import { 
+  X, 
+  Send, 
+  Camera, 
+  User, 
   Calendar,
   Wrench,
   CheckCircle2,
@@ -17,7 +18,9 @@ import {
   Plus,
   LogOut,
   ArrowLeft,
-  Trash2
+  Trash2,
+  Phone,
+  MapPin
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus } from '../types';
@@ -31,12 +34,13 @@ interface MobileSimulationProps {
 
 const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitReport, activeDisaster, requests = [] }) => {
   const [activeForm, setActiveForm] = useState<'NONE' | 'REPAIR' | 'FINISH' | 'DISASTER'>('NONE');
-  const [showPendingSelectModal, setShowPendingSelectModal] = useState(false);
 
   // 分離不同表單的數據
   const [repairFormData, setRepairFormData] = useState({
     hallName: MOCK_HALLS[0].name,
-    reporter: '',
+    name: '',
+    mission: '',
+    phone: '',
     description: '',
     category: Category.AC,
   });
@@ -48,31 +52,115 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     completionDate: new Date().toISOString().split('T')[0],
   });
 
-  const [repairImages, setRepairImages] = useState<string[]>([]);
-  const [finishImages, setFinishImages] = useState<string[]>([]);
-  const [repairErrors, setRepairErrors] = useState<{ reporter?: string; description?: string }>({});
+  // 圖片數據結構：包含 URL、拍攝時間和地點
+  interface ImageData {
+    url: string;
+    timestamp?: string;
+    location?: {
+      latitude: number;
+      longitude: number;
+      address?: string;
+    };
+  }
+  
+  const [repairImages, setRepairImages] = useState<ImageData[]>([]);
+  const [finishImages, setFinishImages] = useState<ImageData[]>([]);
+  const [repairErrors, setRepairErrors] = useState<{ name?: string; mission?: string; phone?: string; description?: string }>({});
   const [finishErrors, setFinishErrors] = useState<{ reporter?: string; workDescription?: string }>({});
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reporterInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
   // 字數限制
-  const REPORTER_MAX_LENGTH = 50;
+  const NAME_MAX_LENGTH = 50;
+  const MISSION_MAX_LENGTH = 50;
+  const PHONE_MAX_LENGTH = 20;
+  const REPORTER_MAX_LENGTH = 50; // 完工表單使用
   const DESCRIPTION_MAX_LENGTH = 500;
 
+  // 獲取當前地理位置
+  const getCurrentLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        () => resolve(null),
+        { timeout: 5000, maximumAge: 60000 }
+      );
+    });
+  };
+
   // 處理文件上傳
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
     const files = e.target.files;
     if (files) {
-      Array.from(files).forEach((file: File) => {
+      // 獲取當前地理位置（作為備選）
+      const currentLocation = await getCurrentLocation();
+      
+      Array.from(files).forEach(async (file: File) => {
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
+          const imageUrl = reader.result as string;
+          let timestamp: string | undefined;
+          let location: { latitude: number; longitude: number; address?: string } | undefined;
+
+          try {
+            // 讀取 EXIF 數據
+            const exifData = await exifr.parse(file, {
+              gps: true,
+              exif: true,
+            });
+
+            // 獲取拍攝時間
+            if (exifData?.DateTimeOriginal) {
+              timestamp = new Date(exifData.DateTimeOriginal).toISOString();
+            } else if (exifData?.CreateDate) {
+              timestamp = new Date(exifData.CreateDate).toISOString();
+            } else if (exifData?.ModifyDate) {
+              timestamp = new Date(exifData.ModifyDate).toISOString();
+            } else {
+              // 如果沒有 EXIF 時間，使用文件修改時間
+              timestamp = new Date(file.lastModified).toISOString();
+            }
+
+            // 獲取 GPS 位置
+            if (exifData?.latitude && exifData?.longitude) {
+              location = {
+                latitude: exifData.latitude,
+                longitude: exifData.longitude,
+              };
+            } else if (currentLocation) {
+              // 如果照片沒有 GPS 信息，使用當前位置
+              location = currentLocation;
+            }
+          } catch (error) {
+            console.warn('讀取 EXIF 數據失敗:', error);
+            // 如果讀取失敗，使用文件修改時間和當前位置
+            timestamp = new Date(file.lastModified).toISOString();
+            if (currentLocation) {
+              location = currentLocation;
+            }
+          }
+
+          const imageData: ImageData = {
+            url: imageUrl,
+            timestamp,
+            location,
+          };
+
           if (formType === 'REPAIR') {
-            setRepairImages(prev => [...prev, reader.result as string]);
+            setRepairImages(prev => [...prev, imageData]);
           } else {
-            setFinishImages(prev => [...prev, reader.result as string]);
+            setFinishImages(prev => [...prev, imageData]);
           }
         };
         reader.readAsDataURL(file);
@@ -88,22 +176,54 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     }
   };
 
+  // 格式化時間顯示
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) return '未知時間';
+    const date = new Date(timestamp);
+    return date.toLocaleString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  // 格式化位置顯示
+  const formatLocation = (location?: { latitude: number; longitude: number }) => {
+    if (!location) return '未知地點';
+    return `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+  };
+
   // 驗證報修表單
   const validateRepairForm = () => {
-    const newErrors: { reporter?: string; description?: string } = {};
+    const newErrors: { name?: string; mission?: string; phone?: string; description?: string } = {};
 
-    if (!repairFormData.reporter.trim()) {
-      newErrors.reporter = '請輸入姓名或職稱';
-    } else if (repairFormData.reporter.length > REPORTER_MAX_LENGTH) {
-      newErrors.reporter = `姓名或職稱不能超過 ${REPORTER_MAX_LENGTH} 個字`;
+    if (!repairFormData.name.trim()) {
+      newErrors.name = '請輸入姓名';
+    } else if (repairFormData.name.length > NAME_MAX_LENGTH) {
+      newErrors.name = `姓名不能超過 ${NAME_MAX_LENGTH} 個字`;
+    }
+
+    if (!repairFormData.mission.trim()) {
+      newErrors.mission = '請輸入學會使命';
+    } else if (repairFormData.mission.length > MISSION_MAX_LENGTH) {
+      newErrors.mission = `學會使命不能超過 ${MISSION_MAX_LENGTH} 個字`;
+    }
+
+    if (!repairFormData.phone.trim()) {
+      newErrors.phone = '請輸入聯絡電話';
+    } else if (repairFormData.phone.length > PHONE_MAX_LENGTH) {
+      newErrors.phone = `聯絡電話不能超過 ${PHONE_MAX_LENGTH} 個字`;
     }
 
     if (!repairFormData.description.trim()) {
       newErrors.description = '請輸入狀況描述';
     } else if (repairFormData.description.length > DESCRIPTION_MAX_LENGTH) {
       newErrors.description = `狀況描述不能超過 ${DESCRIPTION_MAX_LENGTH} 個字`;
-    } else if (repairFormData.description.trim().length < 10) {
-      newErrors.description = '狀況描述至少需要 10 個字';
+    } else if (repairFormData.description.trim().length < 1) {
+      newErrors.description = '狀況描述至少需要 1 個字';
     }
 
     setRepairErrors(newErrors);
@@ -135,8 +255,12 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     e.preventDefault();
 
     if (!validateRepairForm()) {
-      if (repairErrors.reporter) {
+      if (repairErrors.name) {
         reporterInputRef.current?.focus();
+      } else if (repairErrors.mission) {
+        // 可以添加 mission 輸入框的 ref
+      } else if (repairErrors.phone) {
+        // 可以添加 phone 輸入框的 ref
       } else if (repairErrors.description) {
         descriptionInputRef.current?.focus();
       }
@@ -147,14 +271,21 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       ...repairFormData,
       type: OrderType.VOLUNTEER,
       title: `${repairFormData.category} - ${repairFormData.hallName} 報修`,
-      photoUrls: repairImages,
+      reporter: `${repairFormData.name} / ${repairFormData.mission}`,
+      photoUrls: repairImages.map(img => img.url),
+      photoMetadata: repairImages.map(img => ({
+        timestamp: img.timestamp,
+        location: img.location,
+      })),
     });
     alert('感謝您的回報，工單已建立！照片已同步上傳至系統。');
     setActiveForm('NONE');
     setRepairImages([]);
     setRepairFormData({
       hallName: MOCK_HALLS[0].name,
-      reporter: '',
+      name: '',
+      mission: '',
+      phone: '',
       description: '',
       category: Category.AC,
     });
@@ -171,16 +302,18 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
     onSubmitReport({
       ...finishFormData,
-      id: selectedRequestId || undefined,
       type: OrderType.VOLUNTEER,
       title: `${finishFormData.hallName} 修繕完工回報`,
       processingDescription: finishFormData.workDescription,
-      photoUrls: finishImages,
+      photoUrls: finishImages.map(img => img.url),
+      photoMetadata: finishImages.map(img => ({
+        timestamp: img.timestamp,
+        location: img.location,
+      })),
     });
-    alert(selectedRequestId ? '工單修繕資料已更新並結案！' : '完工回報已提交！感謝您的回報。');
+    alert('完工回報已提交！感謝您的回報。');
     setActiveForm('NONE');
     setFinishImages([]);
-    setSelectedRequestId(null);
     setFinishFormData({
       hallName: MOCK_HALLS[0].name,
       reporter: '',
@@ -201,7 +334,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
   // 報修表單 JSX
   const repairFormJSX = (
-    <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-20 flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
+    <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-[30] flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
       <div className="p-6 flex items-center justify-between border-b border-slate-50">
         <div className="flex items-center gap-3">
           <button onClick={() => { setActiveForm('NONE'); setRepairImages([]); }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
@@ -228,59 +361,11 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           </div>
         </div>
 
-        {/* Unfinished Requests List */}
-        {requests.length > 0 && requests.filter(r =>
-          r.hallName === finishFormData.hallName &&
-          r.status !== RepairStatus.CLOSED &&
-          !r.isDeleted
-        ).length > 0 && (
-            <div className="space-y-2 animate-in slide-in-from-right-4 duration-500">
-              <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
-                <ShieldAlert size={12} /> 尚有未完工項目 (點擊帶入)
-              </label>
-              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory custom-scrollbar">
-                {requests
-                  .filter(r =>
-                    r.hallName === finishFormData.hallName &&
-                    r.status !== RepairStatus.CLOSED &&
-                    !r.isDeleted
-                  )
-                  .map(req => (
-                    <div
-                      key={req.id}
-                      onClick={() => {
-                        if (window.confirm('是否載入此報修單內容與照片？\n(這將覆蓋目前的輸入內容)')) {
-                          setFinishFormData(prev => ({
-                            ...prev,
-                            reporter: req.reporter,
-                            workDescription: `[原報修內容]\n${req.description}\n\n[完工說明]\n`,
-                          }));
-                          setFinishImages(req.photoUrls || []);
-                        }
-                      }}
-                      className="min-w-[200px] p-3 bg-indigo-50 border border-indigo-100 rounded-2xl cursor-pointer hover:bg-indigo-100 transition-colors snap-center group relative overflow-hidden"
-                    >
-                      <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">載入</div>
-                      </div>
-                      <h4 className="font-bold text-xs text-indigo-900 line-clamp-1 mb-1">{req.title}</h4>
-                      <p className="text-[10px] text-indigo-700 line-clamp-2 mb-2 bg-white/50 p-1.5 rounded-lg">{req.description}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-indigo-400 font-bold">
-                        <User size={10} /> {req.reporter}
-                        <span className="w-0.5 h-0.5 bg-indigo-300 rounded-full"></span>
-                        <span>{new Date(req.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名 / 職稱</label>
-            <span className={`text-[10px] font-bold ${repairFormData.reporter.length > REPORTER_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
-              {repairFormData.reporter.length}/{REPORTER_MAX_LENGTH}
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名</label>
+            <span className={`text-[10px] font-bold ${(repairFormData.name?.length || 0) > NAME_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+              {repairFormData.name?.length || 0}/{NAME_MAX_LENGTH}
             </span>
           </div>
           <div className="relative">
@@ -288,17 +373,70 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             <input
               ref={reporterInputRef}
               required
-              maxLength={REPORTER_MAX_LENGTH}
-              placeholder="請輸入您的姓名或職稱"
-              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${repairErrors.reporter ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+              maxLength={NAME_MAX_LENGTH}
+              placeholder="請輸入您的姓名"
+              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${repairErrors.name ? 'ring-2 ring-rose-500 bg-rose-50' : ''
                 }`}
-              value={repairFormData.reporter}
-              onChange={e => setRepairFormData(prev => ({ ...prev, reporter: e.target.value }))}
+              value={repairFormData.name || ''}
+              onChange={e => setRepairFormData(prev => ({ ...prev, name: e.target.value }))}
             />
           </div>
-          {repairErrors.reporter && (
+          {repairErrors.name && (
             <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-              <X size={12} /> {repairErrors.reporter}
+              <X size={12} /> {repairErrors.name}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">學會使命</label>
+            <span className={`text-[10px] font-bold ${(repairFormData.mission?.length || 0) > MISSION_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+              {repairFormData.mission?.length || 0}/{MISSION_MAX_LENGTH}
+            </span>
+          </div>
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              required
+              maxLength={MISSION_MAX_LENGTH}
+              placeholder="請輸入學會使命"
+              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${repairErrors.mission ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                }`}
+              value={repairFormData.mission || ''}
+              onChange={e => setRepairFormData(prev => ({ ...prev, mission: e.target.value }))}
+            />
+          </div>
+          {repairErrors.mission && (
+            <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+              <X size={12} /> {repairErrors.mission}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">聯絡電話</label>
+            <span className={`text-[10px] font-bold ${(repairFormData.phone?.length || 0) > PHONE_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+              {repairFormData.phone?.length || 0}/{PHONE_MAX_LENGTH}
+            </span>
+          </div>
+          <div className="relative">
+            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="tel"
+              required
+              maxLength={PHONE_MAX_LENGTH}
+              placeholder="請輸入聯絡電話"
+              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${repairErrors.phone ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                }`}
+              value={repairFormData.phone || ''}
+              onChange={e => setRepairFormData(prev => ({ ...prev, phone: e.target.value }))}
+            />
+          </div>
+          {repairErrors.phone && (
+            <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+              <X size={12} /> {repairErrors.phone}
             </p>
           )}
         </div>
@@ -306,7 +444,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">狀況描述</label>
-            <span className={`text-[10px] font-bold ${repairFormData.description.length > DESCRIPTION_MAX_LENGTH ? 'text-rose-500' : repairFormData.description.length < 10 ? 'text-amber-500' : 'text-slate-400'}`}>
+            <span className={`text-[10px] font-bold ${repairFormData.description.length > DESCRIPTION_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
               {repairFormData.description.length}/{DESCRIPTION_MAX_LENGTH}
             </span>
           </div>
@@ -317,7 +455,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
               required
               maxLength={DESCRIPTION_MAX_LENGTH}
               rows={5}
-              placeholder="請詳細描述故障或需要維修的狀況，至少 10 個字..."
+              placeholder="請詳細描述故障或需要維修的狀況..."
               className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold resize-none transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${repairErrors.description ? 'ring-2 ring-rose-500 bg-rose-50' : ''
                 }`}
               value={repairFormData.description}
@@ -329,11 +467,6 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
               <X size={12} /> {repairErrors.description}
             </p>
           )}
-          {!repairErrors.description && repairFormData.description.length > 0 && repairFormData.description.length < 10 && (
-            <p className="text-[10px] text-amber-500 font-bold mt-1">
-              ⚠️ 建議至少輸入 10 個字以提供更詳細的資訊
-            </p>
-          )}
         </div>
 
         <div className="space-y-3">
@@ -341,17 +474,35 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
           {/* 照片預覽區 */}
           {repairImages.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="space-y-3 mb-2">
               {repairImages.map((img, idx) => (
-                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-100 group">
-                  <img src={img} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(idx, 'REPAIR')}
-                    className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X size={12} />
-                  </button>
+                <div key={idx} className="relative rounded-xl overflow-hidden border border-slate-100 group bg-slate-50">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1 relative aspect-square">
+                      <img src={img.url} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx, 'REPAIR')}
+                        className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                    <div className="col-span-2 p-3 flex flex-col justify-center">
+                      <div className="text-[10px] text-slate-600 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <Calendar size={10} />
+                          <span className="font-bold">拍攝時間：</span>
+                          <span>{formatTimestamp(img.timestamp)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin size={10} />
+                          <span className="font-bold">拍攝地點：</span>
+                          <span className="text-xs">{formatLocation(img.location)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -376,9 +527,9 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           </button>
         </div>
 
-        <button
-          type="submit"
-          disabled={!repairFormData.reporter.trim() || !repairFormData.description.trim()}
+        <button 
+          type="submit" 
+          disabled={!repairFormData.name.trim() || !repairFormData.mission.trim() || !repairFormData.phone.trim() || !repairFormData.description.trim()}
           className="w-full py-5 bg-indigo-600 text-white font-black rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           <Send size={18} /> 送出報修資料
@@ -389,7 +540,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
   // 完工回報表單 JSX
   const finishFormJSX = (
-    <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-20 flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
+    <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-[30] flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
       <div className="p-6 flex items-center justify-between border-b border-slate-50">
         <div className="flex items-center gap-3">
           <button onClick={() => { setActiveForm('NONE'); setFinishImages([]); }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
@@ -408,46 +559,13 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             <select
               className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
               value={finishFormData.hallName}
-              onChange={e => {
-                const newHall = e.target.value;
-                setFinishFormData(prev => ({ ...prev, hallName: newHall }));
-
-                // Auto-open modal if there are pending requests
-                const hasPending = requests.some(r =>
-                  r.hallName === newHall &&
-                  r.status !== RepairStatus.CLOSED &&
-                  r.status !== RepairStatus.CONSTRUCTION_DONE &&
-                  !r.isDeleted
-                );
-                if (hasPending) {
-                  setShowPendingSelectModal(true);
-                }
-              }}
+              onChange={e => setFinishFormData(prev => ({ ...prev, hallName: e.target.value }))}
             >
               {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
           </div>
         </div>
-
-        {/* Unfinished Requests Button */}
-        {requests.length > 0 && requests.filter(r =>
-          r.hallName === finishFormData.hallName &&
-          r.status !== RepairStatus.CLOSED &&
-          r.status !== RepairStatus.CONSTRUCTION_DONE &&
-          !r.isDeleted
-        ).length > 0 && (
-            <div className="animate-in slide-in-from-right-4 duration-500">
-              <button
-                type="button"
-                onClick={() => setShowPendingSelectModal(true)}
-                className="w-full mt-2 py-3 px-4 bg-indigo-50 text-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-100 transition-colors border border-indigo-100 placeholder:animate-in fade-in"
-              >
-                <ShieldAlert size={16} />
-                尚有 {requests.filter(r => r.hallName === finishFormData.hallName && r.status !== RepairStatus.CLOSED && r.status !== RepairStatus.CONSTRUCTION_DONE && !r.isDeleted).length} 筆未完工項目 (點擊選擇)
-              </button>
-            </div>
-          )}
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
@@ -521,17 +639,35 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工照片 ({finishImages.length})</label>
 
           {finishImages.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="space-y-3 mb-2">
               {finishImages.map((img, idx) => (
-                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-100 group">
-                  <img src={img} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(idx, 'FINISH')}
-                    className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X size={12} />
-                  </button>
+                <div key={idx} className="relative rounded-xl overflow-hidden border border-slate-100 group bg-slate-50">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1 relative aspect-square">
+                      <img src={img.url} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx, 'FINISH')}
+                        className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                    <div className="col-span-2 p-3 flex flex-col justify-center">
+                      <div className="text-[10px] text-slate-600 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <Calendar size={10} />
+                          <span className="font-bold">拍攝時間：</span>
+                          <span>{formatTimestamp(img.timestamp)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin size={10} />
+                          <span className="font-bold">拍攝地點：</span>
+                          <span className="text-xs">{formatLocation(img.location)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -580,7 +716,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       </button>
 
       {/* 手機框架 */}
-      <div className="relative w-full max-w-[380px] h-[800px] bg-[#8c9fb6] rounded-[60px] border-[12px] border-slate-900 shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-[380px] h-[800px] bg-[#8c9fb6] rounded-[60px] border-[12px] border-slate-900 shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300" style={{ position: 'relative' }}>
 
         {/* Phone Header - LINE Style */}
         <div className="h-16 bg-[#2a303c] flex items-center justify-between px-6 text-white shrink-0 border-b border-white/5">
@@ -649,7 +785,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         </div>
 
         {/* Input Bar (LINE 底欄) */}
-        <div className="h-16 bg-white border-t border-slate-200 flex items-center px-5 gap-4 shrink-0">
+        <div className="h-16 bg-white border-t border-slate-200 flex items-center px-5 gap-4 shrink-0 relative z-10">
           <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors"><Plus size={20} /></div>
           <div className="flex-1 bg-slate-50 border border-slate-100 rounded-full px-5 py-2.5 text-[11px] font-bold text-slate-400 italic">請輸入訊息...</div>
           <ImageIcon size={22} className="text-slate-300" />
@@ -664,44 +800,6 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       {/* 底部裝飾物 (Home Indicator) */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-white/20 rounded-full"></div>
 
-      {/* Pending Request Selection Modal */}
-      {showPendingSelectModal && (
-        <div className="absolute inset-0 z-[220] bg-slate-900/50 backdrop-blur-sm rounded-[60px] flex items-end animate-in fade-in duration-200">
-          <div className="w-full bg-white rounded-t-[40px] p-6 space-y-4 max-h-[70%] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-              <h3 className="font-black text-lg text-slate-800">選擇未完工項目</h3>
-              <button onClick={() => setShowPendingSelectModal(false)} className="p-2 bg-slate-100 rounded-full"><X size={20} /></button>
-            </div>
-            <div className="space-y-3">
-              {requests.filter(r => r.hallName === finishFormData.hallName && r.status !== RepairStatus.CLOSED && r.status !== RepairStatus.CONSTRUCTION_DONE && !r.isDeleted).map(req => (
-                <button
-                  key={req.id}
-                  onClick={() => {
-                    if (window.confirm('是否載入此報修單內容與照片？\n(這將覆蓋目前的輸入內容)')) {
-                      setFinishFormData(prev => ({
-                        ...prev,
-                        reporter: req.reporter,
-                        workDescription: `[原報修內容]\n${req.description}\n\n[完工說明]\n`,
-                      }));
-                      setFinishImages(req.photoUrls || []);
-                      setSelectedRequestId(req.id);
-                      setShowPendingSelectModal(false);
-                    }
-                  }}
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] font-black bg-white text-indigo-600 px-2 py-0.5 rounded border border-indigo-100">{Category[req.category] || '其他'}</span>
-                    <span className="text-[10px] font-bold text-slate-400">{new Date(req.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <h4 className="font-bold text-base text-slate-800 mb-1">{req.title}</h4>
-                  <p className="text-xs text-slate-500 line-clamp-2">{req.description}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
