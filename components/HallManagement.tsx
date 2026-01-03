@@ -85,7 +85,21 @@ const HallManagement: React.FC = () => {
   };
 
   const HallDetailModal = () => {
-    const hall = halls.find(h => h.id === editingHallId);
+    const isNew = editingHallId === 'NEW_HALL';
+    const hall = isNew ? {
+      id: `H-${Date.now()}`,
+      name: '',
+      address: '',
+      builtDate: '',
+      district: '',
+      area: '',
+      phoneEntries: [],
+      networkEntries: [],
+      photoUrl: '',
+      electricalLayoutUrls: [],
+      floorPlanUrls: []
+    } as Hall : halls.find(h => h.id === editingHallId);
+
     if (!hall) return null;
     const [temp, setTemp] = useState<Hall>({ ...hall });
 
@@ -108,9 +122,17 @@ const HallManagement: React.FC = () => {
     return (
       <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <div className="bg-white w-full max-w-4xl rounded-[40px] p-10 space-y-8 shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-             <h3 className="text-2xl font-black">{temp.name} - 詳細資料</h3>
-             <button onClick={() => setEditingHallId(null)}><X/></button>
+          <div className="flex justify-between items-start border-b border-slate-100 pb-4 gap-4">
+             <div className="flex-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">會館名稱</label>
+                <input 
+                  className="text-2xl font-black w-full bg-transparent border-none outline-none placeholder:text-slate-200" 
+                  value={temp.name} 
+                  onChange={e => setTemp({...temp, name: e.target.value})}
+                  placeholder="請輸入會館名稱"
+                />
+             </div>
+             <button onClick={() => setEditingHallId(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X/></button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -118,8 +140,14 @@ const HallManagement: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">基本資訊</label>
                 <div className="bg-slate-50 p-4 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-2"><MapPin size={16} className="text-indigo-600"/> <span className="font-bold">{temp.address}</span></div>
-                  <div className="flex items-center gap-2 font-bold text-sm text-slate-500">落成於: {temp.builtDate}</div>
+                  <div className="flex items-center gap-2">
+                    <MapPin size={16} className="text-indigo-600 shrink-0"/> 
+                    <input className="font-bold bg-transparent w-full outline-none placeholder:text-slate-400" value={temp.address} onChange={e => setTemp({...temp, address: e.target.value})} placeholder="請輸入地址" />
+                  </div>
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-500">
+                    <span className="shrink-0">落成於:</span>
+                    <input className="bg-transparent w-full outline-none placeholder:text-slate-400" value={temp.builtDate} onChange={e => setTemp({...temp, builtDate: e.target.value})} placeholder="例如: 2020/01/01" />
+                  </div>
                 </div>
               </div>
 
@@ -166,7 +194,11 @@ const HallManagement: React.FC = () => {
           </div>
           
           <div className="flex gap-4 pt-4">
-             <button onClick={() => { saveHalls(halls.map(h => h.id === temp.id ? temp : h)); setEditingHallId(null); }} className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-3xl shadow-xl">儲存所有變更</button>
+             <button onClick={() => { 
+               if (isNew) saveHalls([...halls, temp]);
+               else saveHalls(halls.map(h => h.id === temp.id ? temp : h)); 
+               setEditingHallId(null); 
+             }} className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-3xl shadow-xl">儲存所有變更</button>
              <button onClick={() => setEditingHallId(null)} className="px-10 bg-white border border-slate-200 rounded-3xl font-bold">取消</button>
           </div>
         </div>
@@ -181,6 +213,9 @@ const HallManagement: React.FC = () => {
         <div className="flex items-center gap-3">
            <button onClick={() => { setIsSelectMode(!isSelectMode); setSelectedIds(new Set()); }} className={`px-6 py-3 rounded-2xl text-xs font-black transition-all ${isSelectMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 shadow-sm'}`}>
              {isSelectMode ? '結束選擇' : '進入勾選模式'}
+           </button>
+           <button onClick={() => setEditingHallId('NEW_HALL')} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:brightness-110 transition-all">
+             <Plus size={18} /> 新增資料
            </button>
            <button onClick={() => setShowExportModal(true)} className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl font-black shadow-lg">
              <Download size={18} /> 自訂匯出資料
