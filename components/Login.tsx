@@ -218,7 +218,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
             </button>
           </form>
 
-          {import.meta.env.DEV && (
+          {!import.meta.env.PROD && (
             <div className="pt-6 border-t border-slate-50">
               <button
                 onClick={() => {
