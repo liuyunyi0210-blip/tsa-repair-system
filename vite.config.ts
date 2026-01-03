@@ -109,17 +109,19 @@ export default defineConfig(({ mode }) => {
         cssMinify: true,
         rollupOptions: {
           output: {
+            // 暫時禁用代碼分割，避免 React 19 的載入順序問題
+            // manualChunks: undefined,
             manualChunks: (id) => {
-              // 優化代碼分割：將 node_modules 中的大型依賴分離
+              // 只分割大型依賴，確保 React 相關代碼一起載入
               if (id.includes('node_modules')) {
-                // 將 recharts 與其他 vendor 放在一起，避免載入順序問題
+                // React 和 react-dom 必須在一起，不能分開
                 if (id.includes('react') || id.includes('react-dom')) {
                   return 'vendor-react';
                 }
+                // 其他依賴可以分開
                 if (id.includes('@google/genai')) {
                   return 'vendor-gemini';
                 }
-                // recharts 和其他依賴一起打包，避免分割導致的載入問題
                 return 'vendor';
               }
             },
@@ -128,7 +130,7 @@ export default defineConfig(({ mode }) => {
             assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
           },
         },
-        chunkSizeWarningLimit: 1000,
+        chunkSizeWarningLimit: 2000,
       },
     };
 });
