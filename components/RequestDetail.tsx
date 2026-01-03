@@ -126,7 +126,6 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdat
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
               <h4 className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-3">詳細狀況描述</h4>
               <p className="text-sm text-slate-700 leading-relaxed font-medium">{request.description}</p>
-              <p className="text-sm text-slate-700 leading-relaxed font-medium">{request.description}</p>
             </div>
 
             {/* Photo Gallery */}
