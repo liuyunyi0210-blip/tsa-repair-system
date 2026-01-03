@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSA 會館修繕系統 - 本地預覽說明</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .step {
+            border-left: 4px solid #6366f1;
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+        }
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-black text-slate-900 mb-4">TSA 會館修繕系統</h1>
+                <p class="text-xl text-slate-600">本地預覽說明</p>
+            </div>
+
+            <!-- 重要提示 -->
+            <div class="warning mb-8">
+                <h2 class="font-bold text-lg mb-2">⚠️ 重要提示</h2>
+                <p>本專案使用 React + Vite 構建，需要 Node.js 環境才能運行。請按照以下步驟設置環境。</p>
+            </div>
+
+            <!-- 快速開始 -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-black text-slate-900 mb-6">🚀 快速開始</h2>
+                
+                <div class="step">
+                    <h3 class="text-xl font-bold mb-3">步驟 1：安裝 Node.js</h3>
+                    <p class="mb-3">如果尚未安裝 Node.js，請先安裝：</p>
+                    
+                    <div class="mb-4">
+                        <p class="font-bold mb-2">macOS：</p>
+                        <div class="code-block">
+brew install node
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="font-bold mb-2">Windows：</p>
+                        <p class="mb-2">前往 <a href="https://nodejs.org/" target="_blank" class="text-indigo-600 hover:underline">nodejs.org</a> 下載安裝</p>
+                    </div>
+                    
+                    <p class="text-sm text-slate-500 mt-2">驗證安裝：<code class="bg-slate-100 px-2 py-1 rounded">node --version</code></p>
+                </div>
+
+                <div class="step">
+                    <h3 class="text-xl font-bold mb-3">步驟 2：安裝依賴</h3>
+                    <p class="mb-3">在專案目錄下執行：</p>
+                    <div class="code-block">
+npm install
+                    </div>
+                    <p class="text-sm text-slate-500 mt-2">這會安裝所有必要的套件（React、Vite、TypeScript 等）</p>
+                </div>
+
+                <div class="step">
+                    <h3 class="text-xl font-bold mb-3">步驟 3：啟動開發伺服器</h3>
+                    <p class="mb-3">執行以下命令之一：</p>
+                    
+                    <div class="mb-4">
+                        <p class="font-bold mb-2">使用啟動腳本（推薦）：</p>
+                        <div class="code-block">
+# macOS/Linux
+./start.sh
+
+# Windows (CMD)
+start.bat
+
+# Windows (PowerShell)
+.\start.ps1
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="font-bold mb-2">或直接使用 npm：</p>
+                        <div class="code-block">
+npm run dev
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <h3 class="text-xl font-bold mb-3">步驟 4：打開瀏覽器</h3>
+                    <p class="mb-3">開發伺服器啟動後，在瀏覽器打開：</p>
+                    <div class="code-block">
+http://localhost:3000
+                    </div>
+                    <div class="success mt-4">
+                        <p class="font-bold">✅ 完成！</p>
+                        <p>現在您可以在瀏覽器中查看和測試系統了。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 構建生產版本 -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-black text-slate-900 mb-6">📦 構建生產版本</h2>
+                <p class="mb-4">如果您想要構建一個可以在任何地方運行的靜態版本：</p>
+                
+                <div class="code-block mb-4">
+npm run build
+                </div>
+                
+                <p class="mb-4">構建完成後，會生成 <code class="bg-slate-100 px-2 py-1 rounded">dist</code> 目錄，包含所有靜態文件。</p>
+                
+                <p class="mb-4">預覽生產版本：</p>
+                <div class="code-block">
+npm run preview
+                </div>
+            </div>
+
+            <!-- 文檔連結 -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-black text-slate-900 mb-6">📚 相關文檔</h2>
+                <ul class="space-y-3">
+                    <li>
+                        <a href="本地運行指南.md" class="text-indigo-600 hover:underline font-bold">
+                            📖 本地運行指南.md
+                        </a>
+                        <p class="text-sm text-slate-600 ml-6">詳細的環境設置說明（macOS 和 Windows）</p>
+                    </li>
+                    <li>
+                        <a href="開發者協作指南.md" class="text-indigo-600 hover:underline font-bold">
+                            👥 開發者協作指南.md
+                        </a>
+                        <p class="text-sm text-slate-600 ml-6">團隊協作與開發流程</p>
+                    </li>
+                    <li>
+                        <a href="常見問題.md" class="text-indigo-600 hover:underline font-bold">
+                            ❓ 常見問題.md
+                        </a>
+                        <p class="text-sm text-slate-600 ml-6">FAQ 與疑難排解</p>
+                    </li>
+                    <li>
+                        <a href="專案概覽.md" class="text-indigo-600 hover:underline font-bold">
+                            🏗️ 專案概覽.md
+                        </a>
+                        <p class="text-sm text-slate-600 ml-6">系統架構與功能說明</p>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 功能特色 -->
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <h2 class="text-2xl font-black text-slate-900 mb-6">✨ 系統功能</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded-xl">
+                        <h3 class="font-bold mb-2">📊 儀表板管理</h3>
+                        <p class="text-sm text-slate-600">完整的數據視覺化與統計分析</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl">
+                        <h3 class="font-bold mb-2">🏢 會館管理</h3>
+                        <p class="text-sm text-slate-600">會館基本資料與區域管理</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl">
+                        <h3 class="font-bold mb-2">📝 工單管理</h3>
+                        <p class="text-sm text-slate-600">維修工單的完整生命週期管理</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl">
+                        <h3 class="font-bold mb-2">🔧 設施管理</h3>
+                        <p class="text-sm text-slate-600">會館設施、飲水機、AED、公務車等管理</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl">
+                        <h3 class="font-bold mb-2">📋 合約管理</h3>
+                        <p class="text-sm text-slate-600">維護合約與供應商管理</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl">
+                        <h3 class="font-bold mb-2">🤖 AI 分析</h3>
+                        <p class="text-sm text-slate-600">整合 Gemini AI 進行故障分析與建議</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-12 text-slate-500 text-sm">
+                <p>TSA 會館修繕暨設施管理系統</p>
+                <p class="mt-2">如有問題，請參考文檔或聯繫開發團隊</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

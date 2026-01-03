@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   X, 
   Send, 
@@ -38,7 +38,42 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     category: Category.AC,
   });
   const [images, setImages] = useState<string[]>([]);
+  const [errors, setErrors] = useState<{reporter?: string; description?: string}>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const reporterInputRef = useRef<HTMLInputElement>(null);
+  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // 字數限制
+  const REPORTER_MAX_LENGTH = 50;
+  const DESCRIPTION_MAX_LENGTH = 500;
+
+  // 處理姓名/職稱輸入 - 使用 useCallback 優化性能
+  const handleReporterChange = useCallback((value: string) => {
+    setFormData(prev => ({...prev, reporter: value}));
+    // 清除對應的錯誤
+    setErrors(prev => {
+      if (prev.reporter) {
+        const newErrors = { ...prev };
+        delete newErrors.reporter;
+        return newErrors;
+      }
+      return prev;
+    });
+  }, []);
+
+  // 處理狀況描述輸入 - 使用 useCallback 優化性能
+  const handleDescriptionChange = useCallback((value: string) => {
+    setFormData(prev => ({...prev, description: value}));
+    // 清除對應的錯誤
+    setErrors(prev => {
+      if (prev.description) {
+        const newErrors = { ...prev };
+        delete newErrors.description;
+        return newErrors;
+      }
+      return prev;
+    });
+  }, []);
 
   // Fix: Explicitly type 'file' as 'File' to resolve assignability error to 'Blob' (line 52 area)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,8 +93,41 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 驗證表單
+  const validateForm = () => {
+    const newErrors: {reporter?: string; description?: string} = {};
+    
+    if (!formData.reporter.trim()) {
+      newErrors.reporter = '請輸入姓名或職稱';
+    } else if (formData.reporter.length > REPORTER_MAX_LENGTH) {
+      newErrors.reporter = `姓名或職稱不能超過 ${REPORTER_MAX_LENGTH} 個字`;
+    }
+    
+    if (!formData.description.trim()) {
+      newErrors.description = '請輸入狀況描述';
+    } else if (formData.description.length > DESCRIPTION_MAX_LENGTH) {
+      newErrors.description = `狀況描述不能超過 ${DESCRIPTION_MAX_LENGTH} 個字`;
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = '狀況描述至少需要 10 個字';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      // 聚焦到第一個錯誤欄位
+      if (errors.reporter) {
+        reporterInputRef.current?.focus();
+      } else if (errors.description) {
+        descriptionInputRef.current?.focus();
+      }
+      return;
+    }
+    
     onSubmitReport({
       ...formData,
       type: OrderType.VOLUNTEER,
@@ -69,7 +137,25 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     alert('感謝您的回報，工單已建立！照片已同步上傳至系統。');
     setActiveForm('NONE');
     setImages([]);
+    // 重置表單
+    setFormData({
+      hallName: MOCK_HALLS[0].name,
+      reporter: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0],
+      category: Category.AC,
+    });
+    setErrors({});
   };
+  
+  // 當表單打開時自動聚焦
+  useEffect(() => {
+    if (activeForm === 'REPAIR') {
+      setTimeout(() => {
+        reporterInputRef.current?.focus();
+      }, 300);
+    }
+  }, [activeForm]);
 
   const MobileForm = ({ title, type }: { title: string, type: string }) => (
     <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-20 flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
@@ -87,17 +173,78 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 pb-32 custom-scrollbar">
         <div className="space-y-1">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">選擇會館</label>
-          <select className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold" value={formData.hallName} onChange={e => setFormData({...formData, hallName: e.target.value})}>
-            {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
-          </select>
+          <div className="relative">
+            <select 
+              className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+              value={formData.hallName} 
+              onChange={e => setFormData(prev => ({...prev, hallName: e.target.value}))}
+            >
+              {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+            </select>
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+          </div>
         </div>
+        
         <div className="space-y-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名 / 職稱</label>
-          <input required className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold" value={formData.reporter} onChange={e => setFormData({...formData, reporter: e.target.value})} />
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名 / 職稱</label>
+            <span className={`text-[10px] font-bold ${formData.reporter.length > REPORTER_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+              {formData.reporter.length}/{REPORTER_MAX_LENGTH}
+            </span>
+          </div>
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input 
+              ref={reporterInputRef}
+              required 
+              maxLength={REPORTER_MAX_LENGTH}
+              placeholder="請輸入您的姓名或職稱"
+              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${
+                errors.reporter ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+              }`}
+              value={formData.reporter} 
+              onChange={(e) => handleReporterChange(e.target.value)}
+            />
+          </div>
+          {errors.reporter && (
+            <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+              <X size={12} /> {errors.reporter}
+            </p>
+          )}
         </div>
+        
         <div className="space-y-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">狀況描述</label>
-          <textarea required rows={4} className="w-full px-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">狀況描述</label>
+            <span className={`text-[10px] font-bold ${formData.description.length > DESCRIPTION_MAX_LENGTH ? 'text-rose-500' : formData.description.length < 10 ? 'text-amber-500' : 'text-slate-400'}`}>
+              {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
+            </span>
+          </div>
+          <div className="relative">
+            <MessageCircle className="absolute left-4 top-4 text-slate-400" size={18} />
+            <textarea 
+              ref={descriptionInputRef}
+              required 
+              maxLength={DESCRIPTION_MAX_LENGTH}
+              rows={5}
+              placeholder="請詳細描述故障或需要維修的狀況，至少 10 個字..."
+              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold resize-none transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${
+                errors.description ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+              }`}
+              value={formData.description} 
+              onChange={(e) => handleDescriptionChange(e.target.value)}
+            />
+          </div>
+          {errors.description && (
+            <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+              <X size={12} /> {errors.description}
+            </p>
+          )}
+          {!errors.description && formData.description.length > 0 && formData.description.length < 10 && (
+            <p className="text-[10px] text-amber-500 font-bold mt-1">
+              ⚠️ 建議至少輸入 10 個字以提供更詳細的資訊
+            </p>
+          )}
         </div>
         
         <div className="space-y-3">
@@ -140,7 +287,11 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           </button>
         </div>
 
-        <button type="submit" className="w-full py-5 bg-indigo-600 text-white font-black rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 transition-transform active:scale-95">
+        <button 
+          type="submit" 
+          disabled={!formData.reporter.trim() || !formData.description.trim()}
+          className="w-full py-5 bg-indigo-600 text-white font-black rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+        >
           <Send size={18} /> 送出報修資料
         </button>
       </form>

@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
     }
     
     return {
-      base: '/tsa-repair-system/',
+      base: mode === 'production' ? '/tsa-repair-system/' : '/',
       server: {
         port: 3000,
         host: '0.0.0.0',
