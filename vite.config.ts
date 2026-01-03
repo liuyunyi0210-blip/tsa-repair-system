@@ -1,6 +1,11 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => {
     // 優先從 process.env 讀取（GitHub Actions 設置的），然後從 .env 文件
@@ -35,8 +40,6 @@ export default defineConfig(({ mode }) => {
           closeBundle() {
             // 在構建完成後創建 404.html 用於 GitHub Pages SPA 路由
             if (mode === 'production') {
-              const fs = require('fs');
-              const path = require('path');
               const distPath = path.resolve(__dirname, 'dist');
               const indexPath = path.join(distPath, 'index.html');
               const notFoundPath = path.join(distPath, '404.html');
