@@ -144,7 +144,7 @@ const App: React.FC = () => {
       return req;
     });
     await saveRequests(updated);
-    
+
     if (shouldClose) {
       // 結案後的關鍵跳轉邏輯
       setReportingRequestId(null);
@@ -172,10 +172,10 @@ const App: React.FC = () => {
       isVerified: data.isVerified ?? (data.type === OrderType.ROUTINE),
       photoUrls: data.photoUrls || []
     };
-    
+
     await saveRequests([newReq, ...requests]);
-    setShowForm({show: false, type: OrderType.VOLUNTEER});
-    
+    setShowForm({ show: false, type: OrderType.VOLUNTEER });
+
     if (newReq.isVerified) {
       setActiveTab('requests');
     } else {
@@ -248,11 +248,11 @@ const App: React.FC = () => {
             language={language}
             onView={(id) => setSelectedRequestId(id)}
             onDelete={async (id) => {
-               if (window.confirm('確定要移至回收站？')) {
-                 await saveRequests(requests.map(r => r.id === id ? {...r, isDeleted: true} : r));
-               }
+              if (window.confirm('確定要移至回收站？')) {
+                await saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: true } : r));
+              }
             }}
-            onRestore={async (id) => await saveRequests(requests.map(r => r.id === id ? {...r, isDeleted: false} : r))}
+            onRestore={async (id) => await saveRequests(requests.map(r => r.id === id ? { ...r, isDeleted: false } : r))}
             onPermanentDelete={async (id) => {
               if (window.confirm('永久刪除？')) {
                 await saveRequests(requests.filter(r => r.id !== id));
@@ -348,7 +348,7 @@ const App: React.FC = () => {
           request={requests.find(r => r.id === selectedRequestId)!}
           onClose={() => setSelectedRequestId(null)}
           onUpdateStatus={async (id, status) => {
-             await saveRequests(requests.map(r => r.id === id ? {...r, status} : r));
+            await saveRequests(requests.map(r => r.id === id ? { ...r, status } : r));
           }}
           onReportWork={(id) => {
             setSelectedRequestId(null);
@@ -361,8 +361,22 @@ const App: React.FC = () => {
       {showMobileSim && (
         <MobileSimulation
           activeDisaster={disasterReports.length > 0 ? disasterReports[0] : null}
+          requests={requests}
           onClose={() => setShowMobileSim(false)}
-          onSubmitReport={(data) => handleAddRequest({ ...data, isVerified: false })}
+          onSubmitReport={async (data) => {
+            if (data.id) {
+              // Existing request being completed
+              await handleWorkReportSubmit([data.id], {
+                ...data,
+                status: RepairStatus.CLOSED,
+                isWorkFinished: true,
+                completionDate: data.completionDate
+              }, true);
+            } else {
+              // New report
+              await handleAddRequest({ ...data, isVerified: false });
+            }
+          }}
         />
       )}
 
