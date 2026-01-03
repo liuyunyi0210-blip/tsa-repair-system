@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { 
-  ClipboardList, 
-  Settings, 
+import {
+  ClipboardList,
+  Settings,
   LogOut,
   Wrench,
   Box,
@@ -16,7 +16,9 @@ import {
   Car,
   MessageSquare,
   Hammer,
-  Briefcase
+  Briefcase,
+  Calendar,
+  FileSignature
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -27,10 +29,10 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ 
-  children, 
-  activeTab, 
-  setActiveTab, 
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  activeTab,
+  setActiveTab,
   onSimulateVolunteer,
   onLogout
 }) => {
@@ -46,6 +48,8 @@ const Layout: React.FC<LayoutProps> = ({
     vehicle: '公務車管理',
     contract: '合約管理',
     disaster: '災害回報',
+    monthlySubmission: '月報表回報',
+    monthlyManagement: '月報表管理',
     settings: '系統設定',
     volunteer: 'LINE 報修模擬',
     logout: '登出系統',
@@ -63,6 +67,8 @@ const Layout: React.FC<LayoutProps> = ({
     { id: 'aed', label: t.aed, icon: <HeartPulse size={18} /> },
     { id: 'vehicle', label: t.vehicle, icon: <Car size={18} /> },
     { id: 'disaster', label: t.disaster, icon: <ShieldAlert size={18} /> },
+    { id: 'monthly_submission', label: t.monthlySubmission, icon: <FileSignature size={18} /> },
+    { id: 'monthly_management', label: t.monthlyManagement, icon: <Calendar size={18} /> },
   ];
 
   return (
@@ -80,11 +86,10 @@ const Layout: React.FC<LayoutProps> = ({
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                activeTab === item.id 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              }`}
+                }`}
             >
               {item.icon}
               <span className="font-medium text-sm">{item.label}</span>
@@ -94,9 +99,8 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="pt-4 border-t border-slate-800 mt-4">
             <button
               onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'settings' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white'
+                }`}
             >
               <Settings size={18} />
               <span className="font-medium text-sm">{t.settings}</span>
@@ -105,13 +109,13 @@ const Layout: React.FC<LayoutProps> = ({
         </nav>
 
         <div className="p-6 border-t border-slate-800">
-          <button 
+          <button
             onClick={onSimulateVolunteer}
             className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs transition-all mb-4 border border-white/5"
           >
             <Smartphone size={14} /> {t.volunteer}
           </button>
-          
+
           <button onClick={onLogout} className="flex items-center gap-3 text-slate-500 hover:text-rose-400 transition-colors px-4">
             <LogOut size={18} />
             <span className="text-sm font-bold">{t.logout}</span>

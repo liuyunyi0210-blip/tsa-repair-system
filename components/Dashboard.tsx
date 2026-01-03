@@ -1,22 +1,22 @@
 
 import React from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   Legend
 } from 'recharts';
-import { 
-  Wrench, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Wrench,
+  Clock,
+  CheckCircle2,
   AlertCircle,
   TrendingUp,
   MapPin,
@@ -25,17 +25,20 @@ import {
   ShieldCheck,
   Building2,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  FileText,
+  User
 } from 'lucide-react';
-import { RepairRequest, RepairStatus, OrderType, Category, Language } from '../types';
+import { RepairRequest, RepairStatus, OrderType, Category, Language, MonthlyReport } from '../types';
 import { STATUS_CONFIG, MOCK_HALLS, HEALTH_CHECK_CONFIG } from '../constants';
 
 interface DashboardProps {
   requests: RepairRequest[];
+  monthlyReports?: MonthlyReport[];
   language: Language;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
+const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], language }) => {
   const translations = {
     [Language.ZH]: {
       title: '會館設施運維總覽',
@@ -51,7 +54,8 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
       hallName: '會館名稱',
       manage: '管理',
       pieTitle: '案件類型分佈',
-      barTitle: '工單進度統計'
+      barTitle: '工單進度統計',
+      monthlyReports: '最新會館月報表'
     },
     [Language.JA]: {
       title: '会館施設運用オーバービュー',
@@ -67,7 +71,8 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
       hallName: '会館名',
       manage: '管理',
       pieTitle: '案件タイプ分布',
-      barTitle: '作業状況統計'
+      barTitle: '作業状況統計',
+      monthlyReports: '最新の会館月報'
     }
   };
 
@@ -76,7 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
   const isOverdue = (req: RepairRequest) => {
     if (req.type !== OrderType.ROUTINE || !req.lastExecutedDate || !req.maintenanceCycle) return false;
     if (req.status === RepairStatus.CLOSED) return false;
-    
+
     const lastDate = new Date(req.lastExecutedDate);
     const nextDate = new Date(lastDate.getTime() + req.maintenanceCycle * 24 * 60 * 60 * 1000);
     return nextDate < new Date();
@@ -142,64 +147,63 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
 
       <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
         <div className="flex items-center justify-between mb-8">
-           <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-             <ShieldCheck className="text-indigo-600" /> {t.tableTitle}
-           </h3>
-           <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
-              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> {t.normal}</span>
-              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div> {t.warning}</span>
-              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div> {t.critical}</span>
-           </div>
+          <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+            <ShieldCheck className="text-indigo-600" /> {t.tableTitle}
+          </h3>
+          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> {t.normal}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div> {t.warning}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div> {t.critical}</span>
+          </div>
         </div>
-        
+
         <div className="overflow-x-auto">
-           <table className="w-full text-left">
-              <thead>
-                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                  <th className="px-4 py-4">{t.hallName}</th>
-                  {HEALTH_CHECK_CONFIG.map(facility => (
-                    <th key={facility.key} className="px-4 py-4 text-center">
-                       <div className="flex flex-col items-center gap-1">
-                          {facility.icon}
-                          <span>{facility.label}</span>
-                       </div>
-                    </th>
-                  ))}
-                  <th className="px-4 py-4 text-right">{t.manage}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {MOCK_HALLS.map(hall => (
-                  <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-4">
-                       <div className="flex items-center gap-3">
-                          <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16}/></div>
-                          <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
-                       </div>
-                    </td>
-                    {HEALTH_CHECK_CONFIG.map(facility => {
-                      const status = getHallFacilityStatus(hall.name, facility.key as Category);
-                      return (
-                        <td key={facility.key} className="px-4 py-4">
-                           <div className="flex justify-center">
-                              <div className={`w-4 h-4 rounded-full border-2 ${
-                                status === 'GREEN' ? 'bg-emerald-500 border-emerald-100 shadow-sm shadow-emerald-200' :
-                                status === 'YELLOW' ? 'bg-amber-500 border-amber-100' :
-                                'bg-rose-500 border-rose-100 animate-pulse'
-                              }`}></div>
-                           </div>
-                        </td>
-                      );
-                    })}
-                    <td className="px-4 py-4 text-right">
-                       <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                          <ChevronRight size={18}/>
-                       </button>
-                    </td>
-                  </tr>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                <th className="px-4 py-4">{t.hallName}</th>
+                {HEALTH_CHECK_CONFIG.map(facility => (
+                  <th key={facility.key} className="px-4 py-4 text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      {facility.icon}
+                      <span>{facility.label}</span>
+                    </div>
+                  </th>
                 ))}
-              </tbody>
-           </table>
+                <th className="px-4 py-4 text-right">{t.manage}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {MOCK_HALLS.map(hall => (
+                <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
+                      <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
+                    </div>
+                  </td>
+                  {HEALTH_CHECK_CONFIG.map(facility => {
+                    const status = getHallFacilityStatus(hall.name, facility.key as Category);
+                    return (
+                      <td key={facility.key} className="px-4 py-4">
+                        <div className="flex justify-center">
+                          <div className={`w-4 h-4 rounded-full border-2 ${status === 'GREEN' ? 'bg-emerald-500 border-emerald-100 shadow-sm shadow-emerald-200' :
+                            status === 'YELLOW' ? 'bg-amber-500 border-amber-100' :
+                              'bg-rose-500 border-rose-100 animate-pulse'
+                            }`}></div>
+                        </div>
+                      </td>
+                    );
+                  })}
+                  <td className="px-4 py-4 text-right">
+                    <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                      <ChevronRight size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -213,8 +217,8 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
                   {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} />
-                <Legend 
-                  verticalAlign="bottom" 
+                <Legend
+                  verticalAlign="bottom"
                   height={36}
                   iconType="circle"
                   formatter={(value, entry) => (
@@ -242,6 +246,43 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between mb-8">
+          <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+            <TrendingUp className="text-indigo-600" /> {t.monthlyReports}
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {monthlyReports.length > 0 ? (
+            monthlyReports.slice(0, 6).map(report => (
+              <div key={report.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all group">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                    {report.yearMonth}
+                  </span>
+                  <div className="p-2 bg-white rounded-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <FileText size={16} />
+                  </div>
+                </div>
+                <h4 className="font-black text-slate-900 mb-2">{report.hallName}</h4>
+                <p className="text-xs text-slate-500 font-medium line-clamp-3 leading-relaxed">
+                  {report.content}
+                </p>
+                <div className="mt-4 pt-4 border-t border-slate-200/50 flex items-center justify-between text-[10px] font-bold text-slate-400">
+                  <span className="flex items-center gap-1"><User size={10} /> {report.reporter}</span>
+                  <span>{new Date(report.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-12 text-center text-slate-400 font-bold border-2 border-dashed border-slate-100 rounded-3xl">
+              尚未有月報表提交紀錄
+            </div>
+          )}
         </div>
       </div>
     </div>

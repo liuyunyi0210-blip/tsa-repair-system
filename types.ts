@@ -313,3 +313,16 @@ export interface OperationLog {
     newValue: any;
   }[];
 }
+
+export interface MonthlyReport {
+  id: string;
+  yearMonth: string;
+  hallName: string;
+  content: string;
+  reporter: string;
+  managerRemark?: string;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted?: boolean;
+}
+

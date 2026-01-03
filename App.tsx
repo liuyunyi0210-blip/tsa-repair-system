@@ -19,7 +19,9 @@ import MobileSimulation from './components/MobileSimulation';
 import PermissionManagement from './components/PermissionManagement';
 import UserManagement from './components/UserManagement';
 import StorageSettings from './components/StorageSettings';
-import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterReport, Language, OperationLog } from './types';
+import MonthlyReportSubmission from './components/MonthlyReportSubmission';
+import MonthlyReportManagement from './components/MonthlyReportManagement';
+import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterReport, Language, OperationLog, MonthlyReport } from './types';
 import { storageService } from './services/storageService';
 
 const INITIAL_REQUESTS: RepairRequest[] = [
@@ -66,6 +68,7 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>(Language.ZH);
   const [requests, setRequests] = useState<RepairRequest[]>([]);
   const [disasterReports, setDisasterReports] = useState<DisasterReport[]>([]);
+  const [monthlyReports, setMonthlyReports] = useState<MonthlyReport[]>([]);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [reportingRequestId, setReportingRequestId] = useState<string | null>(null);
   const [bulkReportingIds, setBulkReportingIds] = useState<string[] | null>(null);
@@ -90,6 +93,9 @@ const App: React.FC = () => {
 
       const savedLogs = await storageService.loadLogs();
       if (savedLogs) setOperationLogs(savedLogs);
+
+      const savedMonthly = await storageService.loadMonthlyReports();
+      if (savedMonthly) setMonthlyReports(savedMonthly);
     };
     loadData();
   }, []);
@@ -108,6 +114,11 @@ const App: React.FC = () => {
   const saveRequests = async (newRequests: RepairRequest[]) => {
     setRequests(newRequests);
     await storageService.saveRepairRequests(newRequests);
+  };
+
+  const saveMonthlyReports = async (newReports: MonthlyReport[]) => {
+    setMonthlyReports(newReports);
+    await storageService.saveMonthlyReports(newReports);
   };
 
   const handleLogin = (token: string) => {
@@ -223,7 +234,7 @@ const App: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard key={`dash-${resetKey}`} requests={requests.filter(r => !r.isDeleted && r.isVerified)} language={language} />;
+        return <Dashboard key={`dash-${resetKey}`} requests={requests.filter(r => !r.isDeleted && r.isVerified)} monthlyReports={monthlyReports.filter(r => !r.isDeleted)} language={language} />;
       case 'halls':
         return <HallManagement key={`hall-${resetKey}`} />;
       case 'reports':
@@ -274,6 +285,38 @@ const App: React.FC = () => {
       case 'vehicle': return <VehicleManagement key={`vehicle-${resetKey}`} language={language} />;
       case 'contract': return <ContractManagement key={`contract-${resetKey}`} language={language} />;
       case 'disaster': return <DisasterReporting key={`disaster-${resetKey}`} language={language} />;
+      case 'monthly_submission': return (
+        <MonthlyReportSubmission
+          key={`monthly-sub-${resetKey}`}
+          reports={monthlyReports}
+          onSubmit={async (newReports) => {
+            const formatted: MonthlyReport[] = newReports.map(r => ({
+              ...r,
+              id: `MNR-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }));
+            await saveMonthlyReports([...formatted, ...monthlyReports]);
+            alert('月報表已成功提交！');
+            setActiveTab('monthly_management');
+          }}
+          onUpdate={async (id, updates) => {
+            await saveMonthlyReports(monthlyReports.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
+          }}
+        />
+      );
+      case 'monthly_management': return (
+        <MonthlyReportManagement
+          key={`monthly-mg-${resetKey}`}
+          reports={monthlyReports}
+          onDelete={async (id) => {
+            await saveMonthlyReports(monthlyReports.map(r => r.id === id ? { ...r, isDeleted: true } : r));
+          }}
+          onUpdate={async (id, updates) => {
+            await saveMonthlyReports(monthlyReports.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
+          }}
+        />
+      );
       case 'settings': return (
         <div className="space-y-6">
           <h1 className="text-2xl font-black text-slate-900">系統設定</h1>

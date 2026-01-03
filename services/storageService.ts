@@ -1,8 +1,8 @@
 
 // 儲存服務 - 支援 localStorage 和 GitHub Gist
-import { 
-  User, 
-  Role, 
+import {
+  User,
+  Role,
   OperationLog,
   RepairRequest,
   Hall,
@@ -13,7 +13,8 @@ import {
   AED,
   OfficialVehicle,
   Contract,
-  DisasterReport
+  DisasterReport,
+  MonthlyReport
 } from '../types';
 
 export type StorageType = 'local' | 'gist';
@@ -66,7 +67,7 @@ class StorageService {
     }
 
     const gistId = this.getGistId();
-    const url = gistId 
+    const url = gistId
       ? `https://api.github.com/gists/${gistId}`
       : 'https://api.github.com/gists';
 
@@ -338,6 +339,15 @@ class StorageService {
 
   async loadDisasterReports(): Promise<DisasterReport[] | null> {
     return await this.loadData('tsa_disaster_reports_v1', 'disaster_reports.json');
+  }
+
+  // 月報表資料
+  async saveMonthlyReports(reports: MonthlyReport[]): Promise<void> {
+    await this.saveData('tsa_monthly_reports_v1', reports, 'monthly_reports.json');
+  }
+
+  async loadMonthlyReports(): Promise<MonthlyReport[] | null> {
+    return await this.loadData('tsa_monthly_reports_v1', 'monthly_reports.json');
   }
 }
 
