@@ -116,7 +116,7 @@ export interface RepairRequest {
   isNoPaymentRequired?: boolean;
   paymentDate?: string;
   isInvoiceConfirmed?: boolean;
-  paymentEntity?: string; 
+  paymentEntity?: string;
   vendor?: string;
   amount?: number;
   remarks?: string;
@@ -148,14 +148,19 @@ export interface VehicleRecord {
   amount?: number;
 }
 
+export interface FilterInfo {
+  name: string;
+  lastReplacementDate: string;
+  reminderCycleDays: number;
+}
+
 export interface WaterDispenser {
   id: string;
   hallName: string;
   location: string;
   model: string;
   installDate: string;
-  maintenanceCycle: number;
-  filterStatus: any;
+  filters: FilterInfo[];
 }
 
 export interface Equipment {
@@ -237,13 +242,19 @@ export interface DisasterReport {
   createdAt: string;
 }
 
+export interface WaterMaintenancePart {
+  name: string;
+  price: number;
+}
+
 export interface WaterMaintenanceRecord {
   id: string;
   dispenserId: string;
   date: string;
-  type: string;
+  parts: WaterMaintenancePart[];
   description: string;
-  amount?: number;
+  totalAmount: number;
+  replacedFilterIndexes: number[]; // 哪些濾心被更換了 (0-4)
 }
 
 // 權限管理相關類型
