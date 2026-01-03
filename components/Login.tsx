@@ -63,7 +63,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
     setError('');
 
     setTimeout(() => {
-      if ((account === 'admin' && password === 'tsa2025') || (account === '' && password === '')) {
+      // 僅在開發環境允許預設帳號密碼登入
+      if (import.meta.env.DEV && account === 'admin' && password === 'tsa2025') {
         onLogin('mock-token-12345');
       } else {
         setError(t.errorMsg);
@@ -158,17 +159,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
             </button>
           </form>
 
-          <div className="pt-6 border-t border-slate-50">
-            <button
-              onClick={() => {
-                setAccount('admin');
-                setPassword('tsa2025');
-              }}
-              className="w-full py-3 text-indigo-600 font-bold text-xs hover:bg-indigo-50 rounded-xl transition-all"
-            >
-              {t.quickLogin}
-            </button>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="pt-6 border-t border-slate-50">
+              <button
+                onClick={() => {
+                  setAccount('admin');
+                  setPassword('tsa2025');
+                }}
+                className="w-full py-3 text-indigo-600 font-bold text-xs hover:bg-indigo-50 rounded-xl transition-all"
+              >
+                {t.quickLogin}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mt-12 flex flex-col items-center gap-4">
