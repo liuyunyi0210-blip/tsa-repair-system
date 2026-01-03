@@ -304,8 +304,22 @@ const App: React.FC = () => {
     setResetKey(prev => prev + 1);
   };
 
-  const handleVerifyReport = async (id: string) => {
-    await saveRequests(requests.map(r => r.id === id ? { ...r, isVerified: true, updatedAt: new Date().toISOString() } : r));
+  const handleVerifyReport = async (id: string, formData?: { title: string; category: Category; urgency: Urgency }) => {
+    await saveRequests(requests.map(r => {
+      if (r.id === id) {
+        return {
+          ...r,
+          isVerified: true,
+          updatedAt: new Date().toISOString(),
+          ...(formData && {
+            title: formData.title,
+            category: formData.category,
+            urgency: formData.urgency,
+          }),
+        };
+      }
+      return r;
+    }));
     alert('已成功核實回報並轉入工單管理！');
   };
 

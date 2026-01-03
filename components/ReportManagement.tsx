@@ -9,6 +9,7 @@ import {
   MapPin,
   User,
   ChevronRight,
+  ChevronDown,
   ShieldCheck,
   AlertCircle,
   Clock,
@@ -19,12 +20,12 @@ import {
   FileText,
   AlertTriangle
 } from 'lucide-react';
-import { RepairRequest, RepairStatus, Category, OrderType, Language } from '../types';
-import { CATEGORY_ICONS, MOCK_HALLS } from '../constants';
+import { RepairRequest, RepairStatus, Category, OrderType, Language, Urgency } from '../types';
+import { CATEGORY_ICONS, MOCK_HALLS, URGENCY_CONFIG } from '../constants';
 
 interface ReportManagementProps {
   requests: RepairRequest[];
-  onVerify: (id: string) => void;
+  onVerify: (id: string, formData?: { title: string; category: Category; urgency: Urgency }) => void;
   onDelete: (id: string) => void;
   onRestore: (id: string) => void;
   onPermanentDelete: (id: string) => void;
@@ -36,6 +37,11 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
   const [selectedPhotos, setSelectedPhotos] = useState<string[] | null>(null);
   const [selectedReport, setSelectedReport] = useState<RepairRequest | null>(null);
   const [showTrash, setShowTrash] = useState(false);
+  const [verifyFormData, setVerifyFormData] = useState<{
+    title: string;
+    category: Category;
+    urgency: Urgency;
+  } | null>(null);
 
   // 篩選出回報 (來自手機端的 VOLUNTEER 類型)
   const unverifiedReports = requests.filter(r => r.type === OrderType.VOLUNTEER && r.isDeleted === showTrash);
@@ -146,7 +152,14 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                 </div>
               ) : !report.isVerified ? (
                 <button
-                  onClick={() => setSelectedReport(report)}
+                  onClick={() => {
+                    setSelectedReport(report);
+                    setVerifyFormData({
+                      title: report.title,
+                      category: report.category,
+                      urgency: report.urgency || Urgency.MEDIUM,
+                    });
+                  }}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
                 >
                   <FileText size={16} /> 審核案件
@@ -262,7 +275,14 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                     ) : !report.isVerified ? (
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => setSelectedReport(report)}
+                          onClick={() => {
+                            setSelectedReport(report);
+                            setVerifyFormData({
+                              title: report.title,
+                              category: report.category,
+                              urgency: report.urgency || Urgency.MEDIUM,
+                            });
+                          }}
                           className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
                         >
                           <FileText size={16} /> 審核案件
@@ -333,10 +353,75 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                   <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(selectedReport.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
-              <button onClick={() => setSelectedReport(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={24} className="text-slate-400" /></button>
+              <button onClick={() => {
+                setSelectedReport(null);
+                setVerifyFormData(null);
+              }} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={24} className="text-slate-400" /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+              {verifyFormData && (
+                <div className="space-y-4 p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
+                  <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4">核實資訊補充</h4>
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">工單標題 *</label>
+                    <input
+                      type="text"
+                      required
+                      className="w-full px-4 py-3 bg-white border border-indigo-200 rounded-2xl outline-none font-bold focus:ring-2 focus:ring-indigo-500"
+                      value={verifyFormData.title}
+                      onChange={e => setVerifyFormData(prev => prev ? { ...prev, title: e.target.value } : null)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">類別 *</label>
+                      <div className="relative">
+                        <select
+                          required
+                          className="w-full px-4 py-3 bg-white border border-indigo-200 rounded-2xl outline-none font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500"
+                          value={verifyFormData.category}
+                          onChange={e => {
+                            const newCategory = e.target.value as Category;
+                            setVerifyFormData(prev => prev ? { 
+                              ...prev, 
+                              category: newCategory,
+                              title: `${newCategory} - ${selectedReport.hallName} 報修`
+                            } : null);
+                          }}
+                        >
+                          {Object.values(Category).map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none" size={20} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">優先權 *</label>
+                      <div className="relative">
+                        <select
+                          required
+                          className="w-full px-4 py-3 bg-white border border-indigo-200 rounded-2xl outline-none font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500"
+                          value={verifyFormData.urgency}
+                          onChange={e => setVerifyFormData(prev => prev ? { ...prev, urgency: e.target.value as Urgency } : null)}
+                        >
+                          {Object.values(Urgency).map(urgency => (
+                            <option key={urgency} value={urgency}>
+                              {URGENCY_CONFIG[urgency].label} ({urgency})
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none" size={20} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">狀況描述</label>
                 <p className="text-slate-700 font-bold leading-relaxed bg-slate-50 p-4 rounded-2xl">
@@ -363,6 +448,7 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                 onClick={() => {
                   onDelete(selectedReport.id);
                   setSelectedReport(null);
+                  setVerifyFormData(null);
                 }}
                 className="flex items-center justify-center gap-2 py-4 rounded-3xl font-black text-rose-500 bg-rose-50 hover:bg-rose-100 transition-colors"
               >
@@ -370,8 +456,13 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
               </button>
               <button
                 onClick={() => {
-                  onVerify(selectedReport.id);
-                  setSelectedReport(null);
+                  if (verifyFormData && verifyFormData.title.trim()) {
+                    onVerify(selectedReport.id, verifyFormData);
+                    setSelectedReport(null);
+                    setVerifyFormData(null);
+                  } else {
+                    alert('請填寫工單標題');
+                  }
                 }}
                 className="flex items-center justify-center gap-2 py-4 rounded-3xl font-black text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95"
               >

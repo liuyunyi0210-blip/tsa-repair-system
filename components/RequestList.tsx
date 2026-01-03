@@ -216,7 +216,6 @@ const RequestList: React.FC<RequestListProps> = ({
           <CategoryTab id={Category.AC} icon={<Wind size={20} />} color="bg-cyan-500" label={t.catAc} count={requests.filter(r => r.category === Category.AC && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
           <CategoryTab id={Category.ELECTRICAL} icon={<Zap size={20} />} color="bg-amber-500" label={t.catElec} count={requests.filter(r => r.category === Category.ELECTRICAL && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
           <CategoryTab id={Category.FIRE} icon={<ShieldCheck size={20} />} color="bg-rose-500" label={t.catFire} count={requests.filter(r => r.category === Category.FIRE && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
-          <CategoryTab id={Category.AED} icon={<HeartPulse size={20} />} color="bg-rose-600" label={t.catAed} count={requests.filter(r => r.category === Category.AED && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
           <CategoryTab id="VOLUNTEER_ONLY" icon={<Hammer size={20} />} color="bg-indigo-500" label={t.catRepair} count={requests.filter(r => r.type === OrderType.VOLUNTEER && !r.isDeleted && r.status !== RepairStatus.CLOSED).length} />
         </div>
         <button onClick={onNewRoutine} className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-[24px] font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
