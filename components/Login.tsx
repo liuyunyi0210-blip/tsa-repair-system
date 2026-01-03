@@ -9,6 +9,7 @@ import {
   Globe
 } from 'lucide-react';
 import { Language } from '../types';
+import { storageService } from '../services/storageService';
 
 interface LoginProps {
   onLogin: (token: string) => void;
@@ -57,20 +58,78 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
 
   const t = translations[language];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    setTimeout(() => {
-      // 僅在開發環境允許預設帳號密碼登入
-      if (import.meta.env.DEV && account === 'admin' && password === 'tsa2025') {
-        onLogin('mock-token-12345');
-      } else {
+    try {
+      // 從儲存服務讀取用戶資料
+      const users = await storageService.loadUsers();
+      
+      // 如果沒有用戶資料，檢查是否為開發環境的預設帳號
+      if (!users || users.length === 0) {
+        if (import.meta.env.DEV && account === 'admin' && password === 'tsa2025') {
+          // 建立預設管理員帳號
+          const defaultUser = {
+            id: 'user-admin',
+            account: 'admin',
+            password: 'tsa2025',
+            name: '系統管理員',
+            roleId: 'admin',
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastLoginAt: new Date().toISOString()
+          };
+          await storageService.saveUsers([defaultUser]);
+          onLogin('mock-token-12345');
+          return;
+        } else {
+          setError(t.errorMsg);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 查找匹配的用戶
+      const user = users.find(u => u.account === account.trim());
+
+      if (!user) {
         setError(t.errorMsg);
         setLoading(false);
+        return;
       }
-    }, 800);
+
+      // 檢查用戶是否啟用
+      if (!user.isActive) {
+        setError('此帳號已被停用，請聯絡系統管理員');
+        setLoading(false);
+        return;
+      }
+
+      // 驗證密碼
+      if (user.password !== password) {
+        setError(t.errorMsg);
+        setLoading(false);
+        return;
+      }
+
+      // 更新最後登入時間
+      const updatedUsers = users.map(u => 
+        u.id === user.id 
+          ? { ...u, lastLoginAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+          : u
+      );
+      await storageService.saveUsers(updatedUsers);
+
+      // 登入成功
+      onLogin(`token-${user.id}`);
+    } catch (error) {
+      console.error('登入錯誤:', error);
+      setError('登入時發生錯誤，請稍後再試');
+      setLoading(false);
+    }
   };
 
   return (
