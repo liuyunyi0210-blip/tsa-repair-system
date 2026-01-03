@@ -3,7 +3,15 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
+    // 優先從 process.env 讀取（GitHub Actions 設置的），然後從 .env 文件
     const env = loadEnv(mode, '.', '');
+    const apiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || '';
+    
+    // 構建時驗證環境變數
+    if (mode === 'production' && !apiKey) {
+      console.warn('⚠️  Warning: GEMINI_API_KEY is not set. The app may not work correctly.');
+    }
+    
     return {
       base: '/tsa-repair-system/',
       server: {
@@ -42,8 +50,9 @@ export default defineConfig(({ mode }) => {
         },
       ],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.API_KEY': JSON.stringify(apiKey),
+        'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(apiKey),
       },
       resolve: {
         alias: {
@@ -54,11 +63,31 @@ export default defineConfig(({ mode }) => {
         outDir: 'dist',
         assetsDir: 'assets',
         sourcemap: false,
+        minify: 'esbuild',
+        cssMinify: true,
         rollupOptions: {
           output: {
-            manualChunks: undefined,
+            manualChunks: (id) => {
+              // 優化代碼分割：將 node_modules 中的大型依賴分離
+              if (id.includes('node_modules')) {
+                if (id.includes('react') || id.includes('react-dom')) {
+                  return 'vendor-react';
+                }
+                if (id.includes('@google/genai')) {
+                  return 'vendor-gemini';
+                }
+                if (id.includes('recharts')) {
+                  return 'vendor-recharts';
+                }
+                return 'vendor';
+              }
+            },
+            chunkFileNames: 'assets/js/[name]-[hash].js',
+            entryFileNames: 'assets/js/[name]-[hash].js',
+            assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
           },
         },
+        chunkSizeWarningLimit: 1000,
       },
     };
 });

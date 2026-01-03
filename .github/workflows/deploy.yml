@@ -30,6 +30,15 @@ jobs:
       - name: Install dependencies
         run: npm install
       
+      - name: Validate environment variables
+        run: |
+          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "⚠️  Warning: GEMINI_API_KEY is not set in GitHub Secrets"
+            echo "The build will continue but the app may not work correctly."
+          else
+            echo "✓ GEMINI_API_KEY is set"
+          fi
+      
       - name: Build
         run: npm run build
         env:
