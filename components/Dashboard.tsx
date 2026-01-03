@@ -1,0 +1,239 @@
+
+import React from 'react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+import { 
+  Wrench, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle,
+  TrendingUp,
+  MapPin,
+  CalendarCheck,
+  History,
+  ShieldCheck,
+  Building2,
+  ChevronRight,
+  AlertTriangle
+} from 'lucide-react';
+import { RepairRequest, RepairStatus, OrderType, Category, Language } from '../types';
+import { STATUS_CONFIG, MOCK_HALLS, HEALTH_CHECK_CONFIG } from '../constants';
+
+interface DashboardProps {
+  requests: RepairRequest[];
+  language: Language;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ requests, language }) => {
+  const translations = {
+    [Language.ZH]: {
+      title: '會館設施運維總覽',
+      subtitle: '整合機電、消防、空調、飲水機等全項管理數據',
+      statTotal: '案件總數',
+      statOverdue: '逾期未處理',
+      statVolunteer: '志工報修',
+      statClosed: '已結案',
+      tableTitle: '全台會館設施健康檢查表',
+      normal: '運作正常',
+      warning: '有待辦/預警',
+      critical: '緊急故障',
+      hallName: '會館名稱',
+      manage: '管理',
+      pieTitle: '案件類型分佈',
+      barTitle: '工單進度統計'
+    },
+    [Language.JA]: {
+      title: '会館施設運用オーバービュー',
+      subtitle: '機電、消防、空調、給水機などの全管理データの統合',
+      statTotal: '総件数',
+      statOverdue: '期限超過',
+      statVolunteer: 'ボランティア報告',
+      statClosed: '完了済み',
+      tableTitle: '全国会館施設状態チェック表',
+      normal: '正常',
+      warning: '警告あり',
+      critical: '緊急故障',
+      hallName: '会館名',
+      manage: '管理',
+      pieTitle: '案件タイプ分布',
+      barTitle: '作業状況統計'
+    }
+  };
+
+  const t = translations[language];
+
+  const isOverdue = (req: RepairRequest) => {
+    if (req.type !== OrderType.ROUTINE || !req.lastExecutedDate || !req.maintenanceCycle) return false;
+    if (req.status === RepairStatus.CLOSED) return false;
+    
+    const lastDate = new Date(req.lastExecutedDate);
+    const nextDate = new Date(lastDate.getTime() + req.maintenanceCycle * 24 * 60 * 60 * 1000);
+    return nextDate < new Date();
+  };
+
+  const overdueCount = requests.filter(isOverdue).length;
+
+  const stats = [
+    { label: t.statTotal, value: requests.length, icon: <CalendarCheck size={24} />, color: 'bg-indigo-600' },
+    { label: t.statOverdue, value: overdueCount, icon: <History size={24} />, color: 'bg-rose-600' },
+    { label: t.statVolunteer, value: requests.filter(r => r.type === OrderType.VOLUNTEER).length, icon: <AlertCircle size={24} />, color: 'bg-orange-500' },
+    { label: t.statClosed, value: requests.filter(r => r.status === RepairStatus.CLOSED).length, icon: <CheckCircle2 size={24} />, color: 'bg-emerald-500' },
+  ];
+
+  const categoryData = requests.reduce((acc: any[], req) => {
+    const existing = acc.find(item => item.name === req.category);
+    if (existing) {
+      existing.value += 1;
+    } else {
+      acc.push({ name: req.category, value: 1 });
+    }
+    return acc;
+  }, []);
+
+  const COLORS = ['#4f46e5', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
+
+  const statusData = Object.keys(STATUS_CONFIG).map(key => ({
+    name: language === Language.JA ? (key === 'PENDING' ? '未着手' : key === 'IN_PROGRESS' ? '進行中' : '完了') : STATUS_CONFIG[key as RepairStatus].label,
+    count: requests.filter(r => r.status === key).length
+  }));
+
+  const getHallFacilityStatus = (hallName: string, category: Category) => {
+    const relatedRequests = requests.filter(r => r.hallName === hallName && r.category === category && r.status !== RepairStatus.CLOSED);
+    if (relatedRequests.some(r => r.urgency === 'EMERGENCY' || r.urgency === 'HIGH')) return 'RED';
+    if (relatedRequests.length > 0) return 'YELLOW';
+    return 'GREEN';
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{t.title}</h1>
+          <p className="text-slate-500 font-medium">{t.subtitle}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all">
+            <div className="flex items-start justify-between">
+              <div className={`p-4 rounded-2xl text-white shadow-lg ${stat.color}`}>
+                {stat.icon}
+              </div>
+            </div>
+            <div className="mt-6">
+              <h3 className="text-slate-500 text-sm font-bold">{stat.label}</h3>
+              <p className="text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+        <div className="flex items-center justify-between mb-8">
+           <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+             <ShieldCheck className="text-indigo-600" /> {t.tableTitle}
+           </h3>
+           <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
+              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> {t.normal}</span>
+              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div> {t.warning}</span>
+              <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div> {t.critical}</span>
+           </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+           <table className="w-full text-left">
+              <thead>
+                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                  <th className="px-4 py-4">{t.hallName}</th>
+                  {HEALTH_CHECK_CONFIG.map(facility => (
+                    <th key={facility.key} className="px-4 py-4 text-center">
+                       <div className="flex flex-col items-center gap-1">
+                          {facility.icon}
+                          <span>{facility.label}</span>
+                       </div>
+                    </th>
+                  ))}
+                  <th className="px-4 py-4 text-right">{t.manage}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {MOCK_HALLS.map(hall => (
+                  <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-4">
+                       <div className="flex items-center gap-3">
+                          <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16}/></div>
+                          <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
+                       </div>
+                    </td>
+                    {HEALTH_CHECK_CONFIG.map(facility => {
+                      const status = getHallFacilityStatus(hall.name, facility.key as Category);
+                      return (
+                        <td key={facility.key} className="px-4 py-4">
+                           <div className="flex justify-center">
+                              <div className={`w-4 h-4 rounded-full border-2 ${
+                                status === 'GREEN' ? 'bg-emerald-500 border-emerald-100 shadow-sm shadow-emerald-200' :
+                                status === 'YELLOW' ? 'bg-amber-500 border-amber-100' :
+                                'bg-rose-500 border-rose-100 animate-pulse'
+                              }`}></div>
+                           </div>
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-4 text-right">
+                       <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                          <ChevronRight size={18}/>
+                       </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+           </table>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+          <h3 className="text-xl font-bold text-slate-900 mb-8">{t.pieTitle}</h3>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value" stroke="none">
+                  {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+          <h3 className="text-xl font-bold text-slate-900 mb-8">{t.barTitle}</h3>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={statusData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} />
+                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '24px', border: 'none' }} />
+                <Bar dataKey="count" fill="#4f46e5" radius={[8, 8, 0, 0]} barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;

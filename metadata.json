@@ -1,0 +1,7 @@
+{
+  "name": "Copy of TSA會館修繕暨設施管理系統",
+  "description": "一個專為 TSA 設計的會館維修管理與派工系統，整合 Gemini AI 進行故障分析與維護建議。",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

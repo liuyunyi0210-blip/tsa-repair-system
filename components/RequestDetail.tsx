@@ -1,0 +1,199 @@
+
+import React from 'react';
+import { 
+  X, 
+  Calendar, 
+  User, 
+  MapPin, 
+  Wrench, 
+  Sparkles,
+  ArrowLeft,
+  Check,
+  ClipboardCheck,
+  FileText
+} from 'lucide-react';
+// Import Language type
+import { RepairRequest, RepairStatus, Language } from '../types';
+import { STATUS_CONFIG, URGENCY_CONFIG, CATEGORY_ICONS, STATUS_ORDER } from '../constants';
+
+interface RequestDetailProps {
+  request: RepairRequest;
+  onClose: () => void;
+  onUpdateStatus: (id: string, status: RepairStatus) => void;
+  onReportWork: (id: string) => void;
+  // Add language to props
+  language: Language;
+}
+
+// Destructure language from props
+const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdateStatus, onReportWork, language }) => {
+  const currentStatusIndex = STATUS_ORDER.indexOf(request.status);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-xl bg-slate-100`}>
+              {CATEGORY_ICONS[request.category]}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">{request.title}</h2>
+              <p className="text-sm text-slate-500">工單編號：{request.id}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Progress Bar Area */}
+        <div className="px-10 py-8 bg-slate-50 border-b border-slate-100">
+          <div className="relative flex justify-between">
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -translate-y-1/2 z-0"></div>
+            <div 
+              className="absolute top-1/2 left-0 h-0.5 bg-indigo-600 -translate-y-1/2 z-0 transition-all duration-500"
+              style={{ width: `${(currentStatusIndex / (STATUS_ORDER.length - 1)) * 100}%` }}
+            ></div>
+            
+            {STATUS_ORDER.map((status, index) => {
+              const isActive = index <= currentStatusIndex;
+              const isCurrent = index === currentStatusIndex;
+              return (
+                <div key={status} className="relative z-10 flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                    isCurrent ? 'bg-indigo-600 border-indigo-600 text-white' : 
+                    isActive ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 
+                    'bg-white border-slate-200 text-slate-300'
+                  }`}>
+                    {isActive ? <Check size={14} /> : <span className="text-[10px] font-bold">{index + 1}</span>}
+                  </div>
+                  <span className={`absolute -bottom-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest ${
+                    isActive ? 'text-indigo-600' : 'text-slate-400'
+                  }`}>
+                    {STATUS_CONFIG[status as RepairStatus].label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="flex items-start gap-3">
+                <MapPin size={20} className="text-slate-400 shrink-0 mt-1" />
+                <div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">會館與區域</p>
+                  <p className="text-base font-bold text-slate-800">{request.hallName}</p>
+                  <p className="text-xs text-slate-500">{request.hallArea || '尚未指定區域'}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Calendar size={20} className="text-slate-400 shrink-0 mt-1" />
+                <div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">報修日期</p>
+                  <p className="text-base font-bold text-slate-800">
+                    {new Date(request.createdAt).toLocaleString('zh-TW')}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="flex items-start gap-3">
+                <User size={20} className="text-slate-400 shrink-0 mt-1" />
+                <div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">提報人</p>
+                  <p className="text-base font-bold text-slate-800">{request.reporter}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Wrench size={20} className="text-slate-400 shrink-0 mt-1" />
+                <div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">優先權等級</p>
+                  <div className={`inline-flex px-2 py-0.5 rounded text-xs font-black uppercase ${URGENCY_CONFIG[request.urgency].color}`}>
+                    {URGENCY_CONFIG[request.urgency].label}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+            <h4 className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-3">詳細狀況描述</h4>
+            <p className="text-sm text-slate-700 leading-relaxed font-medium">{request.description}</p>
+          </div>
+
+          {request.aiAnalysis && (
+            <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-3xl space-y-4">
+              <div className="flex items-center gap-2 text-indigo-700">
+                <Sparkles size={18} />
+                <h4 className="font-bold">Gemini AI 智能分析</h4>
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-2">可能原因探討</p>
+                  <div className="flex flex-wrap gap-2">
+                    {request.aiAnalysis.potentialCauses.map((cause, i) => (
+                      <span key={i} className="text-xs bg-white text-indigo-600 px-3 py-1 rounded-full border border-indigo-100 shadow-sm font-bold">
+                        {cause}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-2">現場緊急處置建議</p>
+                  <p className="text-sm text-indigo-800 leading-relaxed bg-white/60 p-4 rounded-2xl border border-indigo-50 font-medium">
+                    {request.aiAnalysis.maintenanceTips}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-8 border-t border-slate-100 bg-slate-50 grid grid-cols-3 gap-4">
+           <button 
+             onClick={onClose}
+             className="flex items-center justify-center gap-2 px-6 py-4 bg-white text-slate-600 font-black rounded-3xl border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+           >
+             <ArrowLeft size={18} />
+             返回
+           </button>
+           
+           <button 
+             onClick={() => onUpdateStatus(request.id, RepairStatus.IN_PROGRESS)}
+             disabled={request.status !== RepairStatus.PENDING}
+             className={`flex items-center justify-center gap-2 px-6 py-4 font-black rounded-3xl shadow-xl transition-all active:scale-95 ${
+               request.status === RepairStatus.PENDING 
+               ? 'bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700' 
+               : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed'
+             }`}
+           >
+             <Check size={18} />
+             確認
+           </button>
+
+           <button 
+             onClick={() => onReportWork(request.id)}
+             disabled={request.status === RepairStatus.PENDING}
+             className={`flex items-center justify-center gap-2 px-6 py-4 font-black rounded-3xl shadow-xl transition-all active:scale-95 ${
+               request.status !== RepairStatus.PENDING
+               ? 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700' 
+               : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed'
+             }`}
+           >
+             <FileText size={18} />
+             回報工單
+           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RequestDetail;
