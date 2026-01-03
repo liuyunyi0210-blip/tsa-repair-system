@@ -591,7 +591,10 @@ const App: React.FC = () => {
           request={requests.find(r => r.id === selectedRequestId)!}
           onClose={() => setSelectedRequestId(null)}
           onUpdateStatus={async (id, status) => {
-            await saveRequests(requests.map(r => r.id === id ? { ...r, status } : r));
+            await saveRequests(requests.map(r => r.id === id ? { ...r, status, updatedAt: new Date().toISOString() } : r));
+          }}
+          onUpdateCategoryAndUrgency={async (id, category, urgency) => {
+            await saveRequests(requests.map(r => r.id === id ? { ...r, category, urgency, updatedAt: new Date().toISOString() } : r));
           }}
           onReportWork={(id) => {
             const req = requests.find(r => r.id === id);

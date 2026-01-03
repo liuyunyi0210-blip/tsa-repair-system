@@ -14,7 +14,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 // Import Language type
-import { RepairRequest, RepairStatus, Language } from '../types';
+import { RepairRequest, RepairStatus, Language, Category, Urgency } from '../types';
 import { STATUS_CONFIG, URGENCY_CONFIG, CATEGORY_ICONS, STATUS_ORDER } from '../constants';
 
 interface RequestDetailProps {
@@ -22,14 +22,46 @@ interface RequestDetailProps {
   onClose: () => void;
   onUpdateStatus: (id: string, status: RepairStatus) => void;
   onReportWork: (id: string) => void;
+  onUpdateCategoryAndUrgency?: (id: string, category: Category, urgency: Urgency) => void;
   // Add language to props
   language: Language;
 }
 
 // Destructure language from props
-const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdateStatus, onReportWork, language }) => {
+const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdateStatus, onReportWork, onUpdateCategoryAndUrgency, language }) => {
   const currentStatusIndex = STATUS_ORDER.indexOf(request.status);
   const [selectedPhotos, setSelectedPhotos] = React.useState<string[] | null>(null);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  const handleCategoryChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCategory = e.target.value as Category;
+    if (onUpdateCategoryAndUrgency && newCategory !== request.category) {
+      setIsSaving(true);
+      try {
+        await onUpdateCategoryAndUrgency(request.id, newCategory, request.urgency);
+      } catch (error) {
+        console.error('更新失敗:', error);
+        alert('更新失敗，請稍後再試');
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const handleUrgencyChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newUrgency = e.target.value as Urgency;
+    if (onUpdateCategoryAndUrgency && newUrgency !== request.urgency) {
+      setIsSaving(true);
+      try {
+        await onUpdateCategoryAndUrgency(request.id, request.category, newUrgency);
+      } catch (error) {
+        console.error('更新失敗:', error);
+        alert('更新失敗，請稍後再試');
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
 
   return (
     <>
@@ -113,14 +145,66 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdat
                 </div>
                 <div className="flex items-start gap-3">
                   <Wrench size={20} className="text-slate-400 shrink-0 mt-1" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">優先權等級</p>
-                    <div className={`inline-flex px-2 py-0.5 rounded text-xs font-black uppercase ${URGENCY_CONFIG[request.urgency].color}`}>
-                      {URGENCY_CONFIG[request.urgency].label}
-                    </div>
+                    {onUpdateCategoryAndUrgency ? (
+                      <select
+                        value={request.urgency}
+                        onChange={handleUrgencyChange}
+                        disabled={isSaving}
+                        className="w-full px-3 py-2 bg-white border-2 border-indigo-300 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:border-indigo-400 transition-colors appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-no-repeat bg-right pr-8"
+                        style={{ backgroundPosition: 'right 0.5rem center', paddingRight: '2rem' }}
+                      >
+                        <option value={Urgency.LOW}>低</option>
+                        <option value={Urgency.MEDIUM}>中</option>
+                        <option value={Urgency.HIGH}>高</option>
+                        <option value={Urgency.EMERGENCY}>緊急</option>
+                      </select>
+                    ) : (
+                      <div className={`inline-flex px-2 py-0.5 rounded text-xs font-black uppercase ${URGENCY_CONFIG[request.urgency].color}`}>
+                        {URGENCY_CONFIG[request.urgency].label}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* 類別選擇區域 */}
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+              <h4 className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-3">工單類別</h4>
+              {onUpdateCategoryAndUrgency ? (
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shrink-0">
+                    {CATEGORY_ICONS[request.category]}
+                  </div>
+                  <select
+                    value={request.category}
+                    onChange={handleCategoryChange}
+                    disabled={isSaving}
+                    className="flex-1 px-4 py-3 bg-white border-2 border-indigo-300 rounded-xl text-base font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:border-indigo-400 transition-colors appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-no-repeat bg-right pr-10"
+                    style={{ backgroundPosition: 'right 0.75rem center', paddingRight: '2.5rem' }}
+                  >
+                    <option value={Category.AC}>空調</option>
+                    <option value={Category.ELECTRICAL}>機電</option>
+                    <option value={Category.FIRE}>消防</option>
+                    <option value={Category.AED}>AED</option>
+                    <option value={Category.WEAK_CURRENT}>弱電</option>
+                    <option value={Category.PLUMBING}>衛生系統</option>
+                    <option value={Category.WATER}>飲水機</option>
+                    <option value={Category.GARDENING}>園藝</option>
+                    <option value={Category.DECO}>裝潢</option>
+                    <option value={Category.OTHER}>其他</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-white border border-slate-200">
+                    {CATEGORY_ICONS[request.category]}
+                  </div>
+                  <span className="text-base font-bold text-slate-800">{request.category}</span>
+                </div>
+              )}
             </div>
 
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
