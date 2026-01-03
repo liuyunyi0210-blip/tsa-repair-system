@@ -109,22 +109,8 @@ export default defineConfig(({ mode }) => {
         cssMinify: true,
         rollupOptions: {
           output: {
-            // 暫時禁用代碼分割，避免 React 19 的載入順序問題
-            // manualChunks: undefined,
-            manualChunks: (id) => {
-              // 只分割大型依賴，確保 React 相關代碼一起載入
-              if (id.includes('node_modules')) {
-                // React 和 react-dom 必須在一起，不能分開
-                if (id.includes('react') || id.includes('react-dom')) {
-                  return 'vendor-react';
-                }
-                // 其他依賴可以分開
-                if (id.includes('@google/genai')) {
-                  return 'vendor-gemini';
-                }
-                return 'vendor';
-              }
-            },
+            // 完全禁用代碼分割，避免 React 19 的載入順序和壓縮問題
+            manualChunks: undefined,
             chunkFileNames: 'assets/js/[name]-[hash].js',
             entryFileNames: 'assets/js/[name]-[hash].js',
             assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
