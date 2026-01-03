@@ -21,6 +21,8 @@ import UserManagement from './components/UserManagement';
 import StorageSettings from './components/StorageSettings';
 import MonthlyReportSubmission from './components/MonthlyReportSubmission';
 import MonthlyReportManagement from './components/MonthlyReportManagement';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterReport, Language, OperationLog, MonthlyReport } from './types';
 import { storageService } from './services/storageService';
 
@@ -79,6 +81,7 @@ const App: React.FC = () => {
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showStorageSettings, setShowStorageSettings] = useState(false);
   const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
+  const [publicView, setPublicView] = useState<'privacy' | 'terms' | null>(null);
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
     if (token) setIsAuthenticated(true);
@@ -380,7 +383,9 @@ const App: React.FC = () => {
   };
 
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} />;
+    if (publicView === 'privacy') return <div className="bg-slate-950 min-h-screen"><PrivacyPolicy onBack={() => setPublicView(null)} /></div>;
+    if (publicView === 'terms') return <div className="bg-slate-950 min-h-screen"><TermsOfService onBack={() => setPublicView(null)} /></div>;
+    return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} onShowPrivacy={() => setPublicView('privacy')} onShowTerms={() => setPublicView('terms')} />;
   }
 
   return (
