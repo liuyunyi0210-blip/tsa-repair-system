@@ -60,13 +60,13 @@ const MonthlyReportManagement: React.FC<MonthlyReportManagementProps> = ({ repor
             <head>
                 <meta charset="utf-8">
                 <style>
-                    body { font-family: "Microsoft JhengHei", "PMingLiU", serif; margin: 2cm; }
-                    .reporter-box { text-align: right; font-size: 11pt; margin-bottom: 5pt; }
-                    .title { text-align: center; font-size: 26pt; font-weight: bold; margin-bottom: 20pt; font-family: "標楷體", serif; }
-                    table { width: 100%; border: 1.5pt solid black; border-collapse: collapse; }
-                    th, td { border: 1.0pt solid black; padding: 10pt; vertical-align: middle; }
-                    th { font-size: 16pt; font-weight: bold; text-align: center; background-color: #ffffff; }
-                    td { font-size: 14pt; line-height: 1.5; }
+                    body { font-family: "Microsoft JhengHei", "PMingLiU", "新細明體", serif; margin: 2.54cm; }
+                    .reporter-box { text-align: right; font-size: 12pt; font-weight: bold; margin-bottom: 10pt; }
+                    .title { text-align: center; font-size: 24pt; font-weight: bold; margin-bottom: 20pt; font-family: "標楷體", serif; }
+                    table { width: 100%; border: 1pt solid black; border-collapse: collapse; table-layout: fixed; }
+                    th, td { border: 1pt solid black; padding: 8pt; vertical-align: middle; word-wrap: break-word; }
+                    th { font-size: 14pt; font-weight: bold; text-align: center; background-color: #ffffff; }
+                    td { font-size: 12pt; line-height: 1.5; }
                     .col-hall { width: 100pt; text-align: center; font-weight: bold; }
                     .col-content { text-align: left; }
                 </style>
@@ -85,7 +85,17 @@ const MonthlyReportManagement: React.FC<MonthlyReportManagementProps> = ({ repor
                         ${selectedReports.map(r => `
                             <tr>
                                 <td class="col-hall">${r.hallName}</td>
-                                <td class="col-content">${r.content.replace(/\n/g, '<br/>')}</td>
+                                <td class="col-content">
+                                    <div style="margin-bottom: 5pt;">${r.content.replace(/\n/g, '<br/>')}</div>
+                                    ${r.photoUrls && r.photoUrls.length > 0 ? `
+                                        <div style="margin-top: 10pt;">
+                                            <p style="font-size: 10pt; color: #555; font-weight: bold; margin-bottom: 4pt;">現場照片回報：</p>
+                                            <div style="display: flex; flex-wrap: wrap;">
+                                                ${r.photoUrls.map(url => `<img src="${url}" width="160" style="margin-right: 5pt; margin-bottom: 5pt; border: 1pt solid #ddd;"/>`).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -237,11 +247,30 @@ const MonthlyReportManagement: React.FC<MonthlyReportManagementProps> = ({ repor
                                     </div>
 
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div className="bg-slate-50/50 p-6 rounded-[24px] border border-slate-100">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">回報內容</label>
-                                            <p className="text-slate-600 leading-relaxed font-medium">
-                                                {report.content}
-                                            </p>
+                                        <div className="space-y-4">
+                                            <div className="bg-slate-50/50 p-6 rounded-[24px] border border-slate-100">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">回報內容</label>
+                                                <p className="text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">
+                                                    {report.content}
+                                                </p>
+                                            </div>
+
+                                            {report.photoUrls && report.photoUrls.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">附帶現場照片</label>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {report.photoUrls.map((url, idx) => (
+                                                            <div key={idx} className="w-24 h-24 rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+                                                                <img
+                                                                    src={url}
+                                                                    className="w-full h-full object-cover"
+                                                                    onClick={() => window.open(url, '_blank')}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className={`p-6 rounded-[24px] border border-dashed transition-all ${editingRemarkId === report.id ? 'bg-indigo-50/30 border-indigo-300' : 'bg-white border-slate-200'}`}>

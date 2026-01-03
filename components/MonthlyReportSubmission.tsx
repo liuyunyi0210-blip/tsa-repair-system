@@ -9,7 +9,10 @@ import {
     FileText,
     CheckCircle2,
     AlertCircle,
-    Edit2
+    Edit2,
+    Camera,
+    X,
+    Image as ImageIcon
 } from 'lucide-react';
 import { MonthlyReport } from '../types';
 import { MOCK_HALLS } from '../constants';
@@ -22,8 +25,8 @@ interface MonthlyReportSubmissionProps {
 
 const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ reports, onSubmit, onUpdate }) => {
     const [yearMonth, setYearMonth] = useState(new Date().toISOString().substring(0, 7));
-    const [submissionReports, setSubmissionReports] = useState<{ hallName: string; content: string }[]>([
-        { hallName: '', content: '' }
+    const [submissionReports, setSubmissionReports] = useState<{ hallName: string; content: string; photoUrls: string[] }[]>([
+        { hallName: '', content: '', photoUrls: [] }
     ]);
     const [editingReportId, setEditingReportId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
@@ -47,7 +50,7 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
     };
 
     const handleAddReport = () => {
-        setSubmissionReports([...submissionReports, { hallName: '', content: '' }]);
+        setSubmissionReports([...submissionReports, { hallName: '', content: '', photoUrls: [] }]);
     };
 
     const handleRemoveReport = (index: number) => {
@@ -56,9 +59,31 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
         }
     };
 
-    const handleUpdateReport = (index: number, field: 'hallName' | 'content', value: string) => {
+    const handleUpdateReport = (index: number, field: string, value: any) => {
         const newReports = [...submissionReports];
-        newReports[index][field] = value;
+        (newReports[index] as any)[field] = value;
+        setSubmissionReports(newReports);
+    };
+
+    const handleFileChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files) {
+            Array.from(files).forEach((file: File) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64 = reader.result as string;
+                    const newReports = [...submissionReports];
+                    newReports[index].photoUrls = [...newReports[index].photoUrls, base64];
+                    setSubmissionReports(newReports);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    };
+
+    const removePhoto = (reportIndex: number, photoIndex: number) => {
+        const newReports = [...submissionReports];
+        newReports[reportIndex].photoUrls = newReports[reportIndex].photoUrls.filter((_, i) => i !== photoIndex);
         setSubmissionReports(newReports);
     };
 
@@ -75,7 +100,7 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
                 yearMonth,
                 reporter: '測試管理員' // 實際應用中應從登入資訊取得
             })));
-            setSubmissionReports([{ hallName: '', content: '' }]);
+            setSubmissionReports([{ hallName: '', content: '', photoUrls: [] }]);
         }
     };
 
@@ -148,15 +173,30 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
                                         </div>
                                     </div>
                                 ) : (
-                                    <>
+                                    <div className="space-y-3">
                                         <p className="text-xs text-slate-500 line-clamp-2">{report.content}</p>
+
+                                        {report.photoUrls && report.photoUrls.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {report.photoUrls.map((url, idx) => (
+                                                    <div key={idx} className="w-12 h-12 rounded-lg overflow-hidden border border-slate-100 shadow-sm">
+                                                        <img
+                                                            src={url}
+                                                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                                            onClick={() => window.open(url, '_blank')}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
                                         {report.managerRemark && (
                                             <div className="mt-3 pt-3 border-t border-slate-50">
                                                 <p className="text-[10px] font-black text-indigo-600">主管回饋：</p>
                                                 <p className="text-[10px] text-indigo-400 italic">{report.managerRemark}</p>
                                             </div>
                                         )}
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         ))
@@ -220,17 +260,56 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
                                 </div>
                             </div>
 
-                            <div className="lg:col-span-8 space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <FileText size={14} /> 回報內容詳述
-                                </label>
-                                <textarea
-                                    rows={8}
-                                    placeholder="請在此處撰寫該會館本月的詳細工作內容與報表摘要..."
-                                    value={report.content}
-                                    onChange={(e) => handleUpdateReport(index, 'content', e.target.value)}
-                                    className="w-full px-6 py-5 bg-slate-50 border-2 border-transparent focus:border-indigo-600 focus:bg-white rounded-2xl font-medium transition-all outline-none resize-none"
-                                />
+                            <div className="lg:col-span-8 space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <FileText size={14} /> 回報內容詳述
+                                    </label>
+                                    <textarea
+                                        rows={8}
+                                        placeholder="請在此處撰寫該會館本月的詳細工作內容與報表摘要..."
+                                        value={report.content}
+                                        onChange={(e) => handleUpdateReport(index, 'content', e.target.value)}
+                                        className="w-full px-6 py-5 bg-slate-50 border-2 border-transparent focus:border-indigo-600 focus:bg-white rounded-2xl font-medium transition-all outline-none resize-none"
+                                    />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Camera size={14} /> 現場照片上傳 ({report.photoUrls.length}/5)
+                                    </label>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        {report.photoUrls.map((url, pIdx) => (
+                                            <div key={pIdx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 group">
+                                                <img src={url} className="w-full h-full object-cover" />
+                                                <button
+                                                    onClick={() => removePhoto(index, pIdx)}
+                                                    className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {report.photoUrls.length < 5 && (
+                                            <div className="relative aspect-square">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={(e) => handleFileChange(index, e)}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                />
+                                                <div className="absolute inset-0 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-all">
+                                                    <Plus size={24} />
+                                                    <span className="text-[10px] font-black mt-1">新增照片</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-medium italic">提示：支援多張照片上傳，直接點擊「新增照片」按鈕即可。</p>
+                                </div>
                             </div>
                         </div>
                     </div>
