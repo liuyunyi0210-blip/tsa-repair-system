@@ -100,6 +100,9 @@ export default defineConfig(({ mode }) => {
         minify: 'esbuild',
         cssMinify: true,
         rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, 'index.html'),
+          },
           output: {
             manualChunks: (id) => {
               // 優化代碼分割：將 node_modules 中的大型依賴分離
