@@ -82,6 +82,24 @@ const App: React.FC = () => {
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showStorageSettings, setShowStorageSettings] = useState(false);
   const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentRole, setCurrentRole] = useState<Role | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [publicView, setPublicView] = useState<'privacy' | 'terms' | null>(null);
+
+  // 當打開 MobileSimulation 時，重新載入災害回報資料
+  useEffect(() => {
+    if (showMobileSim) {
+      const reloadDisasters = async () => {
+        const savedDisasters = await storageService.loadDisasterReports();
+        if (savedDisasters) {
+          setDisasterReports(savedDisasters);
+        }
+      };
+      reloadDisasters();
+    }
+  }, [showMobileSim]);
+
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
     if (token) setIsAuthenticated(true);
