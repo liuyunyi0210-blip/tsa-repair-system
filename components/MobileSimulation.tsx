@@ -1,11 +1,11 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import exifr from 'exifr';
-import { 
-  X, 
-  Send, 
-  Camera, 
-  User, 
+import {
+  X,
+  Send,
+  Camera,
+  User,
   Calendar,
   Wrench,
   CheckCircle2,
@@ -32,9 +32,10 @@ interface MobileSimulationProps {
   onDisasterReport?: (disasterId: string, hallId: string, status: string, remark: string, reporter: string, position: string, phone: string) => void;
   activeDisaster?: DisasterReport | null;
   requests?: RepairRequest[];
+  liffProfile?: { displayName: string; userId: string; pictureUrl?: string } | null;
 }
 
-const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitReport, onDisasterReport, activeDisaster, requests = [] }) => {
+const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitReport, onDisasterReport, activeDisaster, requests = [], liffProfile }) => {
   const [activeForm, setActiveForm] = useState<'NONE' | 'REPAIR' | 'FINISH' | 'DISASTER'>('NONE');
 
   // 分離不同表單的數據
@@ -67,12 +68,12 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       address?: string;
     };
   }
-  
+
   const [repairImages, setRepairImages] = useState<ImageData[]>([]);
   const [finishImages, setFinishImages] = useState<ImageData[]>([]);
   const [repairErrors, setRepairErrors] = useState<{ name?: string; mission?: string; phone?: string; description?: string }>({});
   const [finishErrors, setFinishErrors] = useState<{ selectedRequestId?: string; name?: string; position?: string; phone?: string; workDescription?: string }>({});
-  
+
   const [disasterFormData, setDisasterFormData] = useState({
     hallName: MOCK_HALLS[0].name,
     status: HallSecurityStatus.SAFE,
@@ -120,7 +121,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     if (files) {
       // 獲取當前地理位置（作為備選）
       const currentLocation = await getCurrentLocation();
-      
+
       Array.from(files).forEach(async (file: File) => {
         const reader = new FileReader();
         reader.onloadend = async () => {
@@ -436,6 +437,15 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   // 獲取尚未完工的工單
   const unfinishedRequests = requests.filter(req => req.status !== RepairStatus.CLOSED && req.isVerified);
 
+  // 當有 LINE 個人資料時，自動填充表單
+  useEffect(() => {
+    if (liffProfile) {
+      setRepairFormData(prev => ({ ...prev, name: liffProfile.displayName }));
+      setFinishFormData(prev => ({ ...prev, name: liffProfile.displayName }));
+      setDisasterFormData(prev => ({ ...prev, reporter: liffProfile.displayName }));
+    }
+  }, [liffProfile]);
+
   // 當表單打開時自動聚焦
   useEffect(() => {
     if (activeForm === 'REPAIR' || activeForm === 'FINISH') {
@@ -640,8 +650,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           </button>
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={!repairFormData.name.trim() || !repairFormData.mission.trim() || !repairFormData.phone.trim() || !repairFormData.description.trim()}
           className="w-full py-5 bg-indigo-600 text-white font-black rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
         >
@@ -656,8 +666,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-[30] flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
       <div className="p-6 flex items-center justify-between border-b border-slate-50">
         <div className="flex items-center gap-3">
-          <button onClick={() => { 
-            setActiveForm('NONE'); 
+          <button onClick={() => {
+            setActiveForm('NONE');
             setFinishImages([]);
             setFinishFormData({
               selectedRequestId: '',
@@ -672,8 +682,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           </button>
           <h3 className="text-lg font-black text-slate-800">修繕完工回報</h3>
         </div>
-        <button onClick={() => { 
-          setActiveForm('NONE'); 
+        <button onClick={() => {
+          setActiveForm('NONE');
           setFinishImages([]);
           setFinishFormData({
             selectedRequestId: '',
@@ -827,100 +837,100 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工日期</label>
               </div>
-          <div className="relative">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="date"
-              className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white"
-              value={finishFormData.completionDate}
-              onChange={e => setFinishFormData(prev => ({ ...prev, completionDate: e.target.value }))}
-            />
-          </div>
-        </div>
+              <div className="relative">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="date"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                  value={finishFormData.completionDate}
+                  onChange={e => setFinishFormData(prev => ({ ...prev, completionDate: e.target.value }))}
+                />
+              </div>
+            </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工說明</label>
-            <span className={`text-[10px] font-bold ${finishFormData.workDescription.length > DESCRIPTION_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
-              {finishFormData.workDescription.length}/{DESCRIPTION_MAX_LENGTH}
-            </span>
-          </div>
-          <div className="relative">
-            <MessageCircle className="absolute left-4 top-4 text-slate-400" size={18} />
-            <textarea
-              required
-              maxLength={DESCRIPTION_MAX_LENGTH}
-              rows={5}
-              placeholder="請說明修繕完成的工作內容..."
-              className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold resize-none transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${finishErrors.workDescription ? 'ring-2 ring-rose-500 bg-rose-50' : ''
-                }`}
-              value={finishFormData.workDescription}
-              onChange={e => setFinishFormData(prev => ({ ...prev, workDescription: e.target.value }))}
-            />
-          </div>
-          {finishErrors.workDescription && (
-            <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-              <X size={12} /> {finishErrors.workDescription}
-            </p>
-          )}
-        </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工說明</label>
+                <span className={`text-[10px] font-bold ${finishFormData.workDescription.length > DESCRIPTION_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
+                  {finishFormData.workDescription.length}/{DESCRIPTION_MAX_LENGTH}
+                </span>
+              </div>
+              <div className="relative">
+                <MessageCircle className="absolute left-4 top-4 text-slate-400" size={18} />
+                <textarea
+                  required
+                  maxLength={DESCRIPTION_MAX_LENGTH}
+                  rows={5}
+                  placeholder="請說明修繕完成的工作內容..."
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold resize-none transition-all focus:ring-2 focus:ring-indigo-500 focus:bg-white ${finishErrors.workDescription ? 'ring-2 ring-rose-500 bg-rose-50' : ''
+                    }`}
+                  value={finishFormData.workDescription}
+                  onChange={e => setFinishFormData(prev => ({ ...prev, workDescription: e.target.value }))}
+                />
+              </div>
+              {finishErrors.workDescription && (
+                <p className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                  <X size={12} /> {finishErrors.workDescription}
+                </p>
+              )}
+            </div>
 
-        <div className="space-y-3">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工照片 ({finishImages.length})</label>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">完工照片 ({finishImages.length})</label>
 
-          {finishImages.length > 0 && (
-            <div className="space-y-3 mb-2">
-              {finishImages.map((img, idx) => (
-                <div key={idx} className="relative rounded-xl overflow-hidden border border-slate-100 group bg-slate-50">
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-1 relative aspect-square">
-                      <img src={img.url} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx, 'FINISH')}
-                        className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                    <div className="col-span-2 p-3 flex flex-col justify-center">
-                      <div className="text-[10px] text-slate-600 space-y-1">
-                        <div className="flex items-center gap-1">
-                          <Calendar size={10} />
-                          <span className="font-bold">拍攝時間：</span>
-                          <span>{formatTimestamp(img.timestamp)}</span>
+              {finishImages.length > 0 && (
+                <div className="space-y-3 mb-2">
+                  {finishImages.map((img, idx) => (
+                    <div key={idx} className="relative rounded-xl overflow-hidden border border-slate-100 group bg-slate-50">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-1 relative aspect-square">
+                          <img src={img.url} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx, 'FINISH')}
+                            className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={12} />
+                          </button>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin size={10} />
-                          <span className="font-bold">拍攝地點：</span>
-                          <span className="text-xs">{formatLocation(img.location)}</span>
+                        <div className="col-span-2 p-3 flex flex-col justify-center">
+                          <div className="text-[10px] text-slate-600 space-y-1">
+                            <div className="flex items-center gap-1">
+                              <Calendar size={10} />
+                              <span className="font-bold">拍攝時間：</span>
+                              <span>{formatTimestamp(img.timestamp)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin size={10} />
+                              <span className="font-bold">拍攝地點：</span>
+                              <span className="text-xs">{formatLocation(img.location)}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={e => handleFileChange(e, 'FINISH')}
+                accept="image/*"
+                multiple
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full p-6 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center gap-2 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+              >
+                <Camera size={32} />
+                <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
+              </button>
             </div>
-          )}
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={e => handleFileChange(e, 'FINISH')}
-            accept="image/*"
-            multiple
-            className="hidden"
-          />
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full p-6 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center gap-2 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
-          >
-            <Camera size={32} />
-            <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
-          </button>
-        </div>
 
             <button
               type="submit"
@@ -940,8 +950,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     <div className="absolute inset-x-0 bottom-0 top-16 bg-white z-[30] flex flex-col animate-in slide-in-from-bottom duration-300 rounded-t-[40px] shadow-2xl border-t border-slate-100">
       <div className="p-6 flex items-center justify-between border-b border-slate-50">
         <div className="flex items-center gap-3">
-          <button onClick={() => { 
-            setActiveForm('NONE'); 
+          <button onClick={() => {
+            setActiveForm('NONE');
             setDisasterFormData({
               hallName: MOCK_HALLS[0].name,
               status: HallSecurityStatus.SAFE,
@@ -956,8 +966,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           </button>
           <h3 className="text-lg font-black text-slate-800">災害狀況回報</h3>
         </div>
-        <button onClick={() => { 
-          setActiveForm('NONE'); 
+        <button onClick={() => {
+          setActiveForm('NONE');
           setDisasterFormData({
             hallName: MOCK_HALLS[0].name,
             status: HallSecurityStatus.SAFE,
@@ -1014,15 +1024,14 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                     key={status}
                     type="button"
                     onClick={() => setDisasterFormData(prev => ({ ...prev, status }))}
-                    className={`px-4 py-3 rounded-2xl font-black transition-all ${
-                      disasterFormData.status === status
+                    className={`px-4 py-3 rounded-2xl font-black transition-all ${disasterFormData.status === status
                         ? status === HallSecurityStatus.SAFE
                           ? 'bg-emerald-600 text-white shadow-lg'
                           : status === HallSecurityStatus.LIGHT
-                          ? 'bg-amber-600 text-white shadow-lg'
-                          : 'bg-rose-600 text-white shadow-lg'
+                            ? 'bg-amber-600 text-white shadow-lg'
+                            : 'bg-rose-600 text-white shadow-lg'
                         : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                    }`}
+                      }`}
                   >
                     {status}
                   </button>
@@ -1135,8 +1144,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
               )}
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={!disasterFormData.reporter.trim() || !disasterFormData.phone.trim()}
               className="w-full py-5 bg-rose-600 text-white font-black rounded-3xl shadow-xl shadow-rose-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
             >

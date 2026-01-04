@@ -26,6 +26,7 @@ import TermsOfService from './components/TermsOfService';
 import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterReport, Language, OperationLog, MonthlyReport, User, Role, HallSecurityStatus } from './types';
 import { storageService } from './services/storageService';
 import { MOCK_HALLS } from './constants';
+import liff from '@line/liff';
 
 const INITIAL_REQUESTS: RepairRequest[] = [
   {
@@ -86,6 +87,8 @@ const App: React.FC = () => {
   const [currentRole, setCurrentRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [publicView, setPublicView] = useState<'privacy' | 'terms' | null>(null);
+  const [liffProfile, setLiffProfile] = useState<{ displayName: string; userId: string; pictureUrl?: string } | null>(null);
+  const [isLiffInit, setIsLiffInit] = useState(false);
 
   // 當打開 MobileSimulation 時，重新載入災害回報資料
   useEffect(() => {
@@ -177,6 +180,30 @@ const App: React.FC = () => {
       }
     };
     loadData();
+
+    // 初始化 LIFF
+    const initLiff = async () => {
+      try {
+        await liff.init({ liffId: '2008818149-3JrTOKeE' });
+        setIsLiffInit(true);
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          setLiffProfile({
+            displayName: profile.displayName,
+            userId: profile.userId,
+            pictureUrl: profile.pictureUrl
+          });
+
+          // 如果是在 LINE 內部開啟，且未登入系統，則自動跳轉至手機報修模擬器
+          if (liff.isInClient() && !localStorage.getItem('tsa_auth_token')) {
+            setShowMobileSim(true);
+          }
+        }
+      } catch (err) {
+        console.error('LIFF Initialization failed', err);
+      }
+    };
+    initLiff();
   }, []);
 
   const handleLogOperation = async (logData: Omit<OperationLog, 'id' | 'createdAt'>) => {
@@ -568,6 +595,42 @@ const App: React.FC = () => {
     return currentRole.permissions.includes(permissionId);
   };
 
+  // 優先顯示手機報修畫面 (針對 LINE 志工)
+  if (showMobileSim) {
+    return (
+      <div className="bg-slate-950 min-h-screen flex items-center justify-center p-0">
+        <MobileSimulation
+          key={`mobile-sim-${disasterReports.length}`}
+          activeDisaster={disasterReports && disasterReports.length > 0 ? disasterReports[0] : null}
+          requests={requests}
+          liffProfile={liffProfile}
+          onClose={() => {
+            setShowMobileSim(false);
+            if (liff.isInClient()) {
+              liff.closeWindow();
+            }
+          }}
+          onDisasterReport={handleDisasterReport}
+          onSubmitReport={async (data) => {
+            if (data.id) {
+              await handleWorkReportSubmit([data.id], {
+                ...data,
+                status: RepairStatus.CLOSED,
+                isWorkFinished: true,
+                completionDate: data.completionDate
+              }, true);
+            } else {
+              await handleAddRequest({ ...data, isVerified: false });
+            }
+            if (liff.isInClient()) {
+              setTimeout(() => liff.closeWindow(), 2000);
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     if (publicView === 'privacy') return <div className="bg-slate-950 min-h-screen"><PrivacyPolicy onBack={() => setPublicView(null)} /></div>;
     if (publicView === 'terms') return <div className="bg-slate-950 min-h-screen"><TermsOfService onBack={() => setPublicView(null)} /></div>;
@@ -617,7 +680,13 @@ const App: React.FC = () => {
           key={`mobile-sim-${disasterReports.length}`}
           activeDisaster={disasterReports && disasterReports.length > 0 ? disasterReports[0] : null}
           requests={requests}
-          onClose={() => setShowMobileSim(false)}
+          liffProfile={liffProfile}
+          onClose={() => {
+            setShowMobileSim(false);
+            if (liff.isInClient()) {
+              liff.closeWindow();
+            }
+          }}
           onDisasterReport={handleDisasterReport}
           onSubmitReport={async (data) => {
             if (data.id) {
@@ -631,6 +700,11 @@ const App: React.FC = () => {
             } else {
               // New report
               await handleAddRequest({ ...data, isVerified: false });
+            }
+
+            // 如果在 LINE 裡面，送出後可以考慮直接關閉或提示
+            if (liff.isInClient()) {
+              setTimeout(() => liff.closeWindow(), 2000);
             }
           }}
         />
