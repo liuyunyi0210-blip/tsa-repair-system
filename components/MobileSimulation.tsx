@@ -153,42 +153,35 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   };
 
   // 處理文件上傳
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setIsProcessingImages(true);
-    const currentLocation = await getCurrentLocation();
     const fileArray = Array.from(files);
 
-    for (const file of fileArray) {
+    fileArray.forEach(async (file: any) => {
       try {
         const reader = new FileReader();
         reader.onload = async (event: any) => {
           const imageUrl = event.target.result as string;
-
-          // 讀取時間 (處理型別)
-          const lastMod = (file as any).lastModified ? new Date((file as any).lastModified).toISOString() : new Date().toISOString();
-
-          const imageData: ImageData = {
+          const initialData: ImageData = {
             url: imageUrl,
-            timestamp: lastMod,
-            location: currentLocation || undefined
+            timestamp: file.lastModified ? new Date(file.lastModified).toISOString() : new Date().toISOString(),
+            location: undefined
           };
 
-          // 先直接顯示
+          // 立即更新畫面顯示圖片
           if (formType === 'REPAIR') {
-            setRepairImages(prev => [...prev, imageData]);
+            setRepairImages(prev => [...prev, initialData]);
           } else {
-            setFinishImages(prev => [...prev, imageData]);
+            setFinishImages(prev => [...prev, initialData]);
           }
 
-          // 背景讀取 EXIF
-          try {
-            const exifData = await exifr.parse(file as any, { gps: true, exif: true });
+          // 背景讀取 EXIF，讀到再更新資料，不影響圖片顯示
+          exifr.parse(file, { gps: true, exif: true }).then(exifData => {
             if (exifData) {
-              const updatedTime = exifData.DateTimeOriginal ? new Date(exifData.DateTimeOriginal).toISOString() : lastMod;
-              const updatedLoc = (exifData.latitude && exifData.longitude) ? { latitude: exifData.latitude, longitude: exifData.longitude } : (currentLocation || undefined);
+              const updatedTime = exifData.DateTimeOriginal ? new Date(exifData.DateTimeOriginal).toISOString() : initialData.timestamp;
+              const updatedLoc = (exifData.latitude && exifData.longitude) ? { latitude: exifData.latitude, longitude: exifData.longitude } : undefined;
 
               const updateFn = (prev: ImageData[]) => prev.map(img =>
                 img.url === imageUrl ? { ...img, timestamp: updatedTime, location: updatedLoc } : img
@@ -197,15 +190,14 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
               if (formType === 'REPAIR') setRepairImages(updateFn);
               else setFinishImages(updateFn);
             }
-          } catch (e) { /* EXIF 失敗不影響顯示 */ }
+          }).catch(() => { });
         };
-        reader.readAsDataURL(file as any);
+        reader.readAsDataURL(file);
       } catch (err) {
-        console.error('圖片處理失敗:', err);
+        console.error('圖片處理錯誤:', err);
       }
-    }
+    });
 
-    setIsProcessingImages(false);
     e.target.value = '';
   };
 
