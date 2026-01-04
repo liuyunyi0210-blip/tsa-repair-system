@@ -77,7 +77,10 @@ const App: React.FC = () => {
   const [reportingRequestId, setReportingRequestId] = useState<string | null>(null);
   const [bulkReportingIds, setBulkReportingIds] = useState<string[] | null>(null);
   const [showForm, setShowForm] = useState<{ show: boolean, type: OrderType }>({ show: false, type: OrderType.VOLUNTEER });
-  const [showMobileSim, setShowMobileSim] = useState(false);
+  const [showMobileSim, setShowMobileSim] = useState(() => {
+    // 預先偵測是否在 LINE 瀏覽器中
+    return /Line/i.test(navigator.userAgent);
+  });
   const [resetKey, setResetKey] = useState(0);
   const [showPermissionPanel, setShowPermissionPanel] = useState(false);
   const [showUserPanel, setShowUserPanel] = useState(false);
@@ -186,6 +189,12 @@ const App: React.FC = () => {
       try {
         await liff.init({ liffId: '2008818149-3JrTOKeE' });
         setIsLiffInit(true);
+
+        // 只要是在 LINE 裡面，就開啟報修畫面
+        if (liff.isInClient()) {
+          setShowMobileSim(true);
+        }
+
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
           setLiffProfile({
@@ -193,11 +202,9 @@ const App: React.FC = () => {
             userId: profile.userId,
             pictureUrl: profile.pictureUrl
           });
-
-          // 如果是在 LINE 內部開啟，且未登入系統，則自動跳轉至手機報修模擬器
-          if (liff.isInClient() && !localStorage.getItem('tsa_auth_token')) {
-            setShowMobileSim(true);
-          }
+        } else if (liff.isInClient()) {
+          // 在 LINE 裡面但沒登入，強制登入以取得名字
+          liff.login();
         }
       } catch (err) {
         console.error('LIFF Initialization failed', err);
