@@ -159,60 +159,49 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
     setIsProcessingImages(true);
     const currentLocation = await getCurrentLocation();
-
-    // 將 FileList 轉為明確的 File 陣列，避免型別問題
-    const fileArray: File[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const f = files.item(i);
-      if (f) fileArray.push(f);
-    }
+    const fileArray = Array.from(files);
 
     for (const file of fileArray) {
       try {
-        // --- 優化：秒速預覽 ---
-        const fastPreviewUrl = URL.createObjectURL(file);
-        const placeholderData: ImageData = {
-          url: fastPreviewUrl,
-          timestamp: new Date(file.lastModified).toISOString(),
-          location: currentLocation || undefined
-        };
+        const reader = new FileReader();
+        reader.onload = async (event: any) => {
+          const imageUrl = event.target.result as string;
 
-        if (formType === 'REPAIR') {
-          setRepairImages(prev => [...prev, placeholderData]);
-        } else {
-          setFinishImages(prev => [...prev, placeholderData]);
-        }
+          // 讀取時間 (處理型別)
+          const lastMod = (file as any).lastModified ? new Date((file as any).lastModified).toISOString() : new Date().toISOString();
 
-        // 背景處理
-        (async () => {
-          try {
-            const compressedUrl = await compressImage(file);
-            const exifData = await exifr.parse(file, { gps: true, exif: true }).catch(() => null);
+          const imageData: ImageData = {
+            url: imageUrl,
+            timestamp: lastMod,
+            location: currentLocation || undefined
+          };
 
-            const finalTimestamp = exifData?.DateTimeOriginal
-              ? new Date(exifData.DateTimeOriginal).toISOString()
-              : new Date(file.lastModified).toISOString();
-
-            let finalLocation = currentLocation || undefined;
-            if (exifData?.latitude && exifData?.longitude) {
-              finalLocation = { latitude: exifData.latitude, longitude: exifData.longitude };
-            }
-
-            const updateLogic = (prev: ImageData[]) =>
-              prev.map(img => img.url === fastPreviewUrl ? { url: compressedUrl, timestamp: finalTimestamp, location: finalLocation } : img);
-
-            if (formType === 'REPAIR') {
-              setRepairImages(updateLogic);
-            } else {
-              setFinishImages(updateLogic);
-            }
-          } catch (bgErr) {
-            console.error('背景處理失敗:', bgErr);
+          // 先直接顯示
+          if (formType === 'REPAIR') {
+            setRepairImages(prev => [...prev, imageData]);
+          } else {
+            setFinishImages(prev => [...prev, imageData]);
           }
-        })();
 
+          // 背景讀取 EXIF
+          try {
+            const exifData = await exifr.parse(file as any, { gps: true, exif: true });
+            if (exifData) {
+              const updatedTime = exifData.DateTimeOriginal ? new Date(exifData.DateTimeOriginal).toISOString() : lastMod;
+              const updatedLoc = (exifData.latitude && exifData.longitude) ? { latitude: exifData.latitude, longitude: exifData.longitude } : (currentLocation || undefined);
+
+              const updateFn = (prev: ImageData[]) => prev.map(img =>
+                img.url === imageUrl ? { ...img, timestamp: updatedTime, location: updatedLoc } : img
+              );
+
+              if (formType === 'REPAIR') setRepairImages(updateFn);
+              else setFinishImages(updateFn);
+            }
+          } catch (e) { /* EXIF 失敗不影響顯示 */ }
+        };
+        reader.readAsDataURL(file as any);
       } catch (err) {
-        console.error('圖片處理錯誤:', err);
+        console.error('圖片處理失敗:', err);
       }
     }
 
