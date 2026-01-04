@@ -88,7 +88,6 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   const finishFileInputRef = useRef<HTMLInputElement>(null);
   const reporterInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
-  const [isProcessingImages, setIsProcessingImages] = useState(false);
 
   // 字數限制
   const NAME_MAX_LENGTH = 50;
@@ -660,21 +659,11 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <button
             type="button"
             onClick={() => repairFileInputRef.current?.click()}
-            className={`w-full p-6 border-2 border-dashed rounded-[32px] flex flex-col items-center gap-2 transition-all ${isProcessingImages ? 'bg-slate-50 border-slate-200' : 'border-slate-200 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50'
-              }`}
+            className="w-full p-6 border-2 border-dashed border-slate-200 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50 rounded-[32px] flex flex-col items-center gap-2 transition-all active:scale-95"
           >
-            {isProcessingImages ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs font-black text-indigo-500">正在處理照片，請稍候...</p>
-              </div>
-            ) : (
-              <>
-                <Camera size={32} />
-                <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
-                <p className="text-[10px] opacity-60">支援連選多張照片</p>
-              </>
-            )}
+            <Camera size={32} />
+            <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
+            <p className="text-[10px] opacity-60">支援連選多張照片</p>
           </button>
         </div>
 
@@ -953,21 +942,11 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
               <button
                 type="button"
                 onClick={() => finishFileInputRef.current?.click()}
-                className={`w-full p-6 border-2 border-dashed rounded-[32px] flex flex-col items-center gap-2 transition-all ${isProcessingImages ? 'bg-slate-50 border-slate-200' : 'border-slate-200 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50'
-                  }`}
+                className="w-full p-6 border-2 border-dashed border-slate-200 text-slate-400 hover:border-emerald-300 hover:bg-emerald-50 rounded-[32px] flex flex-col items-center gap-2 transition-all active:scale-95"
               >
-                {isProcessingImages ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-xs font-black text-emerald-500">正在處理照片，請稍候...</p>
-                  </div>
-                ) : (
-                  <>
-                    <Camera size={32} />
-                    <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
-                    <p className="text-[10px] opacity-60">支援連選多張照片</p>
-                  </>
-                )}
+                <Camera size={32} />
+                <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
+                <p className="text-[10px] opacity-60">支援連選多張照片</p>
               </button>
             </div>
 
@@ -1278,7 +1257,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         {/* 底部資訊 */}
         <div className="pt-12 pb-6 text-center">
           <p className="text-slate-300 text-[10px] font-black uppercase tracking-widest">TSA Facility Management System</p>
-          <p className="text-slate-300 text-[10px] mt-1">Version 2.0.0 (LINE LIFF)</p>
+          <p className="text-slate-300 text-[10px] mt-1">Version 1.0.5 (Update: Photos Fix)</p>
         </div>
       </div>
 
