@@ -27,6 +27,7 @@ import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterRepo
 import { storageService } from './services/storageService';
 import { MOCK_HALLS } from './constants';
 import liff from '@line/liff';
+import { Database, ShieldCheck, Users } from 'lucide-react';
 
 const INITIAL_REQUESTS: RepairRequest[] = [
   {
@@ -91,7 +92,6 @@ const App: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [publicView, setPublicView] = useState<'privacy' | 'terms' | null>(null);
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; userId: string; pictureUrl?: string } | null>(null);
-  const [isLiffInit, setIsLiffInit] = useState(false);
 
   // 暴露設定介面給全局，讓 MobileSimulation 可以呼叫
   useEffect(() => {
@@ -193,7 +193,6 @@ const App: React.FC = () => {
     const initLiff = async () => {
       try {
         await liff.init({ liffId: '2008818149-3JrTOKeE' });
-        setIsLiffInit(true);
 
         // 只要是在 LINE 裡面，就開啟報修畫面
         if (liff.isInClient()) {
@@ -548,9 +547,7 @@ const App: React.FC = () => {
             >
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-indigo-100 rounded-xl">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+                  <Users className="w-6 h-6 text-indigo-600" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 mb-1">帳號管理</h3>
@@ -564,9 +561,7 @@ const App: React.FC = () => {
             >
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-purple-100 rounded-xl">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
+                  <ShieldCheck className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 mb-1">角色權限設定</h3>
@@ -580,9 +575,7 @@ const App: React.FC = () => {
             >
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-emerald-100 rounded-xl">
-                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                  </svg>
+                  <Database className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 mb-1">資料儲存設定</h3>
@@ -687,40 +680,6 @@ const App: React.FC = () => {
         />
       )}
 
-      {showMobileSim && (
-        <MobileSimulation
-          key={`mobile-sim-${disasterReports.length}`}
-          activeDisaster={disasterReports && disasterReports.length > 0 ? disasterReports[0] : null}
-          requests={requests}
-          liffProfile={liffProfile}
-          onClose={() => {
-            setShowMobileSim(false);
-            if (liff.isInClient()) {
-              liff.closeWindow();
-            }
-          }}
-          onDisasterReport={handleDisasterReport}
-          onSubmitReport={async (data) => {
-            if (data.id) {
-              // Existing request being completed
-              await handleWorkReportSubmit([data.id], {
-                ...data,
-                status: RepairStatus.CLOSED,
-                isWorkFinished: true,
-                completionDate: data.completionDate
-              }, true);
-            } else {
-              // New report
-              await handleAddRequest({ ...data, isVerified: false });
-            }
-
-            // 如果在 LINE 裡面，送出後可以考慮直接關閉或提示
-            if (liff.isInClient()) {
-              setTimeout(() => liff.closeWindow(), 2000);
-            }
-          }}
-        />
-      )}
 
       <UserManagement
         language={language}

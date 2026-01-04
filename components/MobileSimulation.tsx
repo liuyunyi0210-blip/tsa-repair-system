@@ -29,7 +29,7 @@ import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallS
 
 interface MobileSimulationProps {
   onClose: () => void;
-  onSubmitReport: (data: Partial<RepairRequest>) => void;
+  onSubmitReport: (data: Partial<RepairRequest>) => Promise<void> | void;
   onDisasterReport?: (disasterId: string, hallId: string, status: string, remark: string, reporter: string, position: string, phone: string) => void;
   activeDisaster?: DisasterReport | null;
   requests?: RepairRequest[];
