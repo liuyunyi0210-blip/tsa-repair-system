@@ -93,6 +93,11 @@ const App: React.FC = () => {
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; userId: string; pictureUrl?: string } | null>(null);
   const [isLiffInit, setIsLiffInit] = useState(false);
 
+  // 暴露設定介面給全局，讓 MobileSimulation 可以呼叫
+  useEffect(() => {
+    (window as any).showStorageSettings = () => setShowStorageSettings(true);
+  }, []);
+
   // 當打開 MobileSimulation 時，重新載入災害回報資料
   useEffect(() => {
     if (showMobileSim) {

@@ -21,7 +21,8 @@ import {
   Trash2,
   Phone,
   MapPin,
-  Briefcase
+  Briefcase,
+  Database
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallSecurityStatus } from '../types';
@@ -126,7 +127,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_SIZE = 1200; // 最大尺寸
+          const MAX_SIZE = 800; // 降低尺寸以符合 Gist 1MB 限制
 
           if (width > height) {
             if (width > MAX_SIZE) {
@@ -143,7 +144,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.7)); // 壓縮為 0.7 品質的 jpeg
+          resolve(canvas.toDataURL('image/jpeg', 0.5)); // 降低品質到 0.5
         };
         img.src = e.target?.result as string;
       };
@@ -301,45 +302,40 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   };
 
   // 處理報修表單提交
-  const handleRepairSubmit = (e: React.FormEvent) => {
+  const handleRepairSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateRepairForm()) {
-      if (repairErrors.name) {
-        reporterInputRef.current?.focus();
-      } else if (repairErrors.mission) {
-        // 可以添加 mission 輸入框的 ref
-      } else if (repairErrors.phone) {
-        // 可以添加 phone 輸入框的 ref
-      } else if (repairErrors.description) {
-        descriptionInputRef.current?.focus();
-      }
       return;
     }
 
-    onSubmitReport({
-      ...repairFormData,
-      type: OrderType.VOLUNTEER,
-      title: `${repairFormData.category} - ${repairFormData.hallName} 報修`,
-      reporter: `${repairFormData.name} / ${repairFormData.mission}`,
-      photoUrls: repairImages.map(img => img.url),
-      photoMetadata: repairImages.map(img => ({
-        timestamp: img.timestamp,
-        location: img.location,
-      })),
-    });
-    alert('感謝您的回報，工單已建立！照片已同步上傳至系統。');
-    setActiveForm('NONE');
-    setRepairImages([]);
-    setRepairFormData({
-      hallName: MOCK_HALLS[0].name,
-      name: '',
-      mission: '',
-      phone: '',
-      description: '',
-      category: Category.AC,
-    });
-    setRepairErrors({});
+    try {
+      await onSubmitReport({
+        ...repairFormData,
+        type: OrderType.VOLUNTEER,
+        title: `${repairFormData.category} - ${repairFormData.hallName} 報修`,
+        reporter: `${repairFormData.name} / ${repairFormData.mission}`,
+        photoUrls: repairImages.map(img => img.url),
+        photoMetadata: repairImages.map(img => ({
+          timestamp: img.timestamp,
+          location: img.location,
+        })),
+      });
+      alert('感謝您的回報，工單已建立並同步至雲端！');
+      setActiveForm('NONE');
+      setRepairImages([]);
+      setRepairFormData({
+        hallName: MOCK_HALLS[0].name,
+        name: liffProfile?.displayName || '',
+        mission: '',
+        phone: '',
+        description: '',
+        category: Category.AC,
+      });
+      setRepairErrors({});
+    } catch (err: any) {
+      alert(`提交失敗：${err.message || '未知錯誤'}。請檢查您的雲端同步設定，或嘗試減少照片數量（Gist 有 1MB 限制）。`);
+    }
   };
 
   // 處理完工表單提交
@@ -1179,11 +1175,17 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     <div className="fixed inset-0 z-[200] bg-slate-50 flex flex-col overflow-hidden">
       {/* 頂部導覽列 */}
       <div className="h-16 bg-indigo-700 flex items-center justify-between px-6 text-white shrink-0 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-            <Wrench size={18} className="text-white" />
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => (window as any).showStorageSettings?.()}
+            className="p-2 hover:bg-white/10 rounded-full transition-all"
+            title="儲存設定"
+          >
+            <Database size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="font-black text-lg tracking-tight">會館維護系統</span>
           </div>
-          <span className="font-black text-lg tracking-tight">會館設施維護系統</span>
         </div>
         <button
           onClick={onClose}
