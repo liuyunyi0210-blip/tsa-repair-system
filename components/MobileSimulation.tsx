@@ -122,7 +122,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       // 獲取當前地理位置（作為備選）
       const currentLocation = await getCurrentLocation();
 
-      Array.from(files).forEach(async (file: File) => {
+      const fileArray = Array.from(files);
+      for (const file of fileArray) {
         const reader = new FileReader();
         reader.onloadend = async () => {
           const imageUrl = reader.result as string;
@@ -130,49 +131,26 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           let location: { latitude: number; longitude: number; address?: string } | undefined;
 
           try {
-            // 讀取 EXIF 數據
-            const exifData = await exifr.parse(file, {
-              gps: true,
-              exif: true,
-            });
-
-            // 獲取拍攝時間
+            const exifData = await exifr.parse(file, { gps: true, exif: true });
             if (exifData?.DateTimeOriginal) {
               timestamp = new Date(exifData.DateTimeOriginal).toISOString();
             } else if (exifData?.CreateDate) {
               timestamp = new Date(exifData.CreateDate).toISOString();
-            } else if (exifData?.ModifyDate) {
-              timestamp = new Date(exifData.ModifyDate).toISOString();
             } else {
-              // 如果沒有 EXIF 時間，使用文件修改時間
               timestamp = new Date(file.lastModified).toISOString();
             }
 
-            // 獲取 GPS 位置
             if (exifData?.latitude && exifData?.longitude) {
-              location = {
-                latitude: exifData.latitude,
-                longitude: exifData.longitude,
-              };
+              location = { latitude: exifData.latitude, longitude: exifData.longitude };
             } else if (currentLocation) {
-              // 如果照片沒有 GPS 信息，使用當前位置
               location = currentLocation;
             }
           } catch (error) {
-            console.warn('讀取 EXIF 數據失敗:', error);
-            // 如果讀取失敗，使用文件修改時間和當前位置
             timestamp = new Date(file.lastModified).toISOString();
-            if (currentLocation) {
-              location = currentLocation;
-            }
+            if (currentLocation) location = currentLocation;
           }
 
-          const imageData: ImageData = {
-            url: imageUrl,
-            timestamp,
-            location,
-          };
-
+          const imageData: ImageData = { url: imageUrl, timestamp, location };
           if (formType === 'REPAIR') {
             setRepairImages(prev => [...prev, imageData]);
           } else {
@@ -180,7 +158,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           }
         };
         reader.readAsDataURL(file);
-      });
+      }
+      e.target.value = '';
     }
   };
 
@@ -637,7 +616,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             onChange={e => handleFileChange(e, 'REPAIR')}
             accept="image/*"
             multiple
-            className="hidden"
+            style={{ display: 'block', opacity: 0, width: 0, height: 0, position: 'absolute' }}
           />
 
           <button
@@ -919,7 +898,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                 onChange={e => handleFileChange(e, 'FINISH')}
                 accept="image/*"
                 multiple
-                className="hidden"
+                style={{ display: 'block', opacity: 0, width: 0, height: 0, position: 'absolute' }}
               />
 
               <button
