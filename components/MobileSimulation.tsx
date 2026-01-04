@@ -1025,12 +1025,12 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                     type="button"
                     onClick={() => setDisasterFormData(prev => ({ ...prev, status }))}
                     className={`px-4 py-3 rounded-2xl font-black transition-all ${disasterFormData.status === status
-                        ? status === HallSecurityStatus.SAFE
-                          ? 'bg-emerald-600 text-white shadow-lg'
-                          : status === HallSecurityStatus.LIGHT
-                            ? 'bg-amber-600 text-white shadow-lg'
-                            : 'bg-rose-600 text-white shadow-lg'
-                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      ? status === HallSecurityStatus.SAFE
+                        ? 'bg-emerald-600 text-white shadow-lg'
+                        : status === HallSecurityStatus.LIGHT
+                          ? 'bg-amber-600 text-white shadow-lg'
+                          : 'bg-rose-600 text-white shadow-lg'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                       }`}
                   >
                     {status}
@@ -1158,110 +1158,95 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   );
 
   return (
-    <div className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 overflow-hidden">
-
-      {/* 全域退出按鈕 (手機框架外) */}
-      <button
-        onClick={onClose}
-        className="absolute top-8 right-8 z-[210] flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-rose-600 text-white rounded-full font-black text-sm border border-white/10 shadow-2xl transition-all group"
-      >
-        <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
-        退出手機模擬模式
-      </button>
-
-      {/* 手機框架 */}
-      <div className="relative w-full max-w-[380px] h-[800px] bg-[#8c9fb6] rounded-[60px] border-[12px] border-slate-900 shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300" style={{ position: 'relative' }}>
-
-        {/* Phone Header - LINE Style */}
-        <div className="h-16 bg-[#2a303c] flex items-center justify-between px-6 text-white shrink-0 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="font-black text-[11px] tracking-tight text-white/90">TSA 會館維護系統</span>
+    <div className="fixed inset-0 z-[200] bg-slate-50 flex flex-col overflow-hidden">
+      {/* 頂部導覽列 */}
+      <div className="h-16 bg-indigo-700 flex items-center justify-between px-6 text-white shrink-0 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+            <Wrench size={18} className="text-white" />
           </div>
+          <span className="font-black text-lg tracking-tight">會館設施維護系統</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-white/10 rounded-full transition-all active:scale-95"
+        >
+          <X size={24} />
+        </button>
+      </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-rose-500 rounded-full transition-all group active:scale-90"
-            >
-              <span className="text-[10px] font-black uppercase tracking-tighter">Exit</span>
-              <X size={14} className="group-hover:rotate-90 transition-transform" />
-            </button>
-            <MoreHorizontal size={18} className="opacity-40" />
-          </div>
+      {/* 主選單區 - 改為垂直大按鈕 */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 custom-scrollbar">
+        <div className="mb-8 mt-2">
+          <h2 className="text-2xl font-black text-slate-800 mb-2">您好，{liffProfile?.displayName || '志工伙伴'}</h2>
+          <p className="text-slate-500 font-bold">請選擇下方功能開始通報或回報進度</p>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col custom-scrollbar">
-          <div className="flex gap-2 animate-in slide-in-from-left duration-500">
-            <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0 shadow-lg ring-2 ring-white/10">TSA</div>
-            <div className="bg-white p-4 rounded-3xl rounded-tl-none text-[11px] font-bold text-slate-700 shadow-sm max-w-[85%] leading-relaxed border border-slate-100">
-              您好！歡迎使用會館設施維護系統 LINE 官方帳號。
-              <br /><br />
-              請點擊下方選單進行相關操作，如有緊急故障請直接報修。
+        {/* 垂直按鈕清單 */}
+        <div className="grid grid-cols-1 gap-4">
+          <button
+            onClick={() => setActiveForm('REPAIR')}
+            className="w-full bg-white p-6 rounded-[32px] flex items-center gap-6 shadow-sm border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all active:scale-[0.98] group text-left"
+          >
+            <div className="p-5 bg-indigo-100 rounded-3xl group-hover:bg-indigo-200 transition-colors">
+              <Wrench size={32} className="text-indigo-600" />
             </div>
-          </div>
-
-          {activeDisaster && (
-            <div className="flex gap-2 animate-in slide-in-from-left duration-500 delay-300">
-              <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0 shadow-lg ring-2 ring-white/10">TSA</div>
-              <div className="bg-rose-50 border border-rose-100 p-4 rounded-3xl rounded-tl-none text-[11px] shadow-sm max-w-[85%] space-y-2">
-                <p className="font-black text-rose-600 flex items-center gap-1.5"><ShieldAlert size={14} /> 緊急災害通報：{activeDisaster.name}</p>
-                <p className="text-slate-600 leading-relaxed font-bold">請相關會館負責人立即點擊下方「災害回報」更新會館現狀，以利總務局彙整。</p>
-              </div>
+            <div>
+              <span className="block text-xl font-black text-slate-800 mb-1">線上報修通報</span>
+              <span className="text-sm text-slate-500 font-bold">填寫新的設施損壞報修申請</span>
             </div>
-          )}
-        </div>
-
-        {/* LINE Rich Menu (選單區) */}
-        <div className="bg-[#2a303c] p-0.5 border-t border-slate-800 grid grid-cols-3 h-48 gap-0.5 relative z-20">
-          <button onClick={() => setActiveForm('REPAIR')} className="bg-[#3a4455] text-white flex flex-col items-center justify-center gap-3 hover:bg-[#4a5568] transition-all active:scale-95 group">
-            <div className="p-4 bg-indigo-500/20 rounded-2xl group-hover:bg-indigo-500/30 transition-colors">
-              <Wrench size={28} className="text-indigo-400" />
-            </div>
-            <span className="text-[10px] font-black tracking-widest uppercase">線上報修</span>
           </button>
-          <button onClick={() => setActiveForm('FINISH')} className="bg-[#3a4455] text-white flex flex-col items-center justify-center gap-3 hover:bg-[#4a5568] transition-all active:scale-95 group">
-            <div className="p-4 bg-emerald-500/20 rounded-2xl group-hover:bg-emerald-500/30 transition-colors">
-              <CheckCircle2 size={28} className="text-emerald-400" />
+
+          <button
+            onClick={() => setActiveForm('FINISH')}
+            className="w-full bg-white p-6 rounded-[32px] flex items-center gap-6 shadow-sm border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all active:scale-[0.98] group text-left"
+          >
+            <div className="p-5 bg-emerald-100 rounded-3xl group-hover:bg-emerald-200 transition-colors">
+              <CheckCircle2 size={32} className="text-emerald-600" />
             </div>
-            <span className="text-[10px] font-black tracking-widest uppercase">完工回報</span>
+            <div>
+              <span className="block text-xl font-black text-slate-800 mb-1">修繕完工回報</span>
+              <span className="text-sm text-slate-500 font-bold">回報已完成的維修工作進度</span>
+            </div>
           </button>
+
           <button
             onClick={(e) => {
               e.preventDefault();
-              e.stopPropagation();
               if (activeDisaster) {
                 setActiveForm('DISASTER');
               } else {
                 alert('目前無進行中之災情報告');
               }
             }}
-            className={`bg-[#3a4455] text-white flex flex-col items-center justify-center gap-3 hover:bg-[#4a5568] transition-all active:scale-95 group ${!activeDisaster ? 'opacity-30' : ''}`}
+            className={`w-full bg-white p-6 rounded-[32px] flex items-center gap-6 shadow-sm border border-slate-200 hover:border-rose-300 hover:bg-rose-50/50 transition-all active:scale-[0.98] group text-left ${!activeDisaster ? 'opacity-50 grayscale' : ''}`}
           >
-            <div className="p-4 bg-rose-500/20 rounded-2xl group-hover:bg-rose-500/30 transition-colors">
-              <ShieldAlert size={28} className="text-rose-400" />
+            <div className="p-5 bg-rose-100 rounded-3xl group-hover:bg-rose-200 transition-colors">
+              <ShieldAlert size={32} className="text-rose-600" />
             </div>
-            <span className="text-[10px] font-black tracking-widest uppercase">災害回報</span>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl font-black text-slate-800">災害狀況回報</span>
+                {activeDisaster && <span className="px-2 py-0.5 bg-rose-600 text-white text-[10px] rounded-full animate-pulse">緊急</span>}
+              </div>
+              <span className="text-sm text-slate-500 font-bold">
+                {activeDisaster ? `針對「${activeDisaster.name}」進行通報` : '目前無進行中之災害通報項目'}
+              </span>
+            </div>
           </button>
         </div>
 
-        {/* Input Bar (LINE 底欄) */}
-        <div className="h-16 bg-white border-t border-slate-200 flex items-center px-5 gap-4 shrink-0 relative z-10">
-          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors"><Plus size={20} /></div>
-          <div className="flex-1 bg-slate-50 border border-slate-100 rounded-full px-5 py-2.5 text-[11px] font-bold text-slate-400 italic">請輸入訊息...</div>
-          <ImageIcon size={22} className="text-slate-300" />
+        {/* 底部資訊 */}
+        <div className="pt-12 pb-6 text-center">
+          <p className="text-slate-300 text-[10px] font-black uppercase tracking-widest">TSA Facility Management System</p>
+          <p className="text-slate-300 text-[10px] mt-1">Version 2.0.0 (LINE LIFF)</p>
         </div>
-
-        {/* 表單 Modal 容器 */}
-        {activeForm === 'REPAIR' && repairFormJSX}
-        {activeForm === 'FINISH' && finishFormJSX}
-        {activeForm === 'DISASTER' && disasterFormJSX}
       </div>
 
-      {/* 底部裝飾物 (Home Indicator) */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-white/20 rounded-full"></div>
-
+      {/* 表單內容 - 滿版顯示 */}
+      {activeForm === 'REPAIR' && <div className="fixed inset-0 z-[210]">{repairFormJSX}</div>}
+      {activeForm === 'FINISH' && <div className="fixed inset-0 z-[210]">{finishFormJSX}</div>}
+      {activeForm === 'DISASTER' && <div className="fixed inset-0 z-[210]">{disasterFormJSX}</div>}
     </div>
   );
 };
