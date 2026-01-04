@@ -40,7 +40,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
   const translations = {
     [Language.ZH]: {
       systemName: '會館維修暨設施管理系統',
-      organization: 'TSA 台灣創價學會',
+      organization: 'TSA',
       welcome: '歡迎回來',
       instruction: '請輸入您的管理員帳號與密碼以進入系統',
       accountLabel: '管理帳號',
@@ -48,13 +48,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
       loginBtn: '登入系統',
       quickLogin: '測試員快速登入',
       errorMsg: '帳號或密碼輸入錯誤，請重新確認',
-      footer: '© 2025 台灣創價學會 總務局 版權所有',
+      footer: '© 2025 TSA 版權所有',
       privacy: '隱私權政策',
       terms: '服務條款'
     },
     [Language.JA]: {
       systemName: '会館施設管理・修繕システム',
-      organization: 'TSA 台湾創価学会',
+      organization: 'TSA',
       welcome: 'おかえりなさい',
       instruction: '管理者アカウントとパスワードを入力してください',
       accountLabel: '管理者ID',
@@ -62,7 +62,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
       loginBtn: 'ログイン',
       quickLogin: 'テストログイン',
       errorMsg: 'IDまたはパスワードが正しくありません',
-      footer: '© 2025 台湾創価学会 総務局 All Rights Reserved.',
+      footer: '© 2025 TSA All Rights Reserved.',
       privacy: 'プライバシーポリシー',
       terms: '利用規約'
     }
@@ -159,8 +159,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
           <button
             onClick={onShowStorage}
             className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-xs font-bold ${storageService.getStorageType() === 'gist'
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
-                : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+              : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
               }`}
           >
             <Globe size={14} />

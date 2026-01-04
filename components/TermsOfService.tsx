@@ -61,7 +61,7 @@ const TermsOfService: React.FC<TermsOfServiceProps> = ({ onBack }) => {
                 </div>
 
                 <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-slate-400 text-xs font-bold">
-                    <p>© 2026 TSA 台灣創價學會</p>
+                    <p>© 2026 TSA</p>
                     <p>最後更新日期：2026年1月3日</p>
                 </div>
             </div>
