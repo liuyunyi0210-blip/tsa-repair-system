@@ -115,27 +115,61 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     });
   };
 
+  // 圖片壓縮工具函數
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 1200; // 最大尺寸
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7)); // 壓縮為 0.7 品質的 jpeg
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // 處理文件上傳
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
     const files = e.target.files;
     if (files) {
-      // 獲取當前地理位置（作為備選）
       const currentLocation = await getCurrentLocation();
-
       const fileArray = Array.from(files);
+
       for (const file of fileArray) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const imageUrl = reader.result as string;
+        try {
+          // 1. 同步進行壓縮
+          const compressedUrl = await compressImage(file);
+
+          // 2. 讀取 EXIF
           let timestamp: string | undefined;
           let location: { latitude: number; longitude: number; address?: string } | undefined;
 
           try {
-            const exifData = await exifr.parse(file, { gps: true, exif: true });
+            const exifData = await exifr.parse(file as Blob, { gps: true, exif: true });
             if (exifData?.DateTimeOriginal) {
               timestamp = new Date(exifData.DateTimeOriginal).toISOString();
-            } else if (exifData?.CreateDate) {
-              timestamp = new Date(exifData.CreateDate).toISOString();
             } else {
               timestamp = new Date(file.lastModified).toISOString();
             }
@@ -145,19 +179,21 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             } else if (currentLocation) {
               location = currentLocation;
             }
-          } catch (error) {
+          } catch (exifErr) {
             timestamp = new Date(file.lastModified).toISOString();
             if (currentLocation) location = currentLocation;
           }
 
-          const imageData: ImageData = { url: imageUrl, timestamp, location };
+          const imageData: ImageData = { url: compressedUrl, timestamp, location };
+
           if (formType === 'REPAIR') {
             setRepairImages(prev => [...prev, imageData]);
           } else {
             setFinishImages(prev => [...prev, imageData]);
           }
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+          console.error('圖片處理失敗:', err);
+        }
       }
       e.target.value = '';
     }
