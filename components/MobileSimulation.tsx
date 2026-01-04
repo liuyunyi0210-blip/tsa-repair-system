@@ -84,9 +84,11 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   });
   const [disasterErrors, setDisasterErrors] = useState<{ reporter?: string; position?: string; phone?: string; remark?: string }>({});
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const repairFileInputRef = useRef<HTMLInputElement>(null);
+  const finishFileInputRef = useRef<HTMLInputElement>(null);
   const reporterInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
 
   // 字數限制
   const NAME_MAX_LENGTH = 50;
@@ -153,50 +155,69 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   // 處理文件上傳
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
     const files = e.target.files;
-    if (files) {
-      const currentLocation = await getCurrentLocation();
-      const fileArray = Array.from(files);
+    if (!files || files.length === 0) return;
 
-      for (const file of fileArray) {
-        try {
-          // 1. 同步進行壓縮
-          const compressedUrl = await compressImage(file);
+    setIsProcessingImages(true);
+    const currentLocation = await getCurrentLocation();
 
-          // 2. 讀取 EXIF
-          let timestamp: string | undefined;
-          let location: { latitude: number; longitude: number; address?: string } | undefined;
-
-          try {
-            const exifData = await exifr.parse(file as Blob, { gps: true, exif: true });
-            if (exifData?.DateTimeOriginal) {
-              timestamp = new Date(exifData.DateTimeOriginal).toISOString();
-            } else {
-              timestamp = new Date(file.lastModified).toISOString();
-            }
-
-            if (exifData?.latitude && exifData?.longitude) {
-              location = { latitude: exifData.latitude, longitude: exifData.longitude };
-            } else if (currentLocation) {
-              location = currentLocation;
-            }
-          } catch (exifErr) {
-            timestamp = new Date(file.lastModified).toISOString();
-            if (currentLocation) location = currentLocation;
-          }
-
-          const imageData: ImageData = { url: compressedUrl, timestamp, location };
-
-          if (formType === 'REPAIR') {
-            setRepairImages(prev => [...prev, imageData]);
-          } else {
-            setFinishImages(prev => [...prev, imageData]);
-          }
-        } catch (err) {
-          console.error('圖片處理失敗:', err);
-        }
-      }
-      e.target.value = '';
+    // 將 FileList 轉為明確的 File 陣列，避免型別問題
+    const fileArray: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files.item(i);
+      if (f) fileArray.push(f);
     }
+
+    for (const file of fileArray) {
+      try {
+        // --- 優化：秒速預覽 ---
+        const fastPreviewUrl = URL.createObjectURL(file);
+        const placeholderData: ImageData = {
+          url: fastPreviewUrl,
+          timestamp: new Date(file.lastModified).toISOString(),
+          location: currentLocation || undefined
+        };
+
+        if (formType === 'REPAIR') {
+          setRepairImages(prev => [...prev, placeholderData]);
+        } else {
+          setFinishImages(prev => [...prev, placeholderData]);
+        }
+
+        // 背景處理
+        (async () => {
+          try {
+            const compressedUrl = await compressImage(file);
+            const exifData = await exifr.parse(file, { gps: true, exif: true }).catch(() => null);
+
+            const finalTimestamp = exifData?.DateTimeOriginal
+              ? new Date(exifData.DateTimeOriginal).toISOString()
+              : new Date(file.lastModified).toISOString();
+
+            let finalLocation = currentLocation || undefined;
+            if (exifData?.latitude && exifData?.longitude) {
+              finalLocation = { latitude: exifData.latitude, longitude: exifData.longitude };
+            }
+
+            const updateLogic = (prev: ImageData[]) =>
+              prev.map(img => img.url === fastPreviewUrl ? { url: compressedUrl, timestamp: finalTimestamp, location: finalLocation } : img);
+
+            if (formType === 'REPAIR') {
+              setRepairImages(updateLogic);
+            } else {
+              setFinishImages(updateLogic);
+            }
+          } catch (bgErr) {
+            console.error('背景處理失敗:', bgErr);
+          }
+        })();
+
+      } catch (err) {
+        console.error('圖片處理錯誤:', err);
+      }
+    }
+
+    setIsProcessingImages(false);
+    e.target.value = '';
   };
 
   const removeImage = (index: number, formType: 'REPAIR' | 'FINISH') => {
@@ -648,20 +669,31 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
           <input
             type="file"
-            ref={fileInputRef}
+            ref={repairFileInputRef}
             onChange={e => handleFileChange(e, 'REPAIR')}
             accept="image/*"
             multiple
-            style={{ display: 'block', opacity: 0, width: 0, height: 0, position: 'absolute' }}
+            style={{ position: 'fixed', top: '-1000px', left: '-1000px', visibility: 'hidden' }}
           />
 
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full p-6 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center gap-2 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+            onClick={() => repairFileInputRef.current?.click()}
+            className={`w-full p-6 border-2 border-dashed rounded-[32px] flex flex-col items-center gap-2 transition-all ${isProcessingImages ? 'bg-slate-50 border-slate-200' : 'border-slate-200 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50'
+              }`}
           >
-            <Camera size={32} />
-            <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
+            {isProcessingImages ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs font-black text-indigo-500">正在處理照片，請稍候...</p>
+              </div>
+            ) : (
+              <>
+                <Camera size={32} />
+                <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
+                <p className="text-[10px] opacity-60">支援連選多張照片</p>
+              </>
+            )}
           </button>
         </div>
 
@@ -930,20 +962,31 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
               <input
                 type="file"
-                ref={fileInputRef}
+                ref={finishFileInputRef}
                 onChange={e => handleFileChange(e, 'FINISH')}
                 accept="image/*"
                 multiple
-                style={{ display: 'block', opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                style={{ position: 'fixed', top: '-1000px', left: '-1000px', visibility: 'hidden' }}
               />
 
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full p-6 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center gap-2 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                onClick={() => finishFileInputRef.current?.click()}
+                className={`w-full p-6 border-2 border-dashed rounded-[32px] flex flex-col items-center gap-2 transition-all ${isProcessingImages ? 'bg-slate-50 border-slate-200' : 'border-slate-200 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50'
+                  }`}
               >
-                <Camera size={32} />
-                <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
+                {isProcessingImages ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-xs font-black text-emerald-500">正在處理照片，請稍候...</p>
+                  </div>
+                ) : (
+                  <>
+                    <Camera size={32} />
+                    <p className="text-xs font-black">點擊開啟相機或上傳照片</p>
+                    <p className="text-[10px] opacity-60">支援連選多張照片</p>
+                  </>
+                )}
               </button>
             </div>
 
