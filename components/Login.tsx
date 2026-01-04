@@ -24,6 +24,17 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isFirstRun, setIsFirstRun] = useState(false);
+
+  React.useEffect(() => {
+    const checkFirstRun = async () => {
+      const users = await storageService.loadUsers();
+      if (!users || users.length === 0) {
+        setIsFirstRun(true);
+      }
+    };
+    checkFirstRun();
+  }, []);
 
   const translations = {
     [Language.ZH]: {
@@ -66,10 +77,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
     try {
       // 從儲存服務讀取用戶資料
       const users = await storageService.loadUsers();
-      
-      // 如果沒有用戶資料，檢查是否為開發環境的預設帳號
+
+      // 如果沒有用戶資料，許可使用預設帳號（無論是開發或生產環境）
       if (!users || users.length === 0) {
-        if (import.meta.env.DEV && account === 'admin' && password === 'tsa2025') {
+        if (account === 'admin' && password === 'tsa2025') {
           // 建立預設管理員帳號
           const defaultUser = {
             id: 'user-admin',
@@ -116,8 +127,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
       }
 
       // 更新最後登入時間
-      const updatedUsers = users.map(u => 
-        u.id === user.id 
+      const updatedUsers = users.map(u =>
+        u.id === user.id
           ? { ...u, lastLoginAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
           : u
       );
@@ -218,9 +229,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
             </button>
           </form>
 
-          {!import.meta.env.PROD && (
+          {(!import.meta.env.PROD || isFirstRun) && (
             <div className="pt-6 border-t border-slate-50">
               <button
+                type="button"
                 onClick={() => {
                   setAccount('admin');
                   setPassword('tsa2025');
