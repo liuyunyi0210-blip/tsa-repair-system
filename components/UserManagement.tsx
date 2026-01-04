@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Save, 
-  X, 
+import {
+  User,
+  Plus,
+  Edit,
+  Trash2,
+  Save,
+  X,
   ArrowLeft,
   Search,
   Lock,
@@ -19,7 +19,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { User as UserType, Role, Language } from '../types';
-import { MOCK_HALLS } from '../constants';
+import { MOCK_HALLS, DEFAULT_ROLES } from '../constants';
 import { storageService } from '../services/storageService';
 
 interface UserManagementProps {
@@ -120,7 +120,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
     const loadData = async () => {
       const savedUsers = await storageService.loadUsers();
       const savedRoles = await storageService.loadRoles();
-      
+
       if (savedUsers) {
         setUsers(savedUsers);
       } else {
@@ -139,8 +139,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
         await storageService.saveUsers([defaultUser]);
       }
 
-      if (savedRoles) {
+      if (savedRoles && savedRoles.length > 0) {
         setRoles(savedRoles);
+      } else {
+        // 初始化預設角色
+        setRoles(DEFAULT_ROLES);
+        await storageService.saveRoles(DEFAULT_ROLES);
       }
     };
     loadData();
@@ -194,8 +198,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
 
     if (window.confirm(t.deleteConfirm)) {
       const newUsers = users.filter(u => u.id !== userId);
-    await saveUsers(newUsers);
-    if (onLogOperation) {
+      await saveUsers(newUsers);
+      if (onLogOperation) {
         onLogOperation({
           module: 'permissions',
           action: 'delete',
@@ -244,7 +248,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
 
     const existingIndex = users.findIndex(u => u.id === updatedUser.id);
     let newUsers: UserType[];
-    
+
     if (existingIndex >= 0) {
       newUsers = users.map((u, i) => i === existingIndex ? updatedUser : u);
       if (onLogOperation) {
@@ -304,7 +308,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
     setFormData({ ...formData, allowedHalls: newHalls });
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.account.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
