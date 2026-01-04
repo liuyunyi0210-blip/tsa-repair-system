@@ -28,8 +28,10 @@ import {
   HeartPulse,
   Image as ImageIcon
 } from 'lucide-react';
-import { RepairRequest, RepairStatus, OrderType, Urgency, Category, Language } from '../types';
+import { RepairRequest, RepairStatus, OrderType, Urgency, Category, Language, Hall } from '../types';
 import { STATUS_CONFIG, CATEGORY_ICONS, MOCK_HALLS } from '../constants';
+import { storageService } from '../services/storageService';
+import { useEffect } from 'react';
 
 interface RequestListProps {
   requests: RepairRequest[];
@@ -59,6 +61,15 @@ const RequestList: React.FC<RequestListProps> = ({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedPhotos, setSelectedPhotos] = useState<string[] | null>(null);
+  const [halls, setHalls] = useState<Hall[]>([]);
+
+  useEffect(() => {
+    const loadHalls = async () => {
+      const savedHalls = await storageService.loadHalls();
+      setHalls(savedHalls || MOCK_HALLS);
+    };
+    loadHalls();
+  }, []);
 
   const translations = {
     [Language.ZH]: {
@@ -236,7 +247,7 @@ const RequestList: React.FC<RequestListProps> = ({
             <Building2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none z-10" />
             <select className="w-full pl-12 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-[20px] text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-black text-slate-800 appearance-none cursor-pointer" value={hallFilter} onChange={(e) => setHallFilter(e.target.value)}>
               <option value="ALL">{t.allHalls}</option>
-              {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+              {halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
             </select>
           </div>
           <div className={`relative transition-all duration-300 ${isSearchFocused || searchTerm ? 'w-64' : 'w-12'}`}>
@@ -264,44 +275,44 @@ const RequestList: React.FC<RequestListProps> = ({
                 const isFinished = req.status === RepairStatus.CLOSED;
                 const canSelect = !isFinished;
                 return (
-                <tr key={req.id} onClick={() => onView(req.id)} className={`group cursor-pointer hover:bg-slate-50 transition-all ${isFinished ? 'opacity-50' : ''}`}>
-                  <td className="px-6 py-5 text-center" onClick={(e) => {
-                    if (canSelect) {
-                      toggleSelection(req.id, e as any);
-                    } else {
-                      e.stopPropagation();
-                    }
-                  }}>
-                    <div className={selectedIds.has(req.id) ? 'text-indigo-600' : canSelect ? 'text-slate-200' : 'text-slate-100'}>
-                      {selectedIds.has(req.id) ? <CheckSquare size={20} /> : <Square size={20} />}
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-black text-slate-900 flex items-center gap-2">{req.title} {req.type === OrderType.ROUTINE && <span className="text-[8px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 border border-purple-100 uppercase font-black">{t.routine}</span>}</span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">#{req.id} • {req.reporter}</span>
-                      {req.photoUrls && req.photoUrls.length > 0 && (
-                        <div
-                          className="flex items-center gap-1 mt-1 text-xs font-bold text-indigo-500 cursor-pointer hover:underline w-fit"
-                          onClick={(e) => { e.stopPropagation(); setSelectedPhotos(req.photoUrls || []); }}
-                        >
-                          <ImageIcon size={12} />
-                          <span>{req.photoUrls.length} 張照片</span>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-5 font-bold text-slate-600 whitespace-nowrap">{req.hallName}</td>
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {CATEGORY_ICONS[req.category]}
-                      <span className="text-[10px] font-black text-slate-500 uppercase">{req.category}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5 whitespace-nowrap"><span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${STATUS_CONFIG[req.status].color}`}>{getStatusLabel(req.status)}</span></td>
-                  <td className="px-6 py-5 text-right"><ChevronRight size={18} className="text-slate-300 opacity-0 group-hover:opacity-100 inline" /></td>
-                </tr>
-              );
+                  <tr key={req.id} onClick={() => onView(req.id)} className={`group cursor-pointer hover:bg-slate-50 transition-all ${isFinished ? 'opacity-50' : ''}`}>
+                    <td className="px-6 py-5 text-center" onClick={(e) => {
+                      if (canSelect) {
+                        toggleSelection(req.id, e as any);
+                      } else {
+                        e.stopPropagation();
+                      }
+                    }}>
+                      <div className={selectedIds.has(req.id) ? 'text-indigo-600' : canSelect ? 'text-slate-200' : 'text-slate-100'}>
+                        {selectedIds.has(req.id) ? <CheckSquare size={20} /> : <Square size={20} />}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-black text-slate-900 flex items-center gap-2">{req.title} {req.type === OrderType.ROUTINE && <span className="text-[8px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 border border-purple-100 uppercase font-black">{t.routine}</span>}</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">#{req.id} • {req.reporter}</span>
+                        {req.photoUrls && req.photoUrls.length > 0 && (
+                          <div
+                            className="flex items-center gap-1 mt-1 text-xs font-bold text-indigo-500 cursor-pointer hover:underline w-fit"
+                            onClick={(e) => { e.stopPropagation(); setSelectedPhotos(req.photoUrls || []); }}
+                          >
+                            <ImageIcon size={12} />
+                            <span>{req.photoUrls.length} 張照片</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 font-bold text-slate-600 whitespace-nowrap">{req.hallName}</td>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {CATEGORY_ICONS[req.category]}
+                        <span className="text-[10px] font-black text-slate-500 uppercase">{req.category}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap"><span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${STATUS_CONFIG[req.status].color}`}>{getStatusLabel(req.status)}</span></td>
+                    <td className="px-6 py-5 text-right"><ChevronRight size={18} className="text-slate-300 opacity-0 group-hover:opacity-100 inline" /></td>
+                  </tr>
+                );
               })}
             </tbody>
           </table>
@@ -317,7 +328,7 @@ const RequestList: React.FC<RequestListProps> = ({
           </div>
           <div><p className="text-3xl font-black">{selectedIds.size}</p><p className="text-[10px] text-slate-400 uppercase tracking-widest">{t.bulkSelect}</p></div>
           <div className="space-y-3">
-            <button 
+            <button
               onClick={() => {
                 // 只傳遞尚未完工的工單 ID
                 const unfinishedIds = Array.from(selectedIds).filter(id => {
@@ -329,7 +340,7 @@ const RequestList: React.FC<RequestListProps> = ({
                 } else {
                   alert('請選擇尚未完工的工單進行回報');
                 }
-              }} 
+              }}
               className="w-full flex items-center justify-between px-6 py-4 bg-indigo-600 rounded-[20px] font-black hover:bg-indigo-700 transition-all"
             >
               <span>{t.bulkUpdate}</span><Wrench size={18} />

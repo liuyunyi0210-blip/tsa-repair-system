@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldAlert, 
-  Plus, 
-  Eye, 
-  X, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Flame, 
-  CloudRain, 
+import {
+  ShieldAlert,
+  Plus,
+  Eye,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  Flame,
+  CloudRain,
   Activity,
   ArrowLeft,
   Calendar,
@@ -16,7 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
-import { DisasterReport, DisasterType, HallSecurityStatus, HallDisasterStatus, Language } from '../types';
+import { DisasterReport, DisasterType, HallSecurityStatus, HallDisasterStatus, Language, Hall } from '../types';
 import { storageService } from '../services/storageService';
 
 interface DisasterReportingProps {
@@ -35,6 +35,7 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
     name: '',
     date: new Date().toISOString().split('T')[0]
   });
+  const [halls, setHalls] = useState<Hall[]>([]);
 
   const translations = {
     [Language.ZH]: {
@@ -108,7 +109,9 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
   useEffect(() => {
     const loadData = async () => {
       const saved = await storageService.loadDisasterReports();
+      const savedHalls = await storageService.loadHalls();
       if (saved) setReports(saved);
+      setHalls(savedHalls || MOCK_HALLS);
     };
     loadData();
   }, []);
@@ -124,7 +127,7 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
       type: publishForm.type,
       name: publishForm.name,
       createdAt: new Date().toISOString(),
-      hallsStatus: MOCK_HALLS.map(hall => ({
+      hallsStatus: halls.map(hall => ({
         hallId: hall.id,
         hallName: hall.name,
         status: HallSecurityStatus.NONE,
@@ -157,10 +160,10 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
             <div><h2 className="text-2xl font-black text-slate-900">{selectedReport.name} {t.detailTitle}</h2></div>
           </div>
           <div className="bg-white px-6 py-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-6">
-             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-[10px] font-black text-slate-500">{t.statusSafe}</span></div>
-             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500"></div><span className="text-[10px] font-black text-slate-500">{t.statusLight}</span></div>
-             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500"></div><span className="text-[10px] font-black text-slate-500">{t.statusHeavy}</span></div>
-             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-slate-200"></div><span className="text-[10px] font-black text-slate-500">{t.statusNone}</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-[10px] font-black text-slate-500">{t.statusSafe}</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500"></div><span className="text-[10px] font-black text-slate-500">{t.statusLight}</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500"></div><span className="text-[10px] font-black text-slate-500">{t.statusHeavy}</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-slate-200"></div><span className="text-[10px] font-black text-slate-500">{t.statusNone}</span></div>
           </div>
         </div>
         <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-x-auto">
@@ -181,15 +184,14 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
                     <span className="font-black text-slate-800 text-base">{h.hallName}</span>
                   </td>
                   <td className="px-6 py-5 whitespace-nowrap">
-                    <span className={`px-3 py-1.5 rounded-full text-[11px] font-black ${
-                      h.status === HallSecurityStatus.SAFE 
-                        ? 'bg-emerald-50 text-emerald-600' 
+                    <span className={`px-3 py-1.5 rounded-full text-[11px] font-black ${h.status === HallSecurityStatus.SAFE
+                        ? 'bg-emerald-50 text-emerald-600'
                         : h.status === HallSecurityStatus.LIGHT
-                        ? 'bg-amber-50 text-amber-600'
-                        : h.status === HallSecurityStatus.HEAVY
-                        ? 'bg-rose-50 text-rose-600'
-                        : 'bg-slate-50 text-slate-400'
-                    }`}>{h.status}</span>
+                          ? 'bg-amber-50 text-amber-600'
+                          : h.status === HallSecurityStatus.HEAVY
+                            ? 'bg-rose-50 text-rose-600'
+                            : 'bg-slate-50 text-slate-400'
+                      }`}>{h.status}</span>
                   </td>
                   <td className="px-6 py-5">
                     <p className="text-sm text-slate-600 font-medium max-w-md">{h.remark || t.remarkEmpty}</p>
@@ -246,8 +248,8 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
           </div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-end">
-          <button 
-            onClick={() => setIsPublishing(true)} 
+          <button
+            onClick={() => setIsPublishing(true)}
             className="flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-[24px] font-black shadow-lg hover:bg-indigo-700 transition-all w-full md:w-auto"
           >
             <Plus size={20} /> {t.publishBtn}
@@ -279,41 +281,41 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
               }).length;
               const progress = r.hallsStatus.length > 0 ? (reportedCount / r.hallsStatus.length) * 100 : 0;
               return (
-              <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-4 md:px-8 py-5 whitespace-nowrap">
-                  <span className="px-3 py-1 rounded-xl text-[10px] font-black text-white bg-indigo-500 whitespace-nowrap">{r.type}</span>
-                </td>
-                <td className="px-4 md:px-8 py-5 font-black text-slate-900 text-lg whitespace-nowrap">{r.name}</td>
-                <td className="px-4 md:px-8 py-5 text-sm font-medium text-slate-500 whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
-                <td className="px-4 md:px-8 py-5 whitespace-nowrap">
-                  <div className="flex items-center gap-2 min-w-[120px]">
-                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full">
-                      <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-4 md:px-8 py-5 whitespace-nowrap">
+                    <span className="px-3 py-1 rounded-xl text-[10px] font-black text-white bg-indigo-500 whitespace-nowrap">{r.type}</span>
+                  </td>
+                  <td className="px-4 md:px-8 py-5 font-black text-slate-900 text-lg whitespace-nowrap">{r.name}</td>
+                  <td className="px-4 md:px-8 py-5 text-sm font-medium text-slate-500 whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
+                  <td className="px-4 md:px-8 py-5 whitespace-nowrap">
+                    <div className="flex items-center gap-2 min-w-[120px]">
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full">
+                        <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                      </div>
+                      <span className="text-[10px] font-black text-slate-400">{reportedCount}/{r.hallsStatus.length}</span>
                     </div>
-                    <span className="text-[10px] font-black text-slate-400">{reportedCount}/{r.hallsStatus.length}</span>
-                  </div>
-                </td>
-                <td className="px-4 md:px-8 py-5 text-right whitespace-nowrap">
-                  <button 
-                    onClick={async () => {
-                      // 在切換視圖前重新載入資料以確保顯示最新資訊
-                      const saved = await storageService.loadDisasterReports();
-                      if (saved) {
-                        const updated = saved.find(report => report.id === r.id);
-                        setSelectedReport(updated || r);
-                      } else {
-                        setSelectedReport(r);
-                      }
-                      setView('DETAIL');
-                    }} 
-                    className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-white text-indigo-600 font-black rounded-2xl border border-indigo-100 shadow-sm hover:bg-indigo-50 transition-all text-sm md:text-base"
-                  >
-                    <Eye size={16} className="md:hidden" />
-                    <span className="hidden md:inline">{t.actionView}</span>
-                    <span className="md:hidden">檢視</span>
-                  </button>
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-4 md:px-8 py-5 text-right whitespace-nowrap">
+                    <button
+                      onClick={async () => {
+                        // 在切換視圖前重新載入資料以確保顯示最新資訊
+                        const saved = await storageService.loadDisasterReports();
+                        if (saved) {
+                          const updated = saved.find(report => report.id === r.id);
+                          setSelectedReport(updated || r);
+                        } else {
+                          setSelectedReport(r);
+                        }
+                        setView('DETAIL');
+                      }}
+                      className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-white text-indigo-600 font-black rounded-2xl border border-indigo-100 shadow-sm hover:bg-indigo-50 transition-all text-sm md:text-base"
+                    >
+                      <Eye size={16} className="md:hidden" />
+                      <span className="hidden md:inline">{t.actionView}</span>
+                      <span className="md:hidden">檢視</span>
+                    </button>
+                  </td>
+                </tr>
               );
             })}
             {reports.length === 0 && <tr><td colSpan={5} className="px-8 py-24 text-center text-slate-300 font-black">{t.noData}</td></tr>}
@@ -326,7 +328,7 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
   return (
     <>
       {view === 'DETAIL' ? <DetailView /> : <ListView />}
-      
+
       {/* 發布回報 Modal */}
       {isPublishing && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -349,11 +351,10 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
                     <button
                       key={type}
                       onClick={() => setPublishForm(prev => ({ ...prev, type }))}
-                      className={`px-4 py-3 rounded-2xl font-black transition-all ${
-                        publishForm.type === type
+                      className={`px-4 py-3 rounded-2xl font-black transition-all ${publishForm.type === type
                           ? 'bg-indigo-600 text-white shadow-lg'
                           : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                      }`}
+                        }`}
                     >
                       {type}
                     </button>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Send,
     Trash2,
@@ -14,8 +14,9 @@ import {
     X,
     Image as ImageIcon
 } from 'lucide-react';
-import { MonthlyReport } from '../types';
+import { MonthlyReport, Hall } from '../types';
 import { MOCK_HALLS } from '../constants';
+import { storageService } from '../services/storageService';
 
 interface MonthlyReportSubmissionProps {
     reports: MonthlyReport[];
@@ -25,9 +26,18 @@ interface MonthlyReportSubmissionProps {
 
 const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ reports, onSubmit, onUpdate }) => {
     const [yearMonth, setYearMonth] = useState(new Date().toISOString().substring(0, 7));
+    const [halls, setHalls] = useState<Hall[]>([]);
     const [submissionReports, setSubmissionReports] = useState<{ hallName: string; content: string; photoUrls: string[] }[]>([
         { hallName: '', content: '', photoUrls: [] }
     ]);
+
+    useEffect(() => {
+        const loadHalls = async () => {
+            const savedHalls = await storageService.loadHalls();
+            setHalls(savedHalls || MOCK_HALLS);
+        };
+        loadHalls();
+    }, []);
     const [editingReportId, setEditingReportId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
 
@@ -240,7 +250,7 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
                                         className="w-full px-5 py-4 bg-slate-50 border-2 border-transparent focus:border-indigo-600 focus:bg-white rounded-2xl font-bold transition-all outline-none"
                                     >
                                         <option value="">-- 請選擇會館 --</option>
-                                        {MOCK_HALLS.map(hall => (
+                                        {halls.map(hall => (
                                             <option key={hall.id} value={hall.name}>{hall.name}</option>
                                         ))}
                                     </select>

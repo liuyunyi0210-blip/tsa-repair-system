@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  FilePlus, 
-  Search, 
-  FileText, 
-  Download, 
-  X, 
-  ArrowLeft, 
-  Upload, 
-  Save, 
-  Calendar, 
-  User, 
-  Building2, 
+import {
+  FilePlus,
+  Search,
+  FileText,
+  Download,
+  X,
+  ArrowLeft,
+  Upload,
+  Save,
+  Calendar,
+  User,
+  Building2,
   DollarSign,
   ChevronRight,
   Filter,
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { MOCK_HALLS, CATEGORY_ICONS } from '../constants';
 // Import Language type
-import { Contract, ContractStatus, Category, Language } from '../types';
+import { Contract, ContractStatus, Category, Language, Hall } from '../types';
 import { storageService } from '../services/storageService';
 
 interface ContractManagementProps {
@@ -60,6 +60,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
   const [view, setView] = useState<'LIST' | 'ADD'>('LIST');
   const [viewMode, setViewMode] = useState<'TABLE' | 'VENDOR_MAP'>('TABLE');
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [halls, setHalls] = useState<Hall[]>([]);
   const [filters, setFilters] = useState({ hall: '', vendor: '', status: 'ALL', category: 'ALL' });
   const [isUploading, setIsUploading] = useState(false);
 
@@ -72,49 +73,51 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
   useEffect(() => {
     const loadData = async () => {
       const saved = await storageService.loadContracts();
+      const savedHalls = await storageService.loadHalls();
+      setHalls(savedHalls || MOCK_HALLS);
       if (saved) {
         setContracts(saved);
       } else {
         const initial: Contract[] = [
-        {
-          id: 'CTR-2024-001',
-          category: '空調',
-          vendor: '大金空調工程',
-          hallName: '台北至善文化會館',
-          summary: '全館空調系統年度保養合約',
-          startDate: '2024-01-01',
-          endDate: '2024-12-31',
-          fee: 120000,
-          reporter: '林組長',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'CTR-2024-003',
-          category: '空調',
-          vendor: '大金空調工程',
-          hallName: '板橋文化會館',
-          summary: '分體式冷氣定期保養',
-          startDate: '2024-02-01',
-          endDate: '2025-01-31',
-          fee: 45000,
-          reporter: '林組長',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'CTR-2024-002',
-          category: '保全',
-          vendor: '中興保全',
-          hallName: '板橋文化會館',
-          summary: '年度安全維護服務合約',
-          startDate: '2024-03-01',
-          endDate: '2025-02-28',
-          fee: 85000,
-          reporter: '陳主任',
-          createdAt: new Date().toISOString()
-        }
-      ];
-      setContracts(initial);
-      await storageService.saveContracts(initial);
+          {
+            id: 'CTR-2024-001',
+            category: '空調',
+            vendor: '大金空調工程',
+            hallName: '台北至善文化會館',
+            summary: '全館空調系統年度保養合約',
+            startDate: '2024-01-01',
+            endDate: '2024-12-31',
+            fee: 120000,
+            reporter: '林組長',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'CTR-2024-003',
+            category: '空調',
+            vendor: '大金空調工程',
+            hallName: '板橋文化會館',
+            summary: '分體式冷氣定期保養',
+            startDate: '2024-02-01',
+            endDate: '2025-01-31',
+            fee: 45000,
+            reporter: '林組長',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'CTR-2024-002',
+            category: '保全',
+            vendor: '中興保全',
+            hallName: '板橋文化會館',
+            summary: '年度安全維護服務合約',
+            startDate: '2024-03-01',
+            endDate: '2025-02-28',
+            fee: 85000,
+            reporter: '陳主任',
+            createdAt: new Date().toISOString()
+          }
+        ];
+        setContracts(initial);
+        await storageService.saveContracts(initial);
       }
     };
     loadData();
@@ -158,7 +161,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
     const [form, setForm] = useState<Partial<Contract>>({
       category: '空調',
       vendor: '',
-      hallName: MOCK_HALLS[0].name,
+      hallName: '',
       summary: '',
       startDate: new Date().toISOString().split('T')[0],
       endDate: '',
@@ -166,6 +169,12 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
       reporter: '',
       remarks: ''
     });
+
+    useEffect(() => {
+      if (halls.length > 0 && !form.hallName) {
+        setForm(prev => ({ ...prev, hallName: halls[0].name }));
+      }
+    }, [halls]);
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -191,55 +200,55 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">合約類別 *</label>
-              <select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+              <select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                 {CONTRACT_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">所屬會館 *</label>
-              <select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.hallName} onChange={e => setForm({...form, hallName: e.target.value})}>
-                {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+              <select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.hallName} onChange={e => setForm({ ...form, hallName: e.target.value })}>
+                {halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">廠商名稱 *</label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-3 text-slate-300" size={18} />
-                <input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500" value={form.vendor} onChange={e => setForm({...form, vendor: e.target.value})} />
+                <input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500" value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">提報者 *</label>
               <div className="relative">
                 <User className="absolute left-3 top-3 text-slate-300" size={18} />
-                <input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.reporter} onChange={e => setForm({...form, reporter: e.target.value})} />
+                <input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.reporter} onChange={e => setForm({ ...form, reporter: e.target.value })} />
               </div>
             </div>
             <div className="md:col-span-2 space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">項目 / 合約概述 *</label>
               <div className="relative">
                 <FileText className="absolute left-3 top-3 text-slate-300" size={18} />
-                <input required placeholder="例如：113年度機電設施保養合約" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.summary} onChange={e => setForm({...form, summary: e.target.value})} />
+                <input required placeholder="例如：113年度機電設施保養合約" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.summary} onChange={e => setForm({ ...form, summary: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">合約開始日期 *</label>
-              <input required type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} />
+              <input required type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">合約結束日期 *</label>
-              <input required type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} />
+              <input required type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">合約總費用 *</label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 text-slate-300" size={18} />
-                <input required type="number" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.fee} onChange={e => setForm({...form, fee: parseInt(e.target.value)})} />
+                <input required type="number" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.fee} onChange={e => setForm({ ...form, fee: parseInt(e.target.value) })} />
               </div>
             </div>
             <div className="md:col-span-2 space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">合約書附件</label>
-              <button type="button" onClick={() => {setIsUploading(true); setTimeout(() => {setIsUploading(false); setForm({...form, attachment: 'contract_file.pdf'})}, 1000)}} className={`w-full py-6 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center transition-all ${form.attachment ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-indigo-400 hover:text-indigo-600'}`}>
+              <button type="button" onClick={() => { setIsUploading(true); setTimeout(() => { setIsUploading(false); setForm({ ...form, attachment: 'contract_file.pdf' }) }, 1000) }} className={`w-full py-6 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center transition-all ${form.attachment ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-indigo-400 hover:text-indigo-600'}`}>
                 {isUploading ? (
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 ) : form.attachment ? (
@@ -281,12 +290,12 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-end">
           <div className="bg-white p-1 rounded-2xl border border-slate-200 flex shadow-sm">
-             <button onClick={() => setViewMode('TABLE')} className={`p-2 rounded-xl transition-all ${viewMode === 'TABLE' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>
-                <ListIcon size={20} />
-             </button>
-             <button onClick={() => setViewMode('VENDOR_MAP')} className={`p-2 rounded-xl transition-all ${viewMode === 'VENDOR_MAP' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>
-                <LayoutGrid size={20} />
-             </button>
+            <button onClick={() => setViewMode('TABLE')} className={`p-2 rounded-xl transition-all ${viewMode === 'TABLE' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>
+              <ListIcon size={20} />
+            </button>
+            <button onClick={() => setViewMode('VENDOR_MAP')} className={`p-2 rounded-xl transition-all ${viewMode === 'VENDOR_MAP' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-50'}`}>
+              <LayoutGrid size={20} />
+            </button>
           </div>
           <button onClick={() => setView('ADD')} className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all w-full md:w-auto">
             <FilePlus size={18} /> 新增合約
@@ -321,22 +330,22 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-400">合約種類 (如空調、消防)</label>
-            <select className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.category} onChange={e => setFilters({...filters, category: e.target.value})}>
+            <select className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.category} onChange={e => setFilters({ ...filters, category: e.target.value })}>
               <option value="ALL">全部種類</option>
               {CONTRACT_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-400">會館名稱</label>
-            <input placeholder="搜尋會館..." className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.hall} onChange={e => setFilters({...filters, hall: e.target.value})} />
+            <input placeholder="搜尋會館..." className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.hall} onChange={e => setFilters({ ...filters, hall: e.target.value })} />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-400">廠商名稱</label>
-            <input placeholder="搜尋廠商..." className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.vendor} onChange={e => setFilters({...filters, vendor: e.target.value})} />
+            <input placeholder="搜尋廠商..." className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.vendor} onChange={e => setFilters({ ...filters, vendor: e.target.value })} />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-400">履約進度</label>
-            <select className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})}>
+            <select className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none" value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}>
               <option value="ALL">全部狀態</option>
               <option value={ContractStatus.IN_PROGRESS}>{ContractStatus.IN_PROGRESS}</option>
               <option value={ContractStatus.NOT_STARTED}>{ContractStatus.NOT_STARTED}</option>
@@ -379,7 +388,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
                       <td className="px-6 py-4 text-sm font-medium text-slate-600 whitespace-nowrap">{c.hallName}</td>
                       <td className="px-6 py-4 text-xs font-medium text-slate-500 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Calendar size={12} className="text-slate-300 flex-shrink-0"/>
+                          <Calendar size={12} className="text-slate-300 flex-shrink-0" />
                           <span>{c.startDate}</span>
                           <span className="text-slate-300">~</span>
                           <span>{c.endDate}</span>
@@ -387,11 +396,10 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
                       </td>
                       <td className="px-6 py-4 font-black text-slate-900 whitespace-nowrap">${c.fee.toLocaleString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${
-                          status === ContractStatus.IN_PROGRESS ? 'bg-indigo-600 text-white' :
-                          status === ContractStatus.NOT_STARTED ? 'bg-amber-100 text-amber-700' :
-                          'bg-slate-200 text-slate-400'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${status === ContractStatus.IN_PROGRESS ? 'bg-indigo-600 text-white' :
+                            status === ContractStatus.NOT_STARTED ? 'bg-amber-100 text-amber-700' :
+                              'bg-slate-200 text-slate-400'
+                          }`}>
                           {status}
                         </span>
                       </td>
@@ -412,55 +420,54 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
           {/* Fix: Explicitly cast Object.entries result to resolve unknown type issues for vendorContracts */}
           {(Object.entries(vendorGroups) as [string, Contract[]][]).map(([vendorName, vendorContracts]) => (
             <div key={vendorName} className="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm hover:shadow-xl transition-all">
-               <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-4">
-                     <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-lg">
-                        <Building2 size={24} />
-                     </div>
-                     <div>
-                        <h3 className="text-xl font-black text-slate-900">{vendorName}</h3>
-                        {/* Fix: vendorContracts is now correctly typed as Contract[] */}
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">目前承攬 {vendorContracts.length} 項服務</p>
-                     </div>
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-lg">
+                    <Building2 size={24} />
                   </div>
-                  <button className="p-2 text-slate-300 hover:text-indigo-600"><ExternalLink size={18}/></button>
-               </div>
-               
-               <div className="space-y-4">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2">覆蓋會館清單</p>
-                  <div className="grid grid-cols-1 gap-3">
-                     {/* Fix: vendorContracts is now correctly typed as Contract[] */}
-                     {vendorContracts.map(c => {
-                        const status = getContractStatus(c.startDate, c.endDate);
-                        const catEnum = mapStringToCategory(c.category);
-                        return (
-                          <div key={c.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group/item hover:bg-white border border-transparent hover:border-indigo-100 transition-all">
-                             <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg bg-white border border-slate-100 text-indigo-600 shadow-sm`}>
-                                   {CATEGORY_ICONS[catEnum]}
-                                </div>
-                                <div>
-                                   <p className="text-sm font-bold text-slate-800">{c.hallName}</p>
-                                   <p className="text-[10px] text-slate-400 font-medium">{c.summary}</p>
-                                </div>
-                             </div>
-                             <div className="text-right">
-                                <p className={`text-[10px] font-black mb-1 ${
-                                   status === ContractStatus.ENDED ? 'text-rose-500' : 'text-emerald-500'
-                                }`}>{status}</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">至 {c.endDate}</p>
-                             </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900">{vendorName}</h3>
+                    {/* Fix: vendorContracts is now correctly typed as Contract[] */}
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">目前承攬 {vendorContracts.length} 項服務</p>
+                  </div>
+                </div>
+                <button className="p-2 text-slate-300 hover:text-indigo-600"><ExternalLink size={18} /></button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2">覆蓋會館清單</p>
+                <div className="grid grid-cols-1 gap-3">
+                  {/* Fix: vendorContracts is now correctly typed as Contract[] */}
+                  {vendorContracts.map(c => {
+                    const status = getContractStatus(c.startDate, c.endDate);
+                    const catEnum = mapStringToCategory(c.category);
+                    return (
+                      <div key={c.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group/item hover:bg-white border border-transparent hover:border-indigo-100 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg bg-white border border-slate-100 text-indigo-600 shadow-sm`}>
+                            {CATEGORY_ICONS[catEnum]}
                           </div>
-                        );
-                     })}
-                  </div>
-               </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">{c.hallName}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{c.summary}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-[10px] font-black mb-1 ${status === ContractStatus.ENDED ? 'text-rose-500' : 'text-emerald-500'
+                            }`}>{status}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">至 {c.endDate}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           ))}
           {Object.keys(vendorGroups).length === 0 && (
-             <div className="lg:col-span-2 py-20 text-center text-slate-300 font-black">
-                查無符合條件的廠商覆蓋資料
-             </div>
+            <div className="lg:col-span-2 py-20 text-center text-slate-300 font-black">
+              查無符合條件的廠商覆蓋資料
+            </div>
           )}
         </div>
       )}

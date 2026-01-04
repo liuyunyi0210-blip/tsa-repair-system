@@ -29,8 +29,10 @@ import {
   FileText,
   User
 } from 'lucide-react';
-import { RepairRequest, RepairStatus, OrderType, Category, Language, MonthlyReport } from '../types';
+import { RepairRequest, RepairStatus, OrderType, Category, Language, MonthlyReport, Hall } from '../types';
 import { STATUS_CONFIG, MOCK_HALLS, HEALTH_CHECK_CONFIG } from '../constants';
+import { storageService } from '../services/storageService';
+import { useState, useEffect } from 'react';
 
 interface DashboardProps {
   requests: RepairRequest[];
@@ -39,6 +41,15 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], language }) => {
+  const [halls, setHalls] = useState<Hall[]>([]);
+
+  useEffect(() => {
+    const loadHalls = async () => {
+      const savedHalls = await storageService.loadHalls();
+      setHalls(savedHalls || MOCK_HALLS);
+    };
+    loadHalls();
+  }, []);
   const translations = {
     [Language.ZH]: {
       title: '會館設施運維總覽',
@@ -174,7 +185,7 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], la
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {MOCK_HALLS.map(hall => (
+              {halls.map(hall => (
                 <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">

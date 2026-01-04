@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
-import { 
-  Send, 
-  Sparkles, 
-  Loader2, 
+import React, { useState, useEffect } from 'react';
+import {
+  Send,
+  Sparkles,
+  Loader2,
   X,
   Camera,
   Upload,
@@ -12,9 +12,10 @@ import {
   MapPin,
   ClipboardList
 } from 'lucide-react';
-import { Category, Urgency, RepairRequest, RepairStatus, OrderType, Language } from '../types';
+import { Category, Urgency, RepairRequest, RepairStatus, OrderType, Language, Hall } from '../types';
 import { MOCK_HALLS } from '../constants';
 import { analyzeRepairRequest } from '../services/geminiService';
+import { storageService } from '../services/storageService';
 
 interface NewRequestFormProps {
   onSubmit: (request: Partial<RepairRequest>) => void;
@@ -49,10 +50,11 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({ onSubmit, onCancel, ini
 
   const t = translations[language];
 
+  const [halls, setHalls] = useState<Hall[]>([]);
   const [formData, setFormData] = useState({
     type: initialType,
     title: '',
-    hallName: MOCK_HALLS[0].name,
+    hallName: '',
     category: Category.AC,
     urgency: Urgency.MEDIUM,
     description: '',
@@ -61,6 +63,18 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({ onSubmit, onCancel, ini
     maintenanceCycle: 30,
     staffInCharge: '',
   });
+
+  useEffect(() => {
+    const loadHalls = async () => {
+      const savedHalls = await storageService.loadHalls();
+      const list = savedHalls || MOCK_HALLS;
+      setHalls(list);
+      if (list.length > 0) {
+        setFormData(prev => ({ ...prev, hallName: list[0].name }));
+      }
+    };
+    loadHalls();
+  }, []);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
@@ -86,33 +100,33 @@ const NewRequestForm: React.FC<NewRequestFormProps> = ({ onSubmit, onCancel, ini
         <button onClick={onCancel} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full"><X size={24} /></button>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); onSubmit({...formData, status: RepairStatus.PENDING}); }} className="space-y-6">
+      <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...formData, status: RepairStatus.PENDING }); }} className="space-y-6">
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.titleLabel}</label>
-              <div className="relative"><ClipboardList className="absolute left-3 top-3 text-slate-400" size={18} /><input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.title} onChange={e => setFormData(prev => ({...prev, title: e.target.value}))} /></div>
+              <div className="relative"><ClipboardList className="absolute left-3 top-3 text-slate-400" size={18} /><input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.title} onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))} /></div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.reporterLabel}</label>
-              <div className="relative"><User className="absolute left-3 top-3 text-slate-400" size={18} /><input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.reporter} onChange={e => setFormData(prev => ({...prev, reporter: e.target.value}))} /></div>
+              <div className="relative"><User className="absolute left-3 top-3 text-slate-400" size={18} /><input required className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.reporter} onChange={e => setFormData(prev => ({ ...prev, reporter: e.target.value }))} /></div>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="space-y-2"><label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.hallLabel}</label><select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.hallName} onChange={e => setFormData(prev => ({...prev, hallName: e.target.value}))}>{MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}</select></div>
-            <div className="space-y-2"><label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.catLabel}</label><select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.category} onChange={e => setFormData(prev => ({...prev, category: e.target.value as Category}))}>{Object.values(Category).map(cat => <option key={cat} value={cat}>{cat}</option>)}</select></div>
-            <div className="space-y-2"><label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.urgencyLabel}</label><select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.urgency} onChange={e => setFormData(prev => ({...prev, urgency: e.target.value as Urgency}))}>{Object.values(Urgency).map(u => <option key={u} value={u}>{u}</option>)}</select></div>
+            <div className="space-y-2"><label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.hallLabel}</label><select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.hallName} onChange={e => setFormData(prev => ({ ...prev, hallName: e.target.value }))}>{halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}</select></div>
+            <div className="space-y-2"><label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.catLabel}</label><select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.category} onChange={e => setFormData(prev => ({ ...prev, category: e.target.value as Category }))}>{Object.values(Category).map(cat => <option key={cat} value={cat}>{cat}</option>)}</select></div>
+            <div className="space-y-2"><label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.urgencyLabel}</label><select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={formData.urgency} onChange={e => setFormData(prev => ({ ...prev, urgency: e.target.value as Urgency }))}>{Object.values(Urgency).map(u => <option key={u} value={u}>{u}</option>)}</select></div>
           </div>
           {formData.type === OrderType.ROUTINE && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
-              <div className="space-y-2"><label className="text-xs font-black text-indigo-400 uppercase tracking-widest">{t.lastDate}</label><input type="date" className="w-full px-4 py-2 bg-white border border-indigo-100 rounded-xl" value={formData.lastExecutedDate} onChange={e => setFormData(prev => ({...prev, lastExecutedDate: e.target.value}))} /></div>
-              <div className="space-y-2"><label className="text-xs font-black text-indigo-400 uppercase tracking-widest">{t.cycleLabel}</label><input type="number" className="w-full px-4 py-2 bg-white border border-indigo-100 rounded-xl" value={formData.maintenanceCycle} onChange={e => setFormData(prev => ({...prev, maintenanceCycle: parseInt(e.target.value)}))} /></div>
-              <div className="space-y-2"><label className="text-xs font-black text-indigo-400 uppercase tracking-widest">{t.staffLabel}</label><input className="w-full px-4 py-2 bg-white border border-indigo-100 rounded-xl" value={formData.staffInCharge} onChange={e => setFormData(prev => ({...prev, staffInCharge: e.target.value}))} /></div>
+              <div className="space-y-2"><label className="text-xs font-black text-indigo-400 uppercase tracking-widest">{t.lastDate}</label><input type="date" className="w-full px-4 py-2 bg-white border border-indigo-100 rounded-xl" value={formData.lastExecutedDate} onChange={e => setFormData(prev => ({ ...prev, lastExecutedDate: e.target.value }))} /></div>
+              <div className="space-y-2"><label className="text-xs font-black text-indigo-400 uppercase tracking-widest">{t.cycleLabel}</label><input type="number" className="w-full px-4 py-2 bg-white border border-indigo-100 rounded-xl" value={formData.maintenanceCycle} onChange={e => setFormData(prev => ({ ...prev, maintenanceCycle: parseInt(e.target.value) }))} /></div>
+              <div className="space-y-2"><label className="text-xs font-black text-indigo-400 uppercase tracking-widest">{t.staffLabel}</label><input className="w-full px-4 py-2 bg-white border border-indigo-100 rounded-xl" value={formData.staffInCharge} onChange={e => setFormData(prev => ({ ...prev, staffInCharge: e.target.value }))} /></div>
             </div>
           )}
           <div className="space-y-2">
             <div className="flex items-center justify-between"><label className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.descLabel}</label><button type="button" onClick={handleAIAnalyze} disabled={!formData.description || analyzing} className="flex items-center gap-1.5 text-xs font-bold text-indigo-600">{analyzing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} {t.aiBtn}</button></div>
-            <textarea required rows={4} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none resize-none" value={formData.description} onChange={e => setFormData(prev => ({...prev, description: e.target.value}))} />
+            <textarea required rows={4} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none resize-none" value={formData.description} onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))} />
           </div>
         </div>
         <div className="flex gap-4">

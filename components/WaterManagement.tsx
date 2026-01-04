@@ -24,7 +24,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { MOCK_HALLS, WATER_PRICE_LIST } from '../constants';
-import { WaterDispenser, WaterMaintenanceRecord, Language, FilterInfo, WaterMaintenancePart } from '../types';
+import { WaterDispenser, WaterMaintenanceRecord, Language, FilterInfo, WaterMaintenancePart, Hall } from '../types';
 import { storageService } from '../services/storageService';
 
 interface WaterManagementProps {
@@ -44,6 +44,7 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
   const [view, setView] = useState<'LIST' | 'ADD'>('LIST');
   const [dispensers, setDispensers] = useState<WaterDispenser[]>([]);
   const [maintenanceHistory, setMaintenanceHistory] = useState<WaterMaintenanceRecord[]>([]);
+  const [halls, setHalls] = useState<Hall[]>([]);
 
   const [selectedHall, setSelectedHall] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,7 +66,7 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
 
   // 批量新增狀態
   const [batchList, setBatchList] = useState<Partial<WaterDispenser>[]>([{
-    hallName: MOCK_HALLS[0].name,
+    hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
     location: '',
     model: '',
     installDate: new Date().toISOString().split('T')[0],
@@ -76,8 +77,10 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
     const loadData = async () => {
       const savedD = await storageService.loadWaterDispensers();
       const savedH = await storageService.loadWaterHistory();
+      const savedHalls = await storageService.loadHalls();
       if (savedD) setDispensers(savedD);
       if (savedH) setMaintenanceHistory(savedH);
+      setHalls(savedHalls || MOCK_HALLS);
     };
     loadData();
   }, []);
@@ -92,7 +95,7 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
   const handleSaveAll = async () => {
     const newDispensers: WaterDispenser[] = batchList.map((item, idx) => ({
       id: `WD-${Date.now()}-${idx}`,
-      hallName: item.hallName || MOCK_HALLS[0].name,
+      hallName: item.hallName || (halls.length > 0 ? halls[0].name : MOCK_HALLS[0].name),
       location: item.location || '未指定位置',
       model: item.model || '未指定型號',
       installDate: item.installDate || new Date().toISOString().split('T')[0],
@@ -103,7 +106,7 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
     await saveData(updated, maintenanceHistory);
     setView('LIST');
     setBatchList([{
-      hallName: MOCK_HALLS[0].name,
+      hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
       location: '',
       model: '',
       installDate: new Date().toISOString().split('T')[0],
@@ -246,7 +249,7 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
           onChange={(e) => setSelectedHall(e.target.value)}
         >
           <option value="ALL">所有會館</option>
-          {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+          {halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
         </select>
       </div>
 
@@ -436,7 +439,7 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
                   <div className="space-y-2">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">常用硬體零件 (程控/RO)</p>
                     <div className="grid grid-cols-2 gap-2">
-                      {[...WATER_PRICE_LIST['程控機'], ...WATER_PRICE_LIST['RO機']].filter(p => !p.isFilter).slice(0, 8).map((p, i) => (
+                      {[...WATER_PRICE_LIST['程控機'], ...WATER_PRICE_LIST['RO機']].filter((p: any) => !p.isFilter).slice(0, 8).map((p, i) => (
                         <button
                           key={i}
                           onClick={() => addPartToMForm(p.name, p.price)}
@@ -510,7 +513,7 @@ const WaterManagement: React.FC<WaterManagementProps> = ({ language }) => {
                         value={item.hallName}
                         onChange={(e) => updateBatchItem(bIdx, 'hallName', e.target.value)}
                       >
-                        {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+                        {halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
                       </select>
                     </div>
                     <div className="space-y-1">

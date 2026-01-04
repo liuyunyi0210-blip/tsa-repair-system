@@ -18,7 +18,7 @@ import {
   CheckCircle2,
   XCircle
 } from 'lucide-react';
-import { User as UserType, Role, Language } from '../types';
+import { User as UserType, Role, Language, Hall } from '../types';
 import { MOCK_HALLS, DEFAULT_ROLES } from '../constants';
 import { storageService } from '../services/storageService';
 
@@ -33,6 +33,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
   const [view, setView] = useState<'LIST' | 'EDIT'>('LIST');
   const [users, setUsers] = useState<UserType[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [halls, setHalls] = useState<Hall[]>([]);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -120,6 +121,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
     const loadData = async () => {
       const savedUsers = await storageService.loadUsers();
       const savedRoles = await storageService.loadRoles();
+      const savedHalls = await storageService.loadHalls();
 
       if (savedUsers) {
         setUsers(savedUsers);
@@ -146,6 +148,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
         setRoles(DEFAULT_ROLES);
         await storageService.saveRoles(DEFAULT_ROLES);
       }
+
+      setHalls(savedHalls || MOCK_HALLS);
     };
     loadData();
   }, []);
@@ -420,7 +424,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 >
                   <option value="">不限制</option>
-                  {MOCK_HALLS.map(hall => (
+                  {halls.map(hall => (
                     <option key={hall.id} value={hall.name}>{hall.name}</option>
                   ))}
                 </select>
@@ -430,7 +434,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
                 <label className="block text-sm font-bold text-slate-700 mb-2">{t.allowedHalls}</label>
                 <div className="border border-slate-200 rounded-xl p-4 max-h-48 overflow-y-auto">
                   <div className="space-y-2">
-                    {MOCK_HALLS.map(hall => (
+                    {halls.map(hall => (
                       <label
                         key={hall.id}
                         className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"

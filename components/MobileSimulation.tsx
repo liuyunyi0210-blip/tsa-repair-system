@@ -25,7 +25,8 @@ import {
   Database
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
-import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallSecurityStatus } from '../types';
+import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallSecurityStatus, Hall } from '../types';
+import { storageService } from '../services/storageService';
 
 interface MobileSimulationProps {
   onClose: () => void;
@@ -38,10 +39,25 @@ interface MobileSimulationProps {
 
 const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitReport, onDisasterReport, activeDisaster, requests = [], liffProfile }) => {
   const [activeForm, setActiveForm] = useState<'NONE' | 'REPAIR' | 'FINISH' | 'DISASTER'>('NONE');
+  const [halls, setHalls] = useState<Hall[]>([]);
+
+  useEffect(() => {
+    const loadHalls = async () => {
+      const savedHalls = await storageService.loadHalls();
+      const list = savedHalls || MOCK_HALLS;
+      setHalls(list);
+      if (list.length > 0) {
+        setRepairFormData(prev => ({ ...prev, hallName: list[0].name }));
+        setFinishFormData(prev => ({ ...prev, hallName: list[0].name }));
+        setDisasterFormData(prev => ({ ...prev, hallName: list[0].name }));
+      }
+    };
+    loadHalls();
+  }, []);
 
   // 分離不同表單的數據
   const [repairFormData, setRepairFormData] = useState({
-    hallName: MOCK_HALLS[0].name,
+    hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
     name: '',
     mission: '',
     phone: '',
@@ -51,7 +67,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
   const [finishFormData, setFinishFormData] = useState({
     selectedRequestId: '',
-    hallName: MOCK_HALLS[0].name,
+    hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
     name: '',
     position: '',
     phone: '',
@@ -76,7 +92,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   const [finishErrors, setFinishErrors] = useState<{ selectedRequestId?: string; name?: string; position?: string; phone?: string; workDescription?: string }>({});
 
   const [disasterFormData, setDisasterFormData] = useState({
-    hallName: MOCK_HALLS[0].name,
+    hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
     status: HallSecurityStatus.SAFE,
     remark: '',
     reporter: '',
@@ -325,7 +341,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       setActiveForm('NONE');
       setRepairImages([]);
       setRepairFormData({
-        hallName: MOCK_HALLS[0].name,
+        hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
         name: liffProfile?.displayName || '',
         mission: '',
         phone: '',
@@ -416,7 +432,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       return;
     }
 
-    const selectedHall = MOCK_HALLS.find(h => h.name === disasterFormData.hallName);
+    const selectedHall = halls.find(h => h.name === disasterFormData.hallName);
     if (!selectedHall) {
       alert('請選擇會館');
       return;
@@ -435,7 +451,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       alert('災害回報已提交！感謝您的回報。');
       setActiveForm('NONE');
       setDisasterFormData({
-        hallName: MOCK_HALLS[0].name,
+        hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
         status: HallSecurityStatus.SAFE,
         remark: '',
         reporter: '',
@@ -490,7 +506,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
               value={repairFormData.hallName}
               onChange={e => setRepairFormData(prev => ({ ...prev, hallName: e.target.value }))}
             >
-              {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+              {halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
           </div>
@@ -700,7 +716,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           setFinishImages([]);
           setFinishFormData({
             selectedRequestId: '',
-            hallName: MOCK_HALLS[0].name,
+            hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
             name: '',
             position: '',
             phone: '',
@@ -967,7 +983,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <button onClick={() => {
             setActiveForm('NONE');
             setDisasterFormData({
-              hallName: MOCK_HALLS[0].name,
+              hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
               status: HallSecurityStatus.SAFE,
               remark: '',
               reporter: '',
@@ -983,7 +999,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         <button onClick={() => {
           setActiveForm('NONE');
           setDisasterFormData({
-            hallName: MOCK_HALLS[0].name,
+            hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
             status: HallSecurityStatus.SAFE,
             remark: '',
             reporter: '',
