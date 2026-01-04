@@ -17,9 +17,10 @@ interface LoginProps {
   onLanguageChange: (lang: Language) => void;
   onShowPrivacy: () => void;
   onShowTerms: () => void;
+  onShowStorage: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onShowPrivacy, onShowTerms }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onShowPrivacy, onShowTerms, onShowStorage }) => {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -103,8 +104,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
         }
       }
 
-      // 查找匹配的用戶
-      const user = users.find(u => u.account === account.trim());
+      // 查找匹配的用戶 (不分大小寫)
+      const user = users.find(u => u.account.toLowerCase() === account.trim().toLowerCase());
 
       if (!user) {
         setError(t.errorMsg);
@@ -119,8 +120,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
         return;
       }
 
-      // 驗證密碼
-      if (user.password !== password) {
+      // 驗證密碼 (自動修剪前後空格，避免手機輸入或複製貼上產生空格)
+      if (user.password !== password.trim()) {
         setError(t.errorMsg);
         setLoading(false);
         return;
@@ -136,9 +137,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
 
       // 登入成功
       onLogin(`token-${user.id}`, user.id);
-    } catch (error) {
+    } catch (error: any) {
       console.error('登入錯誤:', error);
-      setError('登入時發生錯誤，請稍後再試');
+      // 根據錯誤類型提供更精確的提示
+      if (error.message?.includes('GitHub') || error.message?.includes('Gist') || error.message?.includes('Token')) {
+        setError('雲端儲存(Gist)連線失敗，請檢查權杖(Token)是否正確或網路是否暢通');
+      } else {
+        setError('系統發生錯誤，請稍後再試 (錯誤碼: L01)');
+      }
       setLoading(false);
     }
   };
@@ -149,19 +155,29 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
       <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-600/10 blur-[120px] rounded-full"></div>
 
       <div className="w-full max-w-lg p-6 relative z-10 animate-in fade-in zoom-in duration-700">
-        <div className="flex justify-end mb-8">
+        <div className="flex justify-between items-center mb-8">
+          <button
+            onClick={onShowStorage}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-xs font-bold ${storageService.getStorageType() === 'gist'
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+                : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+              }`}
+          >
+            <Globe size={14} />
+            {storageService.getStorageType() === 'gist' ? '雲端同步中' : '僅限本地儲存'}
+          </button>
           <button
             onClick={() => onLanguageChange(language === Language.ZH ? Language.JA : Language.ZH)}
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all text-xs font-bold"
           >
-            <Globe size={14} />
-            {language === Language.ZH ? '日本語' : '中文'}
+            <span>{language === Language.ZH ? '日本語' : '中文'}</span>
           </button>
         </div>
 
         <div className="bg-white rounded-[48px] shadow-2xl p-10 md:p-14 space-y-10 border border-slate-100">
           <div className="text-center space-y-4">
-            <div className="inline-flex p-4 bg-indigo-600 text-white rounded-[24px] shadow-xl shadow-indigo-200 mb-2">
+            <div className={`inline-flex p-4 text-white rounded-[24px] shadow-xl mb-2 ${storageService.getStorageType() === 'gist' ? 'bg-emerald-600 shadow-emerald-200' : 'bg-indigo-600 shadow-indigo-200'
+              }`}>
               <Wrench size={32} />
             </div>
             <div>

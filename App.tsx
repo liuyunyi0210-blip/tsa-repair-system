@@ -102,7 +102,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('tsa_auth_token');
-    
+
     const loadData = async () => {
       const savedRequests = await storageService.loadRepairRequests();
       if (savedRequests) setRequests(savedRequests);
@@ -120,19 +120,19 @@ const App: React.FC = () => {
       // 載入用戶和角色資料
       const savedUsers = await storageService.loadUsers();
       const savedRoles = await storageService.loadRoles();
-      
+
       if (token) {
         // 從 token 中提取用戶 ID（格式：token-${userId}）
         const userId = token.startsWith('token-') ? token.replace('token-', '') : null;
         const userIdFromMock = token === 'mock-token-12345' ? 'user-admin' : null;
         const targetUserId = userId || userIdFromMock;
-        
+
         if (targetUserId && savedUsers) {
           const user = savedUsers.find(u => u.id === targetUserId);
           if (user) {
             setCurrentUser(user);
             setIsAuthenticated(true);
-            
+
             // 載入對應的角色
             if (savedRoles) {
               setRoles(savedRoles);
@@ -153,7 +153,7 @@ const App: React.FC = () => {
           }
         }
       }
-      
+
       // 如果沒有 token 或找不到用戶，使用預設邏輯
       if (savedRoles) {
         setRoles(savedRoles);
@@ -202,16 +202,16 @@ const App: React.FC = () => {
 
   const handleLogin = async (token: string, userId: string) => {
     localStorage.setItem('tsa_auth_token', token);
-    
+
     // 載入用戶和角色資料
     const savedUsers = await storageService.loadUsers();
     const savedRoles = await storageService.loadRoles();
-    
+
     if (savedUsers) {
       const user = savedUsers.find(u => u.id === userId);
       if (user) {
         setCurrentUser(user);
-        
+
         // 載入對應的角色
         if (savedRoles) {
           const role = savedRoles.find(r => r.id === user.roleId);
@@ -229,7 +229,7 @@ const App: React.FC = () => {
         }
       }
     }
-    
+
     setIsAuthenticated(true);
   };
 
@@ -339,7 +339,7 @@ const App: React.FC = () => {
     // 更新或添加會館狀態
     const updatedHallsStatus = [...disaster.hallsStatus];
     const existingIndex = updatedHallsStatus.findIndex(h => h.hallId === hallId);
-    
+
     if (existingIndex >= 0) {
       // 更新現有狀態
       updatedHallsStatus[existingIndex] = {
@@ -373,7 +373,7 @@ const App: React.FC = () => {
     const updatedDisasters = disasterReports.map(d => d.id === disasterId ? updatedDisaster : d);
     setDisasterReports(updatedDisasters);
     await storageService.saveDisasterReports(updatedDisasters);
-    
+
     // 重新載入以確保資料同步
     const reloadedDisasters = await storageService.loadDisasterReports();
     if (reloadedDisasters) setDisasterReports(reloadedDisasters);
@@ -571,7 +571,7 @@ const App: React.FC = () => {
   if (!isAuthenticated) {
     if (publicView === 'privacy') return <div className="bg-slate-950 min-h-screen"><PrivacyPolicy onBack={() => setPublicView(null)} /></div>;
     if (publicView === 'terms') return <div className="bg-slate-950 min-h-screen"><TermsOfService onBack={() => setPublicView(null)} /></div>;
-    return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} onShowPrivacy={() => setPublicView('privacy')} onShowTerms={() => setPublicView('terms')} />;
+    return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} onShowPrivacy={() => setPublicView('privacy')} onShowTerms={() => setPublicView('terms')} onShowStorage={() => setShowStorageSettings(true)} />;
   }
 
   return (
