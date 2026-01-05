@@ -976,7 +976,15 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
             <ArrowLeft size={20} />
           </button>
-          <h3 className="text-lg font-black text-slate-800">災害狀況回報</h3>
+          <div className="flex flex-col">
+            <h3 className="text-lg font-black text-slate-800">災害狀況回報</h3>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${storageService.getStorageType() === 'gist' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className="text-[10px] font-bold text-slate-400">
+                {storageService.getStorageType() === 'gist' ? '雲端同步中' : '僅儲存於本機'}
+              </span>
+            </div>
+          </div>
         </div>
         <button onClick={() => {
           setActiveForm('NONE');
@@ -1181,8 +1189,14 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           >
             <Database size={20} />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col">
             <span className="font-black text-lg tracking-tight">會館維護系統</span>
+            <div className="flex items-center gap-1 opacity-80">
+              <div className={`w-1.5 h-1.5 rounded-full ${storageService.getStorageType() === 'gist' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              <span className="text-[9px] font-bold uppercase tracking-wider">
+                {storageService.getStorageType() === 'gist' ? 'Cloud Sync' : 'Local Only'}
+              </span>
+            </div>
           </div>
         </div>
         <button
@@ -1196,7 +1210,13 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
       {/* 主選單區 - 改為垂直大按鈕 */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 custom-scrollbar">
         <div className="mb-8 mt-2">
-          <h2 className="text-2xl font-black text-slate-800 mb-2">您好，{liffProfile?.displayName || '志工伙伴'}</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-black text-slate-800">您好，{liffProfile?.displayName || '志工伙伴'}</h2>
+            <div className={`px-3 py-1 rounded-full flex items-center gap-1.5 ${storageService.getStorageType() === 'gist' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${storageService.getStorageType() === 'gist' ? 'bg-emerald-600' : 'bg-amber-600'}`} />
+              <span className="text-[10px] font-black">{storageService.getStorageType() === 'gist' ? '雲端同步中' : '僅儲存於本機'}</span>
+            </div>
+          </div>
           <p className="text-slate-500 font-bold">請選擇下方功能開始通報或回報進度</p>
         </div>
 
@@ -1257,7 +1277,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         {/* 底部資訊 */}
         <div className="pt-12 pb-6 text-center">
           <p className="text-slate-300 text-[10px] font-black uppercase tracking-widest">TSA Facility Management System</p>
-          <p className="text-slate-300 text-[10px] mt-1">Version 1.0.5 (Update: Photos Fix)</p>
+          <p className="text-slate-300 text-[10px] mt-1">Version 1.0.6 (Update: Sync Status Fix)</p>
         </div>
       </div>
 
