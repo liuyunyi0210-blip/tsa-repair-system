@@ -15,7 +15,8 @@ import {
   Zap,
   Tag,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  Trash2
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { AED, Language, AEDHistoryItem, Hall } from '../types';
@@ -113,6 +114,13 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
     setShowUpdateModal(null);
   };
 
+  const handleDelete = async (aedId: string) => {
+    if (window.confirm('確定要刪除這筆 AED 資料嗎？此操作無法還原。')) {
+      const updated = aeds.filter(a => a.id !== aedId);
+      await saveAeds(updated);
+    }
+  };
+
   const isNearExpiry = (dateStr: string) => {
     if (!dateStr) return false;
     const expiry = new Date(dateStr);
@@ -138,7 +146,14 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {aeds.map(aed => (
-          <div key={aed.id} className="bg-white rounded-[48px] border border-slate-200 shadow-sm hover:shadow-2xl transition-all p-8 flex flex-col group relative">
+          <div key={aed.id} className="bg-white rounded-[48px] border border-slate-200 shadow-sm hover:shadow-2xl transition-all p-8 flex flex-col group relative overflow-hidden">
+            <button
+              onClick={() => handleDelete(aed.id)}
+              className="absolute top-8 right-8 p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all opacity-0 group-hover:opacity-100 z-10"
+              title="刪除資料"
+            >
+              <Trash2 size={20} />
+            </button>
             <div className="space-y-6 flex-1">
               <div className="flex justify-between items-start">
                 <div className="p-4 bg-rose-50 text-rose-600 rounded-3xl"><HeartPulse size={32} /></div>
@@ -347,7 +362,7 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
               {showHistoryModal.history.map(item => (
                 <div key={item.id} className="flex items-start gap-5 p-5 bg-slate-50 rounded-[28px] border border-slate-100 hover:bg-white transition-all">
                   <div className={`p-3 rounded-2xl text-white shadow-lg ${item.type === 'BATTERY' ? 'bg-indigo-500' :
-                      item.type === 'PADS' ? 'bg-rose-500' : 'bg-emerald-500'
+                    item.type === 'PADS' ? 'bg-rose-500' : 'bg-emerald-500'
                     }`}>
                     {item.type === 'BATTERY' ? <RefreshCw size={20} /> :
                       item.type === 'PADS' ? <Tag size={20} /> : <CheckCircle2 size={20} />}
