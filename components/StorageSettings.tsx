@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Database, 
-  Cloud, 
-  Save, 
-  X, 
+import {
+  Database,
+  Cloud,
+  Save,
+  X,
   AlertCircle,
   CheckCircle2,
   Key,
@@ -135,7 +135,7 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-[300] flex">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative w-full max-w-2xl bg-white ml-auto h-full overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-slate-200 p-6 z-10">
@@ -207,7 +207,7 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
                     )}
                   </div>
                   <p className="text-sm text-slate-600 mb-4">{t.gistDesc}</p>
-                  
+
                   {storageType === 'gist' && (
                     <div className="space-y-4 mt-4">
                       <div>
@@ -270,11 +270,10 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
           </div>
 
           {status.type && (
-            <div className={`flex items-center gap-2 p-4 rounded-xl ${
-              status.type === 'success' 
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+            <div className={`flex items-center gap-2 p-4 rounded-xl ${status.type === 'success'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                 : 'bg-rose-50 text-rose-700 border border-rose-200'
-            }`}>
+              }`}>
               {status.type === 'success' ? (
                 <CheckCircle2 size={20} />
               ) : (

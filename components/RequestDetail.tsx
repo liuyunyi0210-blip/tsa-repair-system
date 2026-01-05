@@ -65,7 +65,7 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdat
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-200">
           {/* Header */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">

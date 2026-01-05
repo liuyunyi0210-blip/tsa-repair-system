@@ -322,7 +322,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
 
   if (view === 'EDIT') {
     return (
-      <div className="fixed inset-0 z-50 flex">
+      <div className="fixed inset-0 z-[300] flex">
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <div className="relative w-full max-w-2xl bg-white ml-auto h-full overflow-y-auto">
           <div className="sticky top-0 bg-white border-b border-slate-200 p-6 z-10">
@@ -492,7 +492,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ language, isOpen, onClo
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-[300] flex">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative w-full max-w-3xl bg-white ml-auto h-full overflow-y-auto flex flex-col">
         <div className="sticky top-0 bg-white border-b border-slate-200 p-6 z-10">
