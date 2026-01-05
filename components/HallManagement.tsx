@@ -253,18 +253,19 @@ const HallManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {filteredHalls.map(hall => (
           <div key={hall.id} className={`bg-white rounded-[40px] border transition-all overflow-hidden flex flex-col group ${selectedIds.has(hall.id) ? 'ring-4 ring-indigo-500 border-transparent shadow-2xl' : 'border-slate-200 shadow-sm hover:shadow-xl'}`}>
-            <div className="h-40 relative">
-              <img src={hall.photoUrl || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80'} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-slate-900/40"></div>
+            <div className="p-8 relative space-y-4 flex-1">
               {isSelectMode && (
-                <button onClick={() => toggleSelection(hall.id)} className="absolute top-4 left-4 z-10 text-white">
-                  {selectedIds.has(hall.id) ? <CheckCircle2 className="text-white fill-indigo-600" size={24} /> : <Square size={24} />}
+                <button onClick={() => toggleSelection(hall.id)} className="absolute top-8 right-8 z-10">
+                  {selectedIds.has(hall.id) ? <CheckCircle2 className="text-indigo-600" size={24} /> : <Square className="text-slate-200" size={24} />}
                 </button>
               )}
-              <div className="absolute bottom-4 left-4 text-white"><h3 className="font-black text-lg leading-tight">{hall.name}</h3></div>
+              <h3 className="font-black text-2xl text-slate-900 leading-tight pr-8">{hall.name}</h3>
+              <div className="flex items-center gap-2 text-slate-400">
+                <MapPin size={16} className="text-slate-300" />
+                <span className="text-xs font-bold line-clamp-1">{hall.address}</span>
+              </div>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center gap-2 text-slate-400"><MapPin size={12} /><span className="text-[10px] font-bold truncate">{hall.address}</span></div>
+            <div className="px-8 pb-8">
               <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
                 {showDeleted ? (
                   <div className="flex gap-2 w-full">
