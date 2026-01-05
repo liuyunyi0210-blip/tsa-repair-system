@@ -17,6 +17,7 @@ import {
 import { MonthlyReport, Hall } from '../types';
 import { MOCK_HALLS } from '../constants';
 import { storageService } from '../services/storageService';
+import { compressImage } from '../services/imageService';
 
 interface MonthlyReportSubmissionProps {
     reports: MonthlyReport[];
@@ -75,19 +76,20 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
         setSubmissionReports(newReports);
     };
 
-    const handleFileChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files) {
-            Array.from(files).forEach((file: File) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const base64 = reader.result as string;
+            const fileList = Array.from(files) as File[];
+            for (const file of fileList) {
+                try {
+                    const compressedBase64 = await compressImage(file, { maxWidth: 800, quality: 0.5 });
                     const newReports = [...submissionReports];
-                    newReports[index].photoUrls = [...newReports[index].photoUrls, base64];
+                    newReports[index].photoUrls = [...newReports[index].photoUrls, compressedBase64];
                     setSubmissionReports(newReports);
-                };
-                reader.readAsDataURL(file);
-            });
+                } catch (error) {
+                    console.error('圖片壓縮失敗:', error);
+                }
+            }
         }
     };
 

@@ -23,6 +23,7 @@ import {
 import { MOCK_HALLS, EQUIPMENT_CODES, EQUIPMENT_CATEGORIES } from '../constants';
 import { Equipment, EquipmentChange, EquipmentChangeType, Language, Hall } from '../types';
 import { storageService } from '../services/storageService';
+import { compressImage } from '../services/imageService';
 
 interface EquipmentManagementProps {
   onDirtyChange?: (isDirty: boolean) => void;
@@ -164,6 +165,45 @@ const EquipmentManagement: React.FC<EquipmentManagementProps> = ({ onDirtyChange
             <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase">{t.modelLabel} *</label><input required className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl" value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} /></div>
             <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase">{t.buyDate} *</label><input required type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl" value={form.purchaseDate} onChange={e => setForm({ ...form, purchaseDate: e.target.value })} /></div>
             <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 uppercase">{t.priceLabel} *</label><input required type="number" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl" value={form.price} onChange={e => setForm({ ...form, price: parseInt(e.target.value) })} /></div>
+
+            <div className="md:col-span-2 space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase">{t.photoLabel}</label>
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
+                  {form.photoUrl ? (
+                    <img src={form.photoUrl} className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="text-slate-300" size={32} />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="equip-photo"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const base64 = await compressImage(file, { maxWidth: 600, quality: 0.5 });
+                          setForm({ ...form, photoUrl: base64 });
+                        } catch (err) {
+                          console.error('圖片處理失敗', err);
+                        }
+                      }
+                    }}
+                  />
+                  <label htmlFor="equip-photo" className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-200 rounded-2xl font-black text-xs cursor-pointer hover:bg-slate-50 transition-all">
+                    <Camera size={16} /> {t.uploadBtn}
+                  </label>
+                  {form.photoUrl && (
+                    <button type="button" onClick={() => setForm({ ...form, photoUrl: '' })} className="ml-4 text-[10px] font-black text-rose-500 underline">移除照片</button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="md:col-span-2 pt-6 flex gap-4"><button type="submit" className="flex-1 bg-indigo-600 text-white font-black py-4 rounded-3xl shadow-xl hover:bg-indigo-700 transition-all">{t.saveBtn}</button><button type="button" onClick={() => setView('HOME')} className="px-10 bg-white text-slate-500 font-bold py-4 rounded-3xl border border-slate-200">{t.cancel}</button></div>
           </form>
         </div>

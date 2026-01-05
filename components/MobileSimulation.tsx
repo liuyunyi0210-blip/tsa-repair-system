@@ -27,6 +27,7 @@ import {
 import { MOCK_HALLS } from '../constants';
 import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallSecurityStatus, Hall } from '../types';
 import { storageService } from '../services/storageService';
+import { compressImage } from '../services/imageService';
 
 interface MobileSimulationProps {
   onClose: () => void;
@@ -133,40 +134,6 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     });
   };
 
-  // 圖片壓縮工具函數
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const MAX_SIZE = 800; // 降低尺寸以符合 Gist 1MB 限制
-
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.5)); // 降低品質到 0.5
-        };
-        img.src = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
-    });
-  };
 
   // 處理文件上傳
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
@@ -177,38 +144,37 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
     fileArray.forEach(async (file: any) => {
       try {
-        const reader = new FileReader();
-        reader.onload = async (event: any) => {
-          const imageUrl = event.target.result as string;
-          const initialData: ImageData = {
-            url: imageUrl,
-            timestamp: file.lastModified ? new Date(file.lastModified).toISOString() : new Date().toISOString(),
-            location: undefined
-          };
+        // 使用統一的圖片壓縮服務，針對 Gist 限制進行優化
+        const compressedUrl = await compressImage(file, { maxWidth: 600, quality: 0.4 });
 
-          // 立即更新畫面顯示圖片
-          if (formType === 'REPAIR') {
-            setRepairImages(prev => [...prev, initialData]);
-          } else {
-            setFinishImages(prev => [...prev, initialData]);
-          }
-
-          // 背景讀取 EXIF，讀到再更新資料，不影響圖片顯示
-          exifr.parse(file, { gps: true, exif: true }).then(exifData => {
-            if (exifData) {
-              const updatedTime = exifData.DateTimeOriginal ? new Date(exifData.DateTimeOriginal).toISOString() : initialData.timestamp;
-              const updatedLoc = (exifData.latitude && exifData.longitude) ? { latitude: exifData.latitude, longitude: exifData.longitude } : undefined;
-
-              const updateFn = (prev: ImageData[]) => prev.map(img =>
-                img.url === imageUrl ? { ...img, timestamp: updatedTime, location: updatedLoc } : img
-              );
-
-              if (formType === 'REPAIR') setRepairImages(updateFn);
-              else setFinishImages(updateFn);
-            }
-          }).catch(() => { });
+        const initialData: ImageData = {
+          url: compressedUrl,
+          timestamp: file.lastModified ? new Date(file.lastModified).toISOString() : new Date().toISOString(),
+          location: undefined
         };
-        reader.readAsDataURL(file);
+
+        // 立即更新畫面顯示圖片
+        if (formType === 'REPAIR') {
+          setRepairImages(prev => [...prev, initialData]);
+        } else {
+          setFinishImages(prev => [...prev, initialData]);
+        }
+
+        // 背景讀取 EXIF，讀到再更新資料，不影響圖片顯示
+        exifr.parse(file, { gps: true, exif: true }).then(exifData => {
+          if (exifData) {
+            const updatedTime = exifData.DateTimeOriginal ? new Date(exifData.DateTimeOriginal).toISOString() : initialData.timestamp;
+            const updatedLoc = (exifData.latitude && exifData.longitude) ? { latitude: exifData.latitude, longitude: exifData.longitude } : undefined;
+
+            const updateFn = (prev: ImageData[]) => prev.map(img =>
+              img.url === compressedUrl ? { ...img, timestamp: updatedTime, location: updatedLoc } : img
+            );
+
+            if (formType === 'REPAIR') setRepairImages(updateFn);
+            else setFinishImages(updateFn);
+          }
+        }).catch(() => { });
+
       } catch (err) {
         console.error('圖片處理錯誤:', err);
       }
