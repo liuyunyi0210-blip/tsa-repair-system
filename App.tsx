@@ -92,7 +92,40 @@ const App: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [publicView, setPublicView] = useState<'privacy' | 'terms' | null>(null);
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; userId: string; pictureUrl?: string } | null>(null);
-  const [storageType, setStorageType] = useState<any>(storageService.getStorageType());
+  const [storageType, setStorageType] = useState<any>(() => {
+    // 強健的參數抓取邏輯
+    const getParam = (name: string) => {
+      const search = new URLSearchParams(window.location.search).get(name);
+      if (search) return search;
+      const hashQuery = window.location.hash.split('?')[1];
+      if (hashQuery) return new URLSearchParams(hashQuery).get(name);
+      return null;
+    };
+
+    const urlToken = getParam('token');
+    const urlGistId = getParam('gistId');
+
+    if (urlToken) {
+      storageService.init({
+        type: 'gist',
+        gistToken: urlToken,
+        gistId: urlGistId || undefined
+      });
+      return 'gist';
+    }
+    return storageService.getStorageType();
+  });
+
+  const [isAutoConfigured, setIsAutoConfigured] = useState(() => {
+    const getParam = (name: string) => {
+      const search = new URLSearchParams(window.location.search).get(name);
+      if (search) return search;
+      const hashQuery = window.location.hash.split('?')[1];
+      if (hashQuery) return new URLSearchParams(hashQuery).get(name);
+      return null;
+    };
+    return !!getParam('token');
+  });
 
   // 暴露設定介面給全局，讓 MobileSimulation 可以呼叫
   useEffect(() => {
@@ -117,28 +150,29 @@ const App: React.FC = () => {
     const token = localStorage.getItem('tsa_auth_token');
 
     const loadData = async () => {
-      // 1. 優先處理 URL 參數中的儲存設定 (用於免輸入 Token 登入)
-      const params = new URLSearchParams(window.location.search);
-      const urlToken = params.get('token');
-      const urlGistId = params.get('gistId');
+      // 1. 清除 URL 中的敏感資訊 (支持 search 與 hash)
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
 
-      if (urlToken) {
-        storageService.init({
-          type: 'gist',
-          gistToken: urlToken,
-          gistId: urlGistId || undefined
-        });
-
-        // 清除 URL 中的敏感資訊
+      if (searchParams.get('token') || hashParams.get('token')) {
         const url = new URL(window.location.href);
         url.searchParams.delete('token');
         url.searchParams.delete('gistId');
-        window.history.replaceState({}, document.title, url.toString());
 
-        console.log('已透過 URL 自動載入雲端儲存設定');
+        // 處理哈希中的參數
+        if (url.hash.includes('?')) {
+          const [baseHash, query] = url.hash.split('?');
+          const hParams = new URLSearchParams(query);
+          hParams.delete('token');
+          hParams.delete('gistId');
+          const newQuery = hParams.toString();
+          url.hash = newQuery ? `${baseHash}?${newQuery}` : baseHash;
+        }
+
+        window.history.replaceState({}, document.title, url.toString());
       }
 
-      // 2. 刷新儲存類型狀態
+      // 2. 刷新儲存類型狀態 (確保同步)
       const currentType = storageService.getStorageType();
       setStorageType(currentType);
 
@@ -773,6 +807,7 @@ const App: React.FC = () => {
           onShowTerms={() => setPublicView('terms')}
           onShowStorage={() => setShowStorageSettings(true)}
           storageType={storageType}
+          isAutoConfigured={isAutoConfigured}
         />
         {Modals}
       </div>

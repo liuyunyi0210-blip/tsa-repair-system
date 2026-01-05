@@ -16,12 +16,12 @@ interface LoginProps {
   language: Language;
   onLanguageChange: (lang: Language) => void;
   onShowPrivacy: () => void;
-  onShowTerms: () => void;
   onShowStorage: () => void;
   storageType: 'local' | 'gist';
+  isAutoConfigured?: boolean;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onShowPrivacy, onShowTerms, onShowStorage, storageType }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onShowPrivacy, onShowTerms, onShowStorage, storageType, isAutoConfigured }) => {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -229,6 +229,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
               <div className="flex items-center gap-2 p-4 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100 animate-in slide-in-from-top-2">
                 <AlertCircle size={16} />
                 <span className="text-xs font-bold">{error}</span>
+              </div>
+            )}
+
+            {isAutoConfigured && (
+              <div className="flex items-center gap-2 p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 animate-in fade-in duration-500">
+                <Globe size={16} className="animate-pulse" />
+                <span className="text-xs font-bold">雲端儲存已透過連結自動設定成功！</span>
               </div>
             )}
 
