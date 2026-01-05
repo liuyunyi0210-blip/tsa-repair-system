@@ -82,7 +82,7 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
             const fileList = Array.from(files) as File[];
             for (const file of fileList) {
                 try {
-                    const compressedBase64 = await compressImage(file, { maxWidth: 800, quality: 0.5 });
+                    const compressedBase64 = await compressImage(file);
                     const newReports = [...submissionReports];
                     newReports[index].photoUrls = [...newReports[index].photoUrls, compressedBase64];
                     setSubmissionReports(newReports);

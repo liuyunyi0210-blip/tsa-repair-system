@@ -16,6 +16,7 @@ import {
   DisasterReport,
   MonthlyReport
 } from '../types';
+import { pruneLargeData } from './imageService';
 
 export type StorageType = 'local' | 'gist';
 
@@ -90,7 +91,9 @@ class StorageService {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || '儲存失敗');
+      const message = error.message || '儲存失敗';
+      console.error(`Gist API Error [${filename}]:`, message, error);
+      throw new Error(message);
     }
 
     const result = await response.json();
@@ -231,7 +234,15 @@ class StorageService {
         localStorage.setItem(key, JSON.stringify(data));
       }
     } else {
-      localStorage.setItem(key, JSON.stringify(data));
+      try {
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch (e: any) {
+        if (e.name === 'QuotaExceededError') {
+          console.error('LocalStorage Quota Exceeded!');
+          throw new Error('儲存空間已滿 (The quota has been exceeded)。請嘗試刪除舊資料或減少照片數量。');
+        }
+        throw e;
+      }
     }
   }
 
@@ -253,7 +264,9 @@ class StorageService {
 
   // 工單資料
   async saveRepairRequests(requests: RepairRequest[]): Promise<void> {
-    await this.saveData('tsa_repair_orders_v6', requests, 'repair_requests.json');
+    // 儲存前先檢查大小並適度清理已結案件的照片
+    const pruned = pruneLargeData(requests, 900 * 1024); // 預留空間給其他欄位，限制在 900KB 以下
+    await this.saveData('tsa_repair_orders_v6', pruned, 'repair_requests.json');
   }
 
   async loadRepairRequests(): Promise<RepairRequest[] | null> {
@@ -343,7 +356,8 @@ class StorageService {
 
   // 月報表資料
   async saveMonthlyReports(reports: MonthlyReport[]): Promise<void> {
-    await this.saveData('tsa_monthly_reports_v1', reports, 'monthly_reports.json');
+    const pruned = pruneLargeData(reports, 900 * 1024);
+    await this.saveData('tsa_monthly_reports_v1', pruned, 'monthly_reports.json');
   }
 
   async loadMonthlyReports(): Promise<MonthlyReport[] | null> {

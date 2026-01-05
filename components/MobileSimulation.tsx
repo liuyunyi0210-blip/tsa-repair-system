@@ -145,7 +145,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     fileArray.forEach(async (file: any) => {
       try {
         // 使用統一的圖片壓縮服務，針對 Gist 限制進行優化
-        const compressedUrl = await compressImage(file, { maxWidth: 600, quality: 0.4 });
+        const compressedUrl = await compressImage(file);
 
         const initialData: ImageData = {
           url: compressedUrl,

@@ -11,9 +11,9 @@ export interface CompressionOptions {
 
 export const compressImage = (file: File | Blob, options: CompressionOptions = {}): Promise<string> => {
     const {
-        maxWidth = 800,
-        maxHeight = 800,
-        quality = 0.6
+        maxWidth = 500,
+        maxHeight = 500,
+        quality = 0.3
     } = options;
 
     return new Promise((resolve, reject) => {
@@ -66,6 +66,30 @@ export const compressImage = (file: File | Blob, options: CompressionOptions = {
 export const getBase64Size = (base64String: string): number => {
     const padding = (base64String.match(/=/g) || []).length;
     return (base64String.length * 0.75) - padding;
+};
+
+/**
+ * 自動清理過舊或過大的資料（針對已結案工單移除照片）
+ */
+export const pruneLargeData = (items: any[], targetSize: number = 800 * 1024): any[] => {
+    let jsonString = JSON.stringify(items);
+    if (jsonString.length <= targetSize) return items;
+
+    console.warn('資料過大，開始清理舊照片...');
+    const newItems = [...items];
+
+    // 找出所有已結案且有照片的工單，按時間排序（舊的優先）
+    const closable = newItems
+        .filter(item => item.status === 'CLOSED' && item.photoUrls && item.photoUrls.length > 0)
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    for (const item of closable) {
+        if (JSON.stringify(newItems).length <= targetSize) break;
+        item.photoUrls = []; // 移除照片
+        item.description += ' (原始照片因儲存空間限制已自動移除)';
+    }
+
+    return newItems;
 };
 
 /**
