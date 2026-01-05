@@ -60,7 +60,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h1',
     name: '至善文化會館',
-    area: '台北一區',
+    area: '北部',
     district: '台北圈',
     address: '11143 台北市士林區至善路二段250號',
     builtDate: '1995-03-24',
@@ -73,7 +73,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h2',
     name: '花蓮文化會館',
-    area: '東部一區',
+    area: '東部',
     district: '花蓮圈',
     address: '97057 花蓮縣花蓮市富裕五街71號',
     builtDate: '2000-01-01',
@@ -85,7 +85,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h3',
     name: '宜蘭文化會館',
-    area: '台北二區',
+    area: '北部',
     district: '宜蘭圈',
     address: '26057 宜蘭市陽明路131巷99號',
     builtDate: '2000-01-01',
@@ -97,7 +97,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h4',
     name: '基隆文化會館',
-    area: '台北三區',
+    area: '北部',
     district: '基隆圈',
     address: '20442 基隆市安樂路1段150號1、2樓',
     builtDate: '2000-01-01',
@@ -109,7 +109,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h5',
     name: '淡水文化會館',
-    area: '新北一區',
+    area: '北部',
     district: '台北圈',
     address: '25147 新北市淡水區中正東路1段3巷9號3樓',
     builtDate: '2000-01-01',
@@ -121,7 +121,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h6',
     name: '汐止文化會館',
-    area: '新北二區',
+    area: '北部',
     district: '台北圈',
     address: '22178 新北市汐止區大安街50號3樓',
     builtDate: '2000-01-01',
@@ -133,7 +133,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h7',
     name: '瑞光文化會館',
-    area: '台北一區',
+    area: '北部',
     district: '台北圈',
     address: '11466 台北市內湖區瑞光路26巷20弄25號2樓',
     builtDate: '2000-01-01',
@@ -145,7 +145,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h8',
     name: '玉成文化會館',
-    area: '台北二區',
+    area: '北部',
     district: '台北圈',
     address: '11561 台北市南港區八德路四段768巷5號B1樓',
     builtDate: '2000-01-01',
@@ -157,7 +157,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h9',
     name: '錦州文化會館',
-    area: '台北一區',
+    area: '北部',
     district: '台北圈',
     address: '10491 台北市中山區中山北路二段137巷24-1號',
     builtDate: '2000-01-01',
@@ -169,7 +169,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h10',
     name: '藝文會堂',
-    area: '台北一區',
+    area: '北部',
     district: '台北圈',
     address: '10450 台北市中山區中山北路二段137巷24-1號',
     builtDate: '2000-01-01',
@@ -181,7 +181,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h11',
     name: '文化會堂',
-    area: '台北一區',
+    area: '北部',
     district: '台北圈',
     address: '10450 台北市中山區中山北路二段115巷39號B1',
     builtDate: '2000-01-01',
@@ -193,7 +193,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h12',
     name: '中興文化會館',
-    area: '台北二區',
+    area: '北部',
     district: '台北圈',
     address: '10847 台北市萬華區成都路110號2、3樓',
     builtDate: '2000-01-01',
@@ -205,7 +205,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h13',
     name: '景美文化會館',
-    area: '台北三區',
+    area: '北部',
     district: '台北圈',
     address: '23146 新北市新店區中正路542之3號5樓',
     builtDate: '2000-01-01',
@@ -217,7 +217,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h14',
     name: '雙和文化會館',
-    area: '新北一區',
+    area: '北部',
     district: '台北圈',
     address: '23557 新北市中和區中山路二段362號2樓',
     builtDate: '2000-01-01',
@@ -229,7 +229,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h15',
     name: '板橋文化會館',
-    area: '新北二區',
+    area: '北部',
     district: '台北圈',
     address: '22041 新北市板橋區民生路二段232號3樓',
     builtDate: '2008-11-12',
@@ -242,7 +242,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h16',
     name: '三重文化會館',
-    area: '新北三區',
+    area: '北部',
     district: '台北圈',
     address: '24159 新北市三重區重新路五段609巷2號3樓之1',
     builtDate: '2000-01-01',
@@ -254,7 +254,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h17',
     name: '新莊文化會館',
-    area: '新北三區',
+    area: '北部',
     district: '台北圈',
     address: '24257 新北市新莊區中正路657之10號3樓',
     builtDate: '2000-01-01',
@@ -266,7 +266,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h18',
     name: '桃園文化會館',
-    area: '桃園一區',
+    area: '北部',
     district: '桃園圈',
     address: '33743 桃園市大園區高鐵北路二段140號',
     builtDate: '2015-05-20',
@@ -279,7 +279,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h19',
     name: '新竹文化會館',
-    area: '桃園二區',
+    area: '北部',
     district: '新竹圈',
     address: '30050 新竹市國華街68號',
     builtDate: '2000-01-01',
@@ -291,7 +291,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h20',
     name: '台中文化會館',
-    area: '台中一區',
+    area: '中部',
     district: '台中圈',
     address: '40758 台中市西屯區大容東街90號2、4樓',
     builtDate: '1988-12-05',
@@ -304,7 +304,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h21',
     name: '霧峰文化會館',
-    area: '台中二區',
+    area: '中部',
     district: '台中圈',
     address: '41355 台中市霧峰區四德里中投西路二段76號',
     builtDate: '2000-01-01',
@@ -316,7 +316,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h22',
     name: '彰化文化會館',
-    area: '彰化一區',
+    area: '中部',
     district: '彰化圈',
     address: '50447 彰化縣秀水鄉安溪村平安五街61號',
     builtDate: '2000-01-01',
@@ -328,7 +328,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h23',
     name: '雲林文化會館',
-    area: '雲林一區',
+    area: '中部',
     district: '雲林圈',
     address: '64052 雲林縣斗六市北平路46巷5號',
     builtDate: '2000-01-01',
@@ -340,7 +340,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h24',
     name: '雲林東勢會館',
-    area: '雲林二區',
+    area: '中部',
     district: '雲林圈',
     address: '63555 雲林縣東勢鄉東南村20鄰康安路269號',
     builtDate: '2000-01-01',
@@ -352,7 +352,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h25',
     name: '西螺文化會館',
-    area: '雲林一區',
+    area: '中部',
     district: '雲林圈',
     address: '64848 雲林縣西螺鎮中山路225號3樓',
     builtDate: '2000-01-01',
@@ -364,7 +364,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h26',
     name: '友愛文化會館',
-    area: '嘉義一區',
+    area: '中部',
     district: '嘉義圈',
     address: '60088 嘉義市友愛路288號7樓3',
     builtDate: '2000-01-01',
@@ -376,7 +376,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h27',
     name: '佳里文化會館',
-    area: '台南二區',
+    area: '南部',
     district: '台南圈',
     address: '72241 台南市佳里區延平路351號4樓',
     builtDate: '2000-01-01',
@@ -388,7 +388,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h28',
     name: '安南文化會館',
-    area: '台南一區',
+    area: '南部',
     district: '台南圈',
     address: '70958 台南市安南區郡安路四段65號1樓',
     builtDate: '2000-01-01',
@@ -400,7 +400,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h29',
     name: '高雄文化會館',
-    area: '高雄一區',
+    area: '南部',
     district: '高雄圈',
     address: '811027 高雄市楠梓區金富街1號',
     builtDate: '2002-07-15',
@@ -413,7 +413,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h30',
     name: '鼓山文化會館',
-    area: '高雄二區',
+    area: '南部',
     district: '高雄圈',
     address: '80458 高雄市鼓山區裕誠路1093號3、4樓',
     builtDate: '2000-01-01',
@@ -425,7 +425,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h31',
     name: '鹽埕文化會館',
-    area: '高雄二區',
+    area: '南部',
     district: '高雄圈',
     address: '80341 高雄市鹽埕區莒光街197號',
     builtDate: '2000-01-01',
@@ -437,7 +437,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h32',
     name: '前鎮文化會館',
-    area: '高雄三區',
+    area: '南部',
     district: '高雄圈',
     address: '80661 高雄市前鎮區沱江街110巷1號',
     builtDate: '2000-01-01',
@@ -449,7 +449,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h33',
     name: '鳳山文化會館',
-    area: '高雄四區',
+    area: '南部',
     district: '高雄圈',
     address: '83348 高雄市鳥松區鳥松里中正路2巷17號',
     builtDate: '2000-01-01',
@@ -461,7 +461,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h34',
     name: '旗山文化會館',
-    area: '高雄四區',
+    area: '南部',
     district: '高雄圈',
     address: '842042 高雄市旗山區太平里復新街73號',
     builtDate: '2000-01-01',
@@ -473,7 +473,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h35',
     name: '屏東文化會館',
-    area: '屏東一區',
+    area: '南部',
     district: '屏東圈',
     address: '91141 屏東縣竹田鄉大湖村大成路46號',
     builtDate: '2000-01-01',
@@ -485,7 +485,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h36',
     name: '大龍峒會館',
-    area: '台北二區',
+    area: '北部',
     district: '台北圈',
     address: '10368 台北市大同區哈密街70巷9之3號1樓',
     builtDate: '2000-01-01',
@@ -497,7 +497,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h37',
     name: '永康會館',
-    area: '台南一區',
+    area: '南部',
     district: '台南圈',
     address: '71043 台南市永康區中正路279巷1之2號',
     builtDate: '2000-01-01',
@@ -509,7 +509,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h38',
     name: '生爨會館',
-    area: '台南二區',
+    area: '南部',
     district: '台南圈',
     address: '70047 台南市中區開山路184號',
     builtDate: '2000-01-01',
@@ -521,7 +521,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h39',
     name: '忠義會館',
-    area: '台南二區',
+    area: '南部',
     district: '台南圈',
     address: '70050 台南市忠義路二段187號',
     builtDate: '2000-01-01',
@@ -533,7 +533,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h40',
     name: '存孝會館',
-    area: '離島一區',
+    area: '離島',
     district: '馬公圈',
     address: '88048 馬公市陽明里永和街11巷14號',
     builtDate: '2000-01-01',
@@ -545,7 +545,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h41',
     name: '安明會館',
-    area: '高雄一區',
+    area: '南部',
     district: '高雄圈',
     address: '80780 高雄市三民區大昌二路212巷90、92號2、3、4樓',
     builtDate: '2000-01-01',
@@ -557,7 +557,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h42',
     name: '大溪文化中心',
-    area: '桃園二區',
+    area: '北部',
     district: '桃園圈',
     address: '33560 桃園市大溪區美山路一段151巷60號',
     builtDate: '2000-01-01',
@@ -569,7 +569,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h43',
     name: '華山文化中心',
-    area: '雲林二區',
+    area: '中部',
     district: '雲林圈',
     address: '64646 雲林縣古坑鄉華山村2鄰華山19號之16',
     builtDate: '2000-01-01',
@@ -581,7 +581,7 @@ export const MOCK_HALLS: Hall[] = [
   {
     id: 'h44',
     name: '華山慈恩堂',
-    area: '雲林二區',
+    area: '中部',
     district: '雲林圈',
     address: '64647 雲林縣古坑鄉華山村11鄰松林路79號',
     builtDate: '2000-01-01',

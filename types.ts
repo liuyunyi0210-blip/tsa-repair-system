@@ -356,3 +356,14 @@ export interface MonthlyReport {
   isDeleted?: boolean;
 }
 
+export interface LineUser {
+  id: string;
+  lineId: string; // LINE User ID
+  name: string; // 姓名
+  mission: string; // 使命
+  phone: string; // 手機
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+}
+

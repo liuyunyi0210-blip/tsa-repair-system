@@ -14,7 +14,8 @@ import {
   OfficialVehicle,
   Contract,
   DisasterReport,
-  MonthlyReport
+  MonthlyReport,
+  LineUser
 } from '../types';
 import { pruneLargeData } from './imageService';
 
@@ -363,6 +364,15 @@ class StorageService {
 
   async loadMonthlyReports(): Promise<MonthlyReport[] | null> {
     return await this.loadData('tsa_monthly_reports_v1', 'monthly_reports.json');
+  }
+
+  // LINE 使用者資料
+  async saveLineUsers(lineUsers: LineUser[]): Promise<void> {
+    await this.saveData('tsa_line_users_v1', lineUsers, 'line_users.json');
+  }
+
+  async loadLineUsers(): Promise<LineUser[] | null> {
+    return await this.loadData('tsa_line_users_v1', 'line_users.json');
   }
 }
 

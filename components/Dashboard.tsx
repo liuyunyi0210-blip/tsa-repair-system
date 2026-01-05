@@ -27,7 +27,9 @@ import {
   ChevronRight,
   AlertTriangle,
   FileText,
-  User
+  User,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { RepairRequest, RepairStatus, OrderType, Category, Language, MonthlyReport, Hall } from '../types';
 import { STATUS_CONFIG, MOCK_HALLS, HEALTH_CHECK_CONFIG } from '../constants';
@@ -42,6 +44,13 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], language }) => {
   const [halls, setHalls] = useState<Hall[]>([]);
+  const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({
+    '北部': true,
+    '中部': true,
+    '南部': true,
+    '東部': true,
+    '離島': true
+  });
 
   useEffect(() => {
     const loadHalls = async () => {
@@ -50,6 +59,13 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], la
     };
     loadHalls();
   }, []);
+
+  const toggleArea = (area: string) => {
+    setExpandedAreas(prev => ({
+      ...prev,
+      [area]: !prev[area]
+    }));
+  };
   const translations = {
     [Language.ZH]: {
       title: '會館設備運維總覽',
@@ -131,6 +147,45 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], la
     return 'GREEN';
   };
 
+  // 區域順序定義
+  const areaOrder = ['北部', '中部', '南部', '東部', '離島'];
+  const getAreaOrder = (area: string) => {
+    const index = areaOrder.indexOf(area);
+    return index === -1 ? 999 : index; // 未定義的區域放在最後
+  };
+
+  // 依區域排序會館，同區域內按名稱排序
+  const sortedHalls = [...halls].sort((a, b) => {
+    const areaDiff = getAreaOrder(a.area) - getAreaOrder(b.area);
+    if (areaDiff !== 0) return areaDiff;
+    return a.name.localeCompare(b.name, 'zh-TW');
+  });
+
+  // 計算區域統計
+  const getAreaStats = (area: string) => {
+    const areaHalls = sortedHalls.filter(hall => hall.area === area);
+    let normalCount = 0;
+    let warningCount = 0;
+    let criticalCount = 0;
+
+    areaHalls.forEach(hall => {
+      let hasCritical = false;
+      let hasWarning = false;
+
+      HEALTH_CHECK_CONFIG.forEach(facility => {
+        const status = getHallFacilityStatus(hall.name, facility.key as Category);
+        if (status === 'RED') hasCritical = true;
+        if (status === 'YELLOW') hasWarning = true;
+      });
+
+      if (hasCritical) criticalCount++;
+      else if (hasWarning) warningCount++;
+      else normalCount++;
+    });
+
+    return { normalCount, warningCount, criticalCount, totalCount: areaHalls.length };
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -171,28 +226,69 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], la
         <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
           {/* Mobile View: Cards */}
           <div className="md:hidden divide-y divide-slate-100">
-            {halls.map(hall => (
-              <div key={hall.id} className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
-                  <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {HEALTH_CHECK_CONFIG.map(facility => {
-                    const status = getHallFacilityStatus(hall.name, facility.key as Category);
-                    return (
-                      <div key={facility.key} className="flex flex-col items-center gap-1 p-2 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="text-slate-400">{facility.icon}</div>
-                        <div className={`w-2.5 h-2.5 rounded-full ${status === 'GREEN' ? 'bg-emerald-500 shadow-sm shadow-emerald-200' :
-                          status === 'YELLOW' ? 'bg-amber-500' :
-                            'bg-rose-500 animate-pulse'
-                          }`}></div>
+            {areaOrder.map(area => {
+              const areaHalls = sortedHalls.filter(hall => hall.area === area);
+              if (areaHalls.length === 0) return null;
+              const isExpanded = expandedAreas[area];
+              const stats = getAreaStats(area);
+              return (
+                <div key={area}>
+                  <button
+                    onClick={() => toggleArea(area)}
+                    className="w-full px-6 py-4 bg-slate-50 border-b border-slate-200 hover:bg-slate-100 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1">
+                        <MapPin size={14} className="text-indigo-600" />
+                        <span className="text-xs font-black text-slate-700 uppercase tracking-wider">{area}</span>
+                        <span className="text-[10px] text-slate-400">({areaHalls.length} 間)</span>
                       </div>
-                    );
-                  })}
+                      <div className="flex items-center gap-3">
+                        {!isExpanded && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                              <span className="text-[10px] text-slate-600 font-bold">{stats.normalCount}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                              <span className="text-[10px] text-slate-600 font-bold">{stats.warningCount}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                              <span className="text-[10px] text-slate-600 font-bold">{stats.criticalCount}</span>
+                            </div>
+                          </div>
+                        )}
+                        {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                      </div>
+                    </div>
+                  </button>
+                  {isExpanded && areaHalls.map(hall => (
+                    <div key={hall.id} className="p-6 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
+                        <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {HEALTH_CHECK_CONFIG.map(facility => {
+                          const status = getHallFacilityStatus(hall.name, facility.key as Category);
+                          return (
+                            <div key={facility.key} className="flex flex-col items-center gap-1 p-2 bg-slate-50 rounded-xl border border-slate-100">
+                              <div className="text-slate-400">{facility.icon}</div>
+                              <div className={`w-2.5 h-2.5 rounded-full ${status === 'GREEN' ? 'bg-emerald-500 shadow-sm shadow-emerald-200' :
+                                status === 'YELLOW' ? 'bg-amber-500' :
+                                  'bg-rose-500 animate-pulse'
+                                }`}></div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Desktop View: Table */}
@@ -213,34 +309,74 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], la
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {halls.map(hall => (
-                  <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
-                        <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
-                      </div>
-                    </td>
-                    {HEALTH_CHECK_CONFIG.map(facility => {
-                      const status = getHallFacilityStatus(hall.name, facility.key as Category);
-                      return (
-                        <td key={facility.key} className="px-4 py-4">
-                          <div className="flex justify-center">
-                            <div className={`w-4 h-4 rounded-full border-2 ${status === 'GREEN' ? 'bg-emerald-500 border-emerald-100 shadow-sm shadow-emerald-200' :
-                              status === 'YELLOW' ? 'bg-amber-500 border-amber-100' :
-                                'bg-rose-500 border-rose-100 animate-pulse'
-                              }`}></div>
+                {areaOrder.map(area => {
+                  const areaHalls = sortedHalls.filter(hall => hall.area === area);
+                  if (areaHalls.length === 0) return null;
+                  const isExpanded = expandedAreas[area];
+                  const stats = getAreaStats(area);
+                  return (
+                    <React.Fragment key={area}>
+                      <tr className="bg-slate-50/50 hover:bg-slate-100/50 transition-colors cursor-pointer" onClick={() => toggleArea(area)}>
+                        <td colSpan={HEALTH_CHECK_CONFIG.length + 2} className="px-4 py-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <MapPin size={14} className="text-indigo-600" />
+                              <span className="text-xs font-black text-slate-700 uppercase tracking-wider">{area}</span>
+                              <span className="text-[10px] text-slate-400">({areaHalls.length} 間)</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              {!isExpanded && (
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                                    <span className="text-[10px] text-slate-600 font-bold">正常 {stats.normalCount}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                    <span className="text-[10px] text-slate-600 font-bold">警告 {stats.warningCount}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+                                    <span className="text-[10px] text-slate-600 font-bold">緊急 {stats.criticalCount}</span>
+                                  </div>
+                                </div>
+                              )}
+                              {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                            </div>
                           </div>
                         </td>
-                      );
-                    })}
-                    <td className="px-4 py-4 text-right">
-                      <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                        <ChevronRight size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </tr>
+                      {isExpanded && areaHalls.map(hall => (
+                        <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
+                              <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
+                            </div>
+                          </td>
+                          {HEALTH_CHECK_CONFIG.map(facility => {
+                            const status = getHallFacilityStatus(hall.name, facility.key as Category);
+                            return (
+                              <td key={facility.key} className="px-4 py-4">
+                                <div className="flex justify-center">
+                                  <div className={`w-4 h-4 rounded-full border-2 ${status === 'GREEN' ? 'bg-emerald-500 border-emerald-100 shadow-sm shadow-emerald-200' :
+                                    status === 'YELLOW' ? 'bg-amber-500 border-amber-100' :
+                                      'bg-rose-500 border-rose-100 animate-pulse'
+                                    }`}></div>
+                                </div>
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-4 text-right">
+                            <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                              <ChevronRight size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

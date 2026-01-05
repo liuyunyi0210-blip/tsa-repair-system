@@ -25,7 +25,7 @@ import {
   Database
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
-import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallSecurityStatus, Hall } from '../types';
+import { Category, OrderType, RepairRequest, DisasterReport, RepairStatus, HallSecurityStatus, Hall, LineUser } from '../types';
 import { storageService } from '../services/storageService';
 import { compressImage } from '../services/imageService';
 
@@ -53,6 +53,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   const [activeForm, setActiveForm] = useState<'NONE' | 'REPAIR' | 'FINISH' | 'DISASTER'>('NONE');
   const [halls, setHalls] = useState<Hall[]>([]);
 
+  const [lineUser, setLineUser] = useState<LineUser | null>(null);
+
   useEffect(() => {
     const loadHalls = async () => {
       const savedHalls = await storageService.loadHalls();
@@ -66,6 +68,39 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     };
     loadHalls();
   }, []);
+
+  // 載入 LINE 使用者綁定資料
+  useEffect(() => {
+    const loadLineUser = async () => {
+      if (liffProfile?.userId) {
+        const lineUsers = await storageService.loadLineUsers();
+        if (lineUsers) {
+          const user = lineUsers.find(u => u.lineId === liffProfile.userId && u.isActive);
+          if (user) {
+            setLineUser(user);
+            // 自動帶入綁定的資料
+            setRepairFormData(prev => ({
+              ...prev,
+              name: user.name,
+              mission: user.mission,
+              phone: user.phone
+            }));
+            setFinishFormData(prev => ({
+              ...prev,
+              name: user.name,
+              phone: user.phone
+            }));
+            setDisasterFormData(prev => ({
+              ...prev,
+              reporter: user.name,
+              phone: user.phone
+            }));
+          }
+        }
+      }
+    };
+    loadLineUser();
+  }, [liffProfile]);
 
   // 分離不同表單的數據
   const [repairFormData, setRepairFormData] = useState({

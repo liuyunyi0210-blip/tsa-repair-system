@@ -19,6 +19,8 @@ import MobileSimulation from './components/MobileSimulation';
 import PermissionManagement from './components/PermissionManagement';
 import UserManagement from './components/UserManagement';
 import StorageSettings from './components/StorageSettings';
+import LineBindingManagement from './components/LineBindingManagement';
+import LineBindingForm from './components/LineBindingForm';
 import MonthlyReportSubmission from './components/MonthlyReportSubmission';
 import MonthlyReportManagement from './components/MonthlyReportManagement';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -27,7 +29,7 @@ import { RepairRequest, RepairStatus, Category, Urgency, OrderType, DisasterRepo
 import { storageService } from './services/storageService';
 import { MOCK_HALLS } from './constants';
 import liff from '@line/liff';
-import { Database, ShieldCheck, Users } from 'lucide-react';
+import { Database, ShieldCheck, Users, MessageCircle } from 'lucide-react';
 
 const INITIAL_REQUESTS: RepairRequest[] = [
   {
@@ -86,12 +88,14 @@ const App: React.FC = () => {
   const [showPermissionPanel, setShowPermissionPanel] = useState(false);
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showStorageSettings, setShowStorageSettings] = useState(false);
+  const [showLineBindingPanel, setShowLineBindingPanel] = useState(false);
   const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentRole, setCurrentRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [publicView, setPublicView] = useState<'privacy' | 'terms' | null>(null);
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; userId: string; pictureUrl?: string } | null>(null);
+  const [showLineBindingForm, setShowLineBindingForm] = useState(false);
   const [storageType, setStorageType] = useState<any>(() => {
     // 強健的參數抓取邏輯
     const getParam = (name: string) => {
@@ -272,6 +276,15 @@ const App: React.FC = () => {
             userId: profile.userId,
             pictureUrl: profile.pictureUrl
           });
+
+          // 檢查是否有綁定資料
+          const lineUsers = await storageService.loadLineUsers();
+          const hasBinding = lineUsers?.some(u => u.lineId === profile.userId && u.isActive);
+          
+          if (!hasBinding && liff.isInClient()) {
+            // 如果沒有綁定資料，顯示填寫表單
+            setShowLineBindingForm(true);
+          }
         } else if (liff.isInClient()) {
           // 在 LINE 裡面但沒登入，強制登入以取得名字
           liff.login();
@@ -671,6 +684,20 @@ const App: React.FC = () => {
                 </div>
               </div>
             </button>
+            <button
+              onClick={() => setShowLineBindingPanel(true)}
+              className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all text-left"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <MessageCircle className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 mb-1">LINE 綁定管理</h3>
+                  <p className="text-sm text-slate-500">管理 LINE 使用者綁定與發送客製化訊息</p>
+                </div>
+              </div>
+            </button>
           </div>
         </div>
       );
@@ -751,8 +778,30 @@ const App: React.FC = () => {
           if ((window as any).refreshData) (window as any).refreshData();
         }}
       />
+
+      <LineBindingManagement
+        language={language}
+        isOpen={showLineBindingPanel}
+        onClose={() => setShowLineBindingPanel(false)}
+        onLogOperation={handleLogOperation}
+      />
     </>
   );
+
+  // 優先顯示 LINE 綁定表單（如果還沒綁定）
+  if (showLineBindingForm && liffProfile) {
+    return (
+      <LineBindingForm
+        lineId={liffProfile.userId}
+        displayName={liffProfile.displayName}
+        onComplete={() => {
+          setShowLineBindingForm(false);
+          // 綁定完成後，重新載入資料以更新表單
+          if ((window as any).refreshData) (window as any).refreshData();
+        }}
+      />
+    );
+  }
 
   // 優先顯示手機報修畫面 (針對 LINE 志工)
   if (showMobileSim) {
