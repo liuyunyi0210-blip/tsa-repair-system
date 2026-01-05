@@ -245,20 +245,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
             </button>
           </form>
 
-          {(!import.meta.env.PROD || isFirstRun) && (
-            <div className="pt-6 border-t border-slate-50">
-              <button
-                type="button"
-                onClick={() => {
-                  setAccount('admin');
-                  setPassword('tsa2025');
-                }}
-                className="w-full py-3 text-indigo-600 font-bold text-xs hover:bg-indigo-50 rounded-xl transition-all"
-              >
-                {t.quickLogin}
-              </button>
-            </div>
-          )}
+
         </div>
 
         <div className="mt-12 flex flex-col items-center gap-4">
