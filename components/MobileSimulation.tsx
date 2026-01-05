@@ -514,6 +514,25 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         </div>
 
         <div className="space-y-1">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">回報類別</label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {Object.values(Category).map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setRepairFormData(prev => ({ ...prev, category: cat }))}
+                className={`px-3 py-3 rounded-xl text-[11px] font-black transition-all ${repairFormData.category === cat
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                  }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">姓名</label>
             <span className={`text-[10px] font-bold ${(repairFormData.name?.length || 0) > NAME_MAX_LENGTH ? 'text-rose-500' : 'text-slate-400'}`}>
