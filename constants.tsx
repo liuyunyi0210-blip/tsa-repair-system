@@ -699,7 +699,7 @@ export const DEFAULT_ROLES = [
   {
     id: 'manager',
     name: '總務管理員',
-    description: '可管理所有會館的工單、設施、合約等',
+    description: '可管理所有會館的工單、設備、合約等',
     permissions: [
       ...MODULES.filter(m => ['dashboard', 'halls', 'reports', 'requests', 'equipment', 'water', 'aed', 'vehicle', 'contract', 'disaster'].includes(m.id))
         .flatMap(m => PERMISSION_ACTIONS.filter(a => a.id !== 'manage').map(a => `${m.id}:${a.id}`)),
