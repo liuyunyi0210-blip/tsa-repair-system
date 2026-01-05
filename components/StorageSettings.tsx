@@ -46,7 +46,9 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
       testSuccess: '連線成功！',
       testError: '連線失敗，請檢查 Token',
       currentType: '目前儲存方式',
-      warning: '切換儲存方式不會遷移現有資料，請手動備份'
+      warning: '切換儲存方式不會遷移現有資料，請手動備份',
+      generateLink: '產生快速登入連結',
+      linkCopied: '連結已複製到剪貼簿！'
     },
     [Language.JA]: {
       title: 'データ保存設定',
@@ -66,7 +68,9 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
       testSuccess: '接続成功！',
       testError: '接続失敗。Token を確認してください',
       currentType: '現在の保存方式',
-      warning: '保存方式の切り替えは既存データを移行しません。手動でバックアップしてください'
+      warning: '保存方式の切り替えは既存データを移行しません。手動でバックアップしてください',
+      generateLink: 'クイックログインリンクを生成',
+      linkCopied: 'リンクをクリップボードにコピーしました！'
     }
   };
 
@@ -306,6 +310,22 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
                             {t.test}
                           </>
                         )}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const url = new URL(window.location.origin + window.location.pathname);
+                          url.searchParams.set('token', gistToken);
+                          if (gistId) url.searchParams.set('gistId', gistId);
+
+                          navigator.clipboard.writeText(url.toString());
+                          setStatus({ type: 'success', message: t.linkCopied });
+                        }}
+                        disabled={!gistToken.trim()}
+                        className="w-full py-2.5 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-indigo-200"
+                      >
+                        <Copy size={18} />
+                        {t.generateLink}
                       </button>
                     </div>
                   )}
