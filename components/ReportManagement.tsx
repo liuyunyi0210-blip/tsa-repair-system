@@ -160,9 +160,9 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                       urgency: report.urgency || Urgency.MEDIUM,
                     });
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 text-white font-black rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 text-sm"
                 >
-                  <FileText size={16} /> 審核案件
+                  <FileText size={14} /> 審核案件
                 </button>
               ) : (
                 <div className="flex items-center justify-between">
@@ -283,9 +283,9 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                               urgency: report.urgency || Urgency.MEDIUM,
                             });
                           }}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+                          className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 text-white font-black rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 text-xs"
                         >
-                          <FileText size={16} /> 審核案件
+                          <FileText size={14} /> 審核案件
                         </button>
                       </div>
                     ) : (
