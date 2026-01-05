@@ -18,9 +18,10 @@ interface LoginProps {
   onShowPrivacy: () => void;
   onShowTerms: () => void;
   onShowStorage: () => void;
+  storageType: 'local' | 'gist';
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onShowPrivacy, onShowTerms, onShowStorage }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onShowPrivacy, onShowTerms, onShowStorage, storageType }) => {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -160,13 +161,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={onShowStorage}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-xs font-bold ${storageService.getStorageType() === 'gist'
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-xs font-bold ${storageType === 'gist'
               ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
               : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
               }`}
           >
             <Globe size={14} />
-            {storageService.getStorageType() === 'gist' ? '雲端同步中' : '僅限本地儲存'}
+            {storageType === 'gist' ? '雲端同步中' : '僅限本地儲存'}
           </button>
           <button
             onClick={() => onLanguageChange(language === Language.ZH ? Language.JA : Language.ZH)}
@@ -178,7 +179,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
 
         <div className="bg-white rounded-[48px] shadow-2xl p-10 md:p-14 space-y-10 border border-slate-100">
           <div className="text-center space-y-4">
-            <div className={`inline-flex p-4 text-white rounded-[24px] shadow-xl mb-2 ${storageService.getStorageType() === 'gist' ? 'bg-emerald-600 shadow-emerald-200' : 'bg-indigo-600 shadow-indigo-200'
+            <div className={`inline-flex p-4 text-white rounded-[24px] shadow-xl mb-2 ${storageType === 'gist' ? 'bg-emerald-600 shadow-emerald-200' : 'bg-indigo-600 shadow-indigo-200'
               }`}>
               <Wrench size={32} />
             </div>

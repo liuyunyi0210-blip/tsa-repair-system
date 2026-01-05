@@ -99,30 +99,6 @@ const App: React.FC = () => {
     (window as any).showStorageSettings = () => setShowStorageSettings(true);
   }, []);
 
-  // 處理 URL 參數中的儲存設定 (用於免輸入 Token 登入)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    const gistId = params.get('gistId');
-
-    if (token) {
-      storageService.init({
-        type: 'gist',
-        gistToken: token,
-        gistId: gistId || undefined
-      });
-
-      setStorageType('gist');
-
-      // 清除 URL 中的敏感資訊
-      const url = new URL(window.location.href);
-      url.searchParams.delete('token');
-      url.searchParams.delete('gistId');
-      window.history.replaceState({}, document.title, url.toString());
-
-      console.log('已透過 URL 自動載入雲端儲存設定');
-    }
-  }, []);
 
   // 當打開 MobileSimulation 時，重新載入災害回報資料
   useEffect(() => {
@@ -141,9 +117,32 @@ const App: React.FC = () => {
     const token = localStorage.getItem('tsa_auth_token');
 
     const loadData = async () => {
-      // 確保最新的儲存類型
+      // 1. 優先處理 URL 參數中的儲存設定 (用於免輸入 Token 登入)
+      const params = new URLSearchParams(window.location.search);
+      const urlToken = params.get('token');
+      const urlGistId = params.get('gistId');
+
+      if (urlToken) {
+        storageService.init({
+          type: 'gist',
+          gistToken: urlToken,
+          gistId: urlGistId || undefined
+        });
+
+        // 清除 URL 中的敏感資訊
+        const url = new URL(window.location.href);
+        url.searchParams.delete('token');
+        url.searchParams.delete('gistId');
+        window.history.replaceState({}, document.title, url.toString());
+
+        console.log('已透過 URL 自動載入雲端儲存設定');
+      }
+
+      // 2. 刷新儲存類型狀態
       const currentType = storageService.getStorageType();
       setStorageType(currentType);
+
+      // 3. 載入各類資料
       const savedRequests = await storageService.loadRepairRequests();
       if (savedRequests) setRequests(savedRequests);
       else setRequests(INITIAL_REQUESTS);
@@ -773,6 +772,7 @@ const App: React.FC = () => {
           onShowPrivacy={() => setPublicView('privacy')}
           onShowTerms={() => setPublicView('terms')}
           onShowStorage={() => setShowStorageSettings(true)}
+          storageType={storageType}
         />
         {Modals}
       </div>
