@@ -60,6 +60,7 @@ export interface Hall {
   photoUrl?: string;
   electricalLayoutUrls: string[];
   floorPlanUrls: string[];
+  isDeleted?: boolean;
 }
 
 export interface AEDHistoryItem {
