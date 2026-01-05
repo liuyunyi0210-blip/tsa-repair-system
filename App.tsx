@@ -191,6 +191,7 @@ const App: React.FC = () => {
 
     // 暴露重新整理功能
     (window as any).refreshData = loadData;
+    (window as any).showStorageSettings = () => setShowStorageSettings(true);
 
     // 初始化 LIFF
     const initLiff = async () => {
