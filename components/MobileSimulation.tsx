@@ -32,7 +32,17 @@ import { compressImage } from '../services/imageService';
 interface MobileSimulationProps {
   onClose: () => void;
   onSubmitReport: (data: Partial<RepairRequest>) => Promise<void> | void;
-  onDisasterReport?: (disasterId: string, hallId: string, status: string, remark: string, reporter: string, position: string, phone: string) => void;
+  onDisasterReport?: (
+    disasterId: string,
+    hallId: string,
+    status: string,
+    remark: string,
+    reporter: string,
+    position: string,
+    phone: string,
+    photoUrls?: string[],
+    photoMetadata?: any[]
+  ) => void;
   activeDisaster?: DisasterReport | null;
   requests?: RepairRequest[];
   liffProfile?: { displayName: string; userId: string; pictureUrl?: string } | null;
@@ -89,6 +99,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
   const [repairImages, setRepairImages] = useState<ImageData[]>([]);
   const [finishImages, setFinishImages] = useState<ImageData[]>([]);
+  const [disasterImages, setDisasterImages] = useState<ImageData[]>([]);
   const [repairErrors, setRepairErrors] = useState<{ name?: string; mission?: string; phone?: string; description?: string }>({});
   const [finishErrors, setFinishErrors] = useState<{ selectedRequestId?: string; name?: string; position?: string; phone?: string; workDescription?: string }>({});
 
@@ -104,6 +115,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
   const repairFileInputRef = useRef<HTMLInputElement>(null);
   const finishFileInputRef = useRef<HTMLInputElement>(null);
+  const disasterFileInputRef = useRef<HTMLInputElement>(null);
   const reporterInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -136,7 +148,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
 
   // 處理文件上傳
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'REPAIR' | 'FINISH' | 'DISASTER') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -156,8 +168,10 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         // 立即更新畫面顯示圖片
         if (formType === 'REPAIR') {
           setRepairImages(prev => [...prev, initialData]);
-        } else {
+        } else if (formType === 'FINISH') {
           setFinishImages(prev => [...prev, initialData]);
+        } else {
+          setDisasterImages(prev => [...prev, initialData]);
         }
 
         // 背景讀取 EXIF，讀到再更新資料，不影響圖片顯示
@@ -171,7 +185,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             );
 
             if (formType === 'REPAIR') setRepairImages(updateFn);
-            else setFinishImages(updateFn);
+            else if (formType === 'FINISH') setFinishImages(updateFn);
+            else setDisasterImages(updateFn);
           }
         }).catch(() => { });
 
@@ -183,11 +198,13 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     e.target.value = '';
   };
 
-  const removeImage = (index: number, formType: 'REPAIR' | 'FINISH') => {
+  const removeImage = (index: number, formType: 'REPAIR' | 'FINISH' | 'DISASTER') => {
     if (formType === 'REPAIR') {
       setRepairImages(prev => prev.filter((_, i) => i !== index));
-    } else {
+    } else if (formType === 'FINISH') {
       setFinishImages(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setDisasterImages(prev => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -412,7 +429,12 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         disasterFormData.remark,
         disasterFormData.reporter,
         disasterFormData.position,
-        disasterFormData.phone
+        disasterFormData.phone,
+        disasterImages.map(img => img.url),
+        disasterImages.map(img => ({
+          timestamp: img.timestamp,
+          location: img.location
+        }))
       );
       alert('災害回報已提交！感謝您的回報。');
       setActiveForm('NONE');
@@ -424,6 +446,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         position: '',
         phone: ''
       });
+      setDisasterImages([]);
       setDisasterErrors({});
     }
   };
@@ -1162,6 +1185,77 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                   <X size={12} /> {disasterErrors.remark}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">現場照片 (可多張)</label>
+                <span className="text-[10px] font-bold text-slate-400">
+                  {disasterImages.length} 張已選取
+                </span>
+              </div>
+
+              {/* 圖片預覽區域 */}
+              {disasterImages.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {disasterImages.map((img, index) => (
+                    <div key={index} className="relative aspect-square rounded-2xl overflow-hidden shadow-sm group">
+                      <img src={img.url} alt={`預覽 ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index, 'DISASTER')}
+                        className="absolute top-2 right-2 p-1.5 bg-rose-500/90 text-white rounded-lg backdrop-blur-sm"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+                        <div className="flex items-center gap-1 text-[8px] text-white/90 font-bold">
+                          <Calendar size={8} /> {img.timestamp ? new Date(img.timestamp).toLocaleString() : '無時間'}
+                        </div>
+                        {img.location && (
+                          <div className="flex items-center gap-1 text-[8px] text-white/90 font-bold truncate">
+                            <MapPin size={8} /> {formatLocation(img.location)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => disasterFileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-2 p-6 bg-indigo-50 rounded-2xl border-2 border-dashed border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-all group"
+                >
+                  <Camera size={24} className="group-active:scale-95 transition-transform" />
+                  <span className="text-xs font-black">拍攝照片</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = disasterFileInputRef.current;
+                    if (input) {
+                      input.removeAttribute('capture');
+                      input.click();
+                    }
+                  }}
+                  className="flex flex-col items-center justify-center gap-2 p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-600 hover:bg-slate-100 transition-all group"
+                >
+                  <ImageIcon size={24} className="group-active:scale-95 transition-transform" />
+                  <span className="text-xs font-black">從相簿選擇</span>
+                </button>
+              </div>
+              <input
+                ref={disasterFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                capture="environment"
+                className="hidden"
+                onChange={(e) => handleFileChange(e, 'DISASTER')}
+              />
             </div>
 
             <button

@@ -13,7 +13,9 @@ import {
   ArrowLeft,
   Calendar,
   Building2,
-  Info
+  Info,
+  MapPin,
+  Camera
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { DisasterReport, DisasterType, HallSecurityStatus, HallDisasterStatus, Language, Hall } from '../types';
@@ -30,6 +32,7 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
   const [view, setView] = useState<'LIST' | 'DETAIL'>('LIST');
   const [selectedReport, setSelectedReport] = useState<DisasterReport | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [publishForm, setPublishForm] = useState({
     type: DisasterType.EARTHQUAKE,
     name: '',
@@ -173,6 +176,7 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
                 <th className="px-6 py-4 whitespace-nowrap">{t.hallNameHeader}</th>
                 <th className="px-6 py-4 whitespace-nowrap">{t.statusHeader}</th>
                 <th className="px-6 py-4 whitespace-nowrap">{t.remarkHeader}</th>
+                <th className="px-6 py-4 whitespace-nowrap">現場照片</th>
                 <th className="px-6 py-4 whitespace-nowrap">{t.reporterHeader}</th>
                 <th className="px-6 py-4 whitespace-nowrap">{t.reportedAtLabel}</th>
               </tr>
@@ -185,16 +189,42 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
                   </td>
                   <td className="px-6 py-5 whitespace-nowrap">
                     <span className={`px-3 py-1.5 rounded-full text-[11px] font-black ${h.status === HallSecurityStatus.SAFE
-                        ? 'bg-emerald-50 text-emerald-600'
-                        : h.status === HallSecurityStatus.LIGHT
-                          ? 'bg-amber-50 text-amber-600'
-                          : h.status === HallSecurityStatus.HEAVY
-                            ? 'bg-rose-50 text-rose-600'
-                            : 'bg-slate-50 text-slate-400'
+                      ? 'bg-emerald-50 text-emerald-600'
+                      : h.status === HallSecurityStatus.LIGHT
+                        ? 'bg-amber-50 text-amber-600'
+                        : h.status === HallSecurityStatus.HEAVY
+                          ? 'bg-rose-50 text-rose-600'
+                          : 'bg-slate-50 text-slate-400'
                       }`}>{h.status}</span>
                   </td>
                   <td className="px-6 py-5">
                     <p className="text-sm text-slate-600 font-medium max-w-md">{h.remark || t.remarkEmpty}</p>
+                  </td>
+                  <td className="px-6 py-5">
+                    {h.photoUrls && h.photoUrls.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 max-w-[200px]">
+                        {h.photoUrls.map((url, i) => (
+                          <div key={i} className="relative group">
+                            <img
+                              src={url}
+                              className="w-12 h-12 object-cover rounded-xl cursor-pointer border-2 border-slate-100 hover:border-indigo-500 transition-all"
+                              onClick={() => setSelectedPhoto(url)}
+                            />
+                            {h.photoMetadata && h.photoMetadata[i] && (
+                              <div className="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-slate-900 text-white text-[8px] rounded-lg whitespace-nowrap z-20">
+                                {h.photoMetadata[i].timestamp && <div>時間: {new Date(h.photoMetadata[i].timestamp).toLocaleString()}</div>}
+                                {h.photoMetadata[i].location && <div>地點: {h.photoMetadata[i].location.latitude.toFixed(4)}, {h.photoMetadata[i].location.longitude.toFixed(4)}</div>}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-slate-300">
+                        <Camera size={16} className="opacity-50" />
+                        <span className="text-[10px] font-bold">無照片</span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-5">
                     {h.reporter ? (
@@ -352,8 +382,8 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
                       key={type}
                       onClick={() => setPublishForm(prev => ({ ...prev, type }))}
                       className={`px-4 py-3 rounded-2xl font-black transition-all ${publishForm.type === type
-                          ? 'bg-indigo-600 text-white shadow-lg'
-                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                         }`}
                     >
                       {type}
@@ -402,6 +432,25 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* 照片查看器 Modal */}
+      {selectedPhoto && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <button
+            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors"
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <X size={24} />
+          </button>
+          <img
+            src={selectedPhoto}
+            className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200"
+            alt="放大照片"
+          />
         </div>
       )}
     </>

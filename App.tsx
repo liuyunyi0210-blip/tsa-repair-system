@@ -366,7 +366,17 @@ const App: React.FC = () => {
     alert('已成功核實回報並轉入工單管理！');
   };
 
-  const handleDisasterReport = async (disasterId: string, hallId: string, status: string, remark: string, reporter: string, position: string, phone: string) => {
+  const handleDisasterReport = async (
+    disasterId: string,
+    hallId: string,
+    status: string,
+    remark: string,
+    reporter: string,
+    position: string,
+    phone: string,
+    photoUrls?: string[],
+    photoMetadata?: any[]
+  ) => {
     const disaster = disasterReports.find(d => d.id === disasterId);
     if (!disaster) {
       alert('找不到對應的災害回報');
@@ -392,7 +402,9 @@ const App: React.FC = () => {
         reporter: reporter || undefined,
         position: position || undefined,
         phone: phone || undefined,
-        reportedAt: new Date().toISOString()
+        reportedAt: new Date().toISOString(),
+        photoUrls: photoUrls || updatedHallsStatus[existingIndex].photoUrls,
+        photoMetadata: photoMetadata || updatedHallsStatus[existingIndex].photoMetadata
       };
     } else {
       // 添加新狀態
@@ -404,7 +416,9 @@ const App: React.FC = () => {
         reporter: reporter || undefined,
         position: position || undefined,
         phone: phone || undefined,
-        reportedAt: new Date().toISOString()
+        reportedAt: new Date().toISOString(),
+        photoUrls: photoUrls || [],
+        photoMetadata: photoMetadata || []
       });
     }
 

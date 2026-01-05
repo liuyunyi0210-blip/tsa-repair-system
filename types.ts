@@ -245,6 +245,15 @@ export interface HallDisasterStatus {
   position?: string;
   phone?: string;
   reportedAt?: string;
+  photoUrls?: string[];
+  photoMetadata?: {
+    timestamp?: string;
+    location?: {
+      latitude: number;
+      longitude: number;
+      address?: string;
+    };
+  }[];
 }
 
 export interface DisasterReport {
