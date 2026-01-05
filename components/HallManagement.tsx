@@ -18,7 +18,8 @@ import {
   Upload,
   ExternalLink,
   Check,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import { MOCK_HALLS } from '../constants';
 import { Hall, TechnicalEntry } from '../types';
@@ -105,6 +106,12 @@ const HallManagement: React.FC = () => {
     if (!confirm('永久刪除後將無法復原，確定要執行嗎？')) return;
     const updated = halls.filter(h => h.id !== id);
     await saveHalls(updated);
+  };
+
+  const handleResetData = async () => {
+    if (!confirm('確定要將會館資料重設為系統預設值嗎？這將會覆蓋您目前的修改，並載入全部 44 間會館資料。')) return;
+    await saveHalls(MOCK_HALLS);
+    alert('資料已重設成功！');
   };
 
   const HallDetailModal = () => {
@@ -240,6 +247,9 @@ const HallManagement: React.FC = () => {
           </button>
           <button onClick={() => { setIsSelectMode(!isSelectMode); setSelectedIds(new Set()); }} className={`px-6 py-3 rounded-2xl text-xs font-black transition-all ${isSelectMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 shadow-sm'}`}>
             {isSelectMode ? '結束選擇' : '進入勾選模式'}
+          </button>
+          <button onClick={handleResetData} className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl text-xs font-black shadow-sm hover:bg-slate-200 transition-all" title="同步最新的 44 間會館資料">
+            <RefreshCw size={18} /> 重設為預設資料
           </button>
           <button onClick={() => setEditingHallId('NEW_HALL')} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:brightness-110 transition-all">
             <Plus size={18} /> 新增資料
