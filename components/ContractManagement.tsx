@@ -228,7 +228,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">項目 / 合約概述 *</label>
               <div className="relative">
                 <FileText className="absolute left-3 top-3 text-slate-300" size={18} />
-                <input required placeholder="例如：113年度機電設施保養合約" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.summary} onChange={e => setForm({ ...form, summary: e.target.value })} />
+                <input required placeholder="例如：113年度機電設備保養合約" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none" value={form.summary} onChange={e => setForm({ ...form, summary: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1">
@@ -397,8 +397,8 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onDirtyChange, 
                       <td className="px-6 py-4 font-black text-slate-900 whitespace-nowrap">${c.fee.toLocaleString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-lg text-[10px] font-black whitespace-nowrap ${status === ContractStatus.IN_PROGRESS ? 'bg-indigo-600 text-white' :
-                            status === ContractStatus.NOT_STARTED ? 'bg-amber-100 text-amber-700' :
-                              'bg-slate-200 text-slate-400'
+                          status === ContractStatus.NOT_STARTED ? 'bg-amber-100 text-amber-700' :
+                            'bg-slate-200 text-slate-400'
                           }`}>
                           {status}
                         </span>

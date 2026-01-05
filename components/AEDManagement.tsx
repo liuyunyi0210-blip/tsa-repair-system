@@ -135,7 +135,7 @@ const AEDManagement: React.FC<AEDManagementProps> = ({ language }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-            <HeartPulse className="text-rose-500" /> AED 設施管理系統
+            <HeartPulse className="text-rose-500" /> AED 設備管理系統
           </h1>
           <p className="text-slate-500 font-medium tracking-tight">會館 AED 設備清單、耗材效期追蹤與廠商維護紀錄</p>
         </div>

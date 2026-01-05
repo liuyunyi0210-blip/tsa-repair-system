@@ -265,7 +265,7 @@ const MonthlyReportSubmission: React.FC<MonthlyReportSubmissionProps> = ({ repor
                                     </div>
                                     <ul className="text-xs text-indigo-600/80 space-y-1 font-medium list-disc pl-4">
                                         <li>本月重大維修項目總結</li>
-                                        <li>設施運行狀況說明</li>
+                                        <li>設備運行狀況說明</li>
                                         <li>異常狀況與後續追蹤</li>
                                         <li>志工報修處理進度</li>
                                     </ul>

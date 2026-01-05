@@ -39,12 +39,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
 
   const translations = {
     [Language.ZH]: {
-      systemName: '會館維修暨設施管理系統',
+      systemName: '會館修繕暨設備管理系統',
       organization: 'TSA',
-      welcome: '歡迎回來',
+      welcome: '登入您的帳戶',
       instruction: '請輸入您的管理員帳號與密碼以進入系統',
       accountLabel: '管理帳號',
       passwordLabel: '通行密碼',
+      username: '使用者名稱',
+      password: '密碼',
       loginBtn: '登入系統',
       quickLogin: '測試員快速登入',
       errorMsg: '帳號或密碼輸入錯誤，請重新確認',
@@ -53,7 +55,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, language, onLanguageChange, onSh
       terms: '服務條款'
     },
     [Language.JA]: {
-      systemName: '会館施設管理・修繕システム',
+      systemName: '会館設備管理・修繕システム',
       organization: 'TSA',
       welcome: 'おかえりなさい',
       instruction: '管理者アカウントとパスワードを入力してください',
