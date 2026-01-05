@@ -26,6 +26,7 @@ import {
   Hammer,
   ChevronDown,
   HeartPulse,
+  RotateCcw,
   Image as ImageIcon
 } from 'lucide-react';
 import { RepairRequest, RepairStatus, OrderType, Urgency, Category, Language, Hall } from '../types';
@@ -94,7 +95,10 @@ const RequestList: React.FC<RequestListProps> = ({
       catElec: '機電設備',
       catFire: '消防設備',
       catAed: 'AED 設備',
-      catRepair: '修繕報修'
+      catRepair: '修繕報修',
+      manage: '管理',
+      restore: '恢復',
+      permanentDelete: '永久刪除'
     },
     [Language.JA]: {
       title: '工單管理',
@@ -103,12 +107,12 @@ const RequestList: React.FC<RequestListProps> = ({
       deleted: '削除済み',
       allHalls: '全会館リスト',
       search: 'キーワード検索...',
-      headerTitle: '内容 / 報告者',
+      headerTitle: '內容 / 報告者',
       headerHall: '会館名',
       headerCat: 'カテゴリー',
       headerStatus: 'ステータス',
       headerDetail: '詳細',
-      noData: '条件に一致する案件はありません',
+      noData: '條件に一致する案件はありません',
       bulkSelect: '件選択済み',
       bulkUpdate: '一括点検',
       export: 'エクスポート',
@@ -118,7 +122,10 @@ const RequestList: React.FC<RequestListProps> = ({
       catElec: '機電設備',
       catFire: '消防設備',
       catAed: 'AED 設備',
-      catRepair: '修繕報告'
+      catRepair: '修繕報告',
+      manage: '管理',
+      restore: '元に戻す',
+      permanentDelete: '完全削除'
     }
   };
 
@@ -307,15 +314,40 @@ const RequestList: React.FC<RequestListProps> = ({
                     {CATEGORY_ICONS[req.category]}
                     <span className="text-[10px] font-black text-slate-500 uppercase">{req.category}</span>
                   </div>
-                  {req.photoUrls && req.photoUrls.length > 0 && (
-                    <div
-                      className="flex items-center gap-1 text-xs font-bold text-indigo-500"
-                      onClick={(e) => { e.stopPropagation(); setSelectedPhotos(req.photoUrls || []); }}
-                    >
-                      <ImageIcon size={12} />
-                      <span>{req.photoUrls.length}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {filter === 'DELETED' ? (
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onRestore(req.id); }}
+                          className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black flex items-center gap-1"
+                        >
+                          <RotateCcw size={12} /> {t.restore}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onPermanentDelete(req.id); }}
+                          className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-black flex items-center gap-1"
+                        >
+                          <Trash2 size={12} /> {t.permanentDelete}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(req.id); }}
+                        className="p-2 text-rose-400 hover:text-rose-600 active:scale-95 transition-all"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                    {req.photoUrls && req.photoUrls.length > 0 && (
+                      <div
+                        className="flex items-center gap-1 text-xs font-bold text-indigo-500 ml-2"
+                        onClick={(e) => { e.stopPropagation(); setSelectedPhotos(req.photoUrls || []); }}
+                      >
+                        <ImageIcon size={12} />
+                        <span>{req.photoUrls.length}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -332,7 +364,7 @@ const RequestList: React.FC<RequestListProps> = ({
                 <th className="px-6 py-5 whitespace-nowrap">{t.headerHall}</th>
                 <th className="px-6 py-5 whitespace-nowrap">{t.headerCat}</th>
                 <th className="px-6 py-5 whitespace-nowrap">{t.headerStatus}</th>
-                <th className="px-6 py-5 text-right whitespace-nowrap">{t.headerDetail}</th>
+                <th className="px-6 py-5 text-right whitespace-nowrap">{t.manage}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -375,7 +407,39 @@ const RequestList: React.FC<RequestListProps> = ({
                       </div>
                     </td>
                     <td className="px-6 py-5 whitespace-nowrap"><span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${STATUS_CONFIG[req.status].color}`}>{getStatusLabel(req.status)}</span></td>
-                    <td className="px-6 py-5 text-right"><ChevronRight size={18} className="text-slate-300 opacity-0 group-hover:opacity-100 inline" /></td>
+                    <td className="px-6 py-5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {filter === 'DELETED' ? (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onRestore(req.id); }}
+                              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                              title={t.restore}
+                            >
+                              <RotateCcw size={18} />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onPermanentDelete(req.id); }}
+                              className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                              title={t.permanentDelete}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onDelete(req.id); }}
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                              title="刪除"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                            <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-600" />
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
