@@ -92,6 +92,7 @@ const App: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [publicView, setPublicView] = useState<'privacy' | 'terms' | null>(null);
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; userId: string; pictureUrl?: string } | null>(null);
+  const [storageType, setStorageType] = useState<any>(storageService.getStorageType());
 
   // 暴露設定介面給全局，讓 MobileSimulation 可以呼叫
   useEffect(() => {
@@ -111,27 +112,13 @@ const App: React.FC = () => {
         gistId: gistId || undefined
       });
 
+      setStorageType('gist');
+
       // 清除 URL 中的敏感資訊
       const url = new URL(window.location.href);
       url.searchParams.delete('token');
       url.searchParams.delete('gistId');
       window.history.replaceState({}, document.title, url.toString());
-
-      // 重新整理資料的邏輯
-      const reload = async () => {
-        const savedRequests = await storageService.loadRepairRequests();
-        if (savedRequests) setRequests(savedRequests);
-
-        const savedDisasters = await storageService.loadDisasterReports();
-        if (savedDisasters) setDisasterReports(savedDisasters);
-
-        const savedLogs = await storageService.loadLogs();
-        if (savedLogs) setOperationLogs(savedLogs);
-
-        const savedMonthly = await storageService.loadMonthlyReports();
-        if (savedMonthly) setMonthlyReports(savedMonthly);
-      };
-      reload();
 
       console.log('已透過 URL 自動載入雲端儲存設定');
     }
@@ -154,6 +141,9 @@ const App: React.FC = () => {
     const token = localStorage.getItem('tsa_auth_token');
 
     const loadData = async () => {
+      // 確保最新的儲存類型
+      const currentType = storageService.getStorageType();
+      setStorageType(currentType);
       const savedRequests = await storageService.loadRepairRequests();
       if (savedRequests) setRequests(savedRequests);
       else setRequests(INITIAL_REQUESTS);
@@ -720,7 +710,13 @@ const App: React.FC = () => {
       <StorageSettings
         language={language}
         isOpen={showStorageSettings}
-        onClose={() => setShowStorageSettings(false)}
+        onClose={() => {
+          setShowStorageSettings(false);
+          const currentType = storageService.getStorageType();
+          setStorageType(currentType);
+          // 如果換了儲存方式，重刷資料
+          if ((window as any).refreshData) (window as any).refreshData();
+        }}
       />
     </>
   );
@@ -769,7 +765,15 @@ const App: React.FC = () => {
     if (publicView === 'terms') return <div className="bg-slate-950 min-h-screen"><TermsOfService onBack={() => setPublicView(null)} /></div>;
     return (
       <div className="bg-slate-950 min-h-screen">
-        <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} onShowPrivacy={() => setPublicView('privacy')} onShowTerms={() => setPublicView('terms')} onShowStorage={() => setShowStorageSettings(true)} />
+        <Login
+          key={`login-${storageType}`}
+          onLogin={handleLogin}
+          language={language}
+          onLanguageChange={setLanguage}
+          onShowPrivacy={() => setPublicView('privacy')}
+          onShowTerms={() => setPublicView('terms')}
+          onShowStorage={() => setShowStorageSettings(true)}
+        />
         {Modals}
       </div>
     );
