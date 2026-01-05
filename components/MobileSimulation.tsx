@@ -1395,7 +1395,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         {/* 底部資訊 */}
         <div className="pt-12 pb-6 text-center">
           <p className="text-slate-300 text-[10px] font-black uppercase tracking-widest">TSA Facility Management System</p>
-          <p className="text-slate-300 text-[10px] mt-1">Version 1.0.6 (Update: Sync Status Fix)</p>
+          <p className="text-slate-300 text-[10px] mt-1">Version 1.0.7 (Update: Category & Photos Fix)</p>
         </div>
       </div>
 
