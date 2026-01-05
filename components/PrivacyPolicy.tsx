@@ -32,7 +32,7 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
                 </div>
 
                 <div className="p-10 prose prose-slate max-w-none">
-                    <p className="text-slate-600 mb-6">歡迎使用「TSA會館修繕暨設施管理系統」（以下簡稱「本服務」）。本服務由 TSA 管理團隊提供。為了讓您能夠安心使用本服務的各項資訊及服務，特此向您說明本服務的隱私權保護政策，以保障您的權益，請您詳閱下列內容：</p>
+                    <p className="text-slate-600 mb-6">歡迎使用「TSA會館修繕暨設備管理系統」（以下簡稱「本服務」）。本服務由 TSA 管理團隊提供。為了讓您能夠安心使用本服務的各項資訊及服務，特此向您說明本服務的隱私權保護政策，以保障您的權益，請您詳閱下列內容：</p>
 
                     <h2 className="text-lg font-black text-slate-800 mt-8 mb-4">一、隱私權保護政策的適用範圍</h2>
                     <p className="text-slate-600 mb-6">隱私權保護政策內容，包括本服務如何處理在您使用網頁/LINE 介面服務時收集到的個人識別資料。隱私權保護政策不適用於本服務以外的相關連結網站，也不適用於非本服務所委託或參與管理的人員。</p>

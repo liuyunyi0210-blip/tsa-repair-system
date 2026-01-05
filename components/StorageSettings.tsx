@@ -245,7 +245,7 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
                                     headers: { 'Authorization': `token ${gistToken}` }
                                   });
                                   const gists = await res.json();
-                                  const tsaGist = gists.find((g: any) => g.description === 'TSA 會館設施維護系統資料');
+                                  const tsaGist = gists.find((g: any) => g.description === 'TSA 會館設備維護系統資料');
                                   if (tsaGist) {
                                     setGistId(tsaGist.id);
                                     setStatus({ type: 'success', message: '已找到現有雲端資料庫！' });

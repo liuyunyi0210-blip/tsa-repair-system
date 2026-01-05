@@ -1390,7 +1390,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             </div>
             <div>
               <span className="block text-xl font-black text-slate-800 mb-1">線上報修通報</span>
-              <span className="text-sm text-slate-500 font-bold">填寫新的設施損壞報修申請</span>
+              <span className="text-sm text-slate-500 font-bold">填寫新的設備損壞報修申請</span>
             </div>
           </button>
 

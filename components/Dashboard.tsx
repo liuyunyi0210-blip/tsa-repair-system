@@ -52,13 +52,13 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], la
   }, []);
   const translations = {
     [Language.ZH]: {
-      title: '會館設施運維總覽',
+      title: '會館設備運維總覽',
       subtitle: '整合機電、消防、空調、飲水機等全項管理數據',
       statTotal: '案件總數',
       statOverdue: '逾期未處理',
       statVolunteer: '志工報修',
       statClosed: '已結案',
-      tableTitle: '全台會館設施健康檢查表',
+      tableTitle: '全台會館設備健康檢查表',
       normal: '運作正常',
       warning: '有待辦/預警',
       critical: '緊急故障',

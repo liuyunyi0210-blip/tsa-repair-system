@@ -32,10 +32,10 @@ const TermsOfService: React.FC<TermsOfServiceProps> = ({ onBack }) => {
                 </div>
 
                 <div className="p-10 prose prose-slate max-w-none">
-                    <p className="text-slate-600 mb-6">歡迎您使用「TSA會館修繕暨設施管理系統」（以下簡稱「本服務」）。在使用本服務前，請仔細閱讀以下條款。當您開始使用本服務，即視為您已同意並接受本條款之所有內容。</p>
+                    <p className="text-slate-600 mb-6">歡迎您使用「TSA會館修繕暨設備管理系統」（以下簡稱「本服務」）。在使用本服務前，請仔細閱讀以下條款。當您開始使用本服務，即視為您已同意並接受本條款之所有內容。</p>
 
                     <h2 className="text-lg font-black text-slate-800 mt-8 mb-4">一、服務內容</h2>
-                    <p className="text-slate-600 mb-6">本服務提供 TSA 會館設施報修、例行性維護記錄、設備管理及 AI 故障診斷分析功能。本服務旨在協助 TSA 管理團隊與志工維持會館設施之運作。</p>
+                    <p className="text-slate-600 mb-6">本服務提供 TSA 會館設備報修、例行性維護記錄、設備管理及 AI 故障診斷分析功能。本服務旨在協助 TSA 管理團隊與志工維持會館設備之運作。</p>
 
                     <h2 className="text-lg font-black text-slate-800 mt-8 mb-4">二、使用者責任與義務</h2>
                     <ul className="list-disc pl-5 text-slate-600 space-y-3 mb-6">

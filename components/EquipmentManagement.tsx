@@ -43,17 +43,17 @@ const EquipmentManagement: React.FC<EquipmentManagementProps> = ({ onDirtyChange
 
   const translations = {
     [Language.ZH]: {
-      addTitle: '新增會館設施', addDesc: '建立新資產檔案，自動計算購入批次序號',
-      listTitle: '會館設施管理、查詢', listDesc: '完整資產清單、移動位置與標籤列印',
-      historyTitle: '異動歷史查詢', historyDesc: '追蹤所有設施的流向與變動紀錄',
+      addTitle: '新增會館設備', addDesc: '建立新資產檔案，自動計算購入批次序號',
+      listTitle: '會館設備管理、查詢', listDesc: '完整資產清單、移動位置與標籤列印',
+      historyTitle: '異動歷史查詢', historyDesc: '追蹤所有設備的流動與變動紀錄',
       enter: '進入功能',
       hallLabel: '會館別', locLabel: '位置 (如: 3F講堂)', prodName: '品名',
       modelLabel: '型號', qtyLabel: '數量', buyDate: '購買日期', priceLabel: '價格',
       warranty: '保固年限', photoLabel: '品項照片', uploadBtn: '拍攝或上傳照片',
-      saveBtn: '保存設施並生成標籤', cancel: '取消',
+      saveBtn: '保存設備並生成標籤', cancel: '取消',
       transfer: '移動位置', scrap: '報廢', reason: '原因說明', reporter: '經辦人/提報人',
-      saveChange: '保存變動', historyHeader: ['執行日期', '類型', '設施型號', '來源會館', '目的會館', '提報人'],
-      qrPrint: '設施標籤列印', qrBtn: '列印標籤', noData: '尚未建立任何資產設施資料',
+      saveChange: '保存變動', historyHeader: ['執行日期', '類型', '設備型號', '來源會館', '目的會館', '提報人'],
+      qrPrint: '設備標籤列印', qrBtn: '列印標籤', noData: '尚未建立任何資產設備資料',
       warrantyOk: '保固中', warrantyEnd: '已過期'
     },
     [Language.JA]: {
@@ -435,7 +435,7 @@ const EquipmentManagement: React.FC<EquipmentManagementProps> = ({ onDirtyChange
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
-                placeholder="搜尋設施、編號或會館..."
+                placeholder="搜尋設備、編號或會館..."
                 className="pl-12 pr-4 py-2 bg-white border border-slate-200 rounded-xl w-64 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-sm"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}

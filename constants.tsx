@@ -656,7 +656,7 @@ export const MODULES = [
   { id: 'halls', name: '會館基本資料', nameEn: 'Halls' },
   { id: 'reports', name: '回報管理', nameEn: 'Reports' },
   { id: 'requests', name: '工單管理', nameEn: 'Requests' },
-  { id: 'equipment', name: '會館設施', nameEn: 'Equipment' },
+  { id: 'equipment', name: '會館設備', nameEn: 'Equipment' },
   { id: 'water', name: '飲水機保養', nameEn: 'Water' },
   { id: 'aed', name: 'AED管理', nameEn: 'AED' },
   { id: 'vehicle', name: '公務車管理', nameEn: 'Vehicle' },

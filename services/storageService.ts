@@ -83,7 +83,7 @@ class StorageService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        description: 'TSA 會館設施維護系統資料',
+        description: 'TSA 會館設備維護系統資料',
         public: false,
         files
       })

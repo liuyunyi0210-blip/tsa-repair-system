@@ -48,12 +48,12 @@ const Layout: React.FC<LayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const t = {
-    title: 'TSA會館設施維護系統',
+    title: 'TSA會館設備維護系統',
     dashboard: '首頁',
     halls: '會館基本資料',
     reports: '回報管理',
     requests: '工單管理',
-    equipment: '會館設施',
+    equipment: '會館設備',
     water: '飲水機保養',
     aed: 'AED 管理',
     vehicle: '公務車管理',
