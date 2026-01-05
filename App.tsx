@@ -608,60 +608,9 @@ const App: React.FC = () => {
     return currentRole.permissions.includes(permissionId);
   };
 
-  // 優先顯示手機報修畫面 (針對 LINE 志工)
-  if (showMobileSim) {
-    return (
-      <div className="bg-slate-950 min-h-screen flex items-center justify-center p-0">
-        <MobileSimulation
-          key={`mobile-sim-${disasterReports.length}`}
-          activeDisaster={disasterReports && disasterReports.length > 0 ? disasterReports[0] : null}
-          requests={requests}
-          liffProfile={liffProfile}
-          onClose={() => {
-            setShowMobileSim(false);
-            if (liff.isInClient()) {
-              liff.closeWindow();
-            }
-          }}
-          onDisasterReport={handleDisasterReport}
-          onSubmitReport={async (data) => {
-            if (data.id) {
-              await handleWorkReportSubmit([data.id], {
-                ...data,
-                status: RepairStatus.CLOSED,
-                isWorkFinished: true,
-                completionDate: data.completionDate
-              }, true);
-            } else {
-              await handleAddRequest({ ...data, isVerified: false });
-            }
-            if (liff.isInClient()) {
-              setTimeout(() => liff.closeWindow(), 2000);
-            }
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    if (publicView === 'privacy') return <div className="bg-slate-950 min-h-screen"><PrivacyPolicy onBack={() => setPublicView(null)} /></div>;
-    if (publicView === 'terms') return <div className="bg-slate-950 min-h-screen"><TermsOfService onBack={() => setPublicView(null)} /></div>;
-    return <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} onShowPrivacy={() => setPublicView('privacy')} onShowTerms={() => setPublicView('terms')} onShowStorage={() => setShowStorageSettings(true)} />;
-  }
-
-  return (
-    <Layout
-      activeTab={activeTab}
-      setActiveTab={handleTabChangeRequest}
-      onSimulateVolunteer={() => setShowMobileSim(true)}
-      onLogout={handleLogout}
-      hasPermission={hasPermission}
-      currentUser={currentUser}
-      currentRole={currentRole}
-    >
-      {renderContent()}
-
+  // 定義 Modal 元件列
+  const Modals = (
+    <>
       {selectedRequestId && (
         <RequestDetail
           request={requests.find(r => r.id === selectedRequestId)!}
@@ -675,7 +624,6 @@ const App: React.FC = () => {
           onReportWork={(id) => {
             const req = requests.find(r => r.id === id);
             if (req) {
-              // 只允許尚未完工的工單進行回報
               if (req.status !== RepairStatus.CLOSED) {
                 setSelectedRequestId(null);
                 setReportingRequestId(id);
@@ -687,7 +635,6 @@ const App: React.FC = () => {
           language={language}
         />
       )}
-
 
       <UserManagement
         language={language}
@@ -701,7 +648,6 @@ const App: React.FC = () => {
         isOpen={showPermissionPanel}
         onClose={() => {
           setShowPermissionPanel(false);
-          // 重新載入角色資料以更新權限
           const reloadRoles = async () => {
             const savedRoles = await storageService.loadRoles();
             if (savedRoles) {
@@ -709,9 +655,6 @@ const App: React.FC = () => {
               if (currentUser) {
                 const userRole = savedRoles.find(r => r.id === currentUser.roleId);
                 if (userRole) setCurrentRole(userRole);
-              } else {
-                const adminRole = savedRoles.find(r => r.id === 'admin') || savedRoles[0];
-                if (adminRole) setCurrentRole(adminRole);
               }
             }
           };
@@ -725,6 +668,71 @@ const App: React.FC = () => {
         isOpen={showStorageSettings}
         onClose={() => setShowStorageSettings(false)}
       />
+    </>
+  );
+
+  // 優先顯示手機報修畫面 (針對 LINE 志工)
+  if (showMobileSim) {
+    return (
+      <div className="bg-slate-950 min-h-screen">
+        <div className="flex items-center justify-center p-0">
+          <MobileSimulation
+            key={`mobile-sim-${disasterReports.length}`}
+            activeDisaster={disasterReports && disasterReports.length > 0 ? disasterReports[0] : null}
+            requests={requests}
+            liffProfile={liffProfile}
+            onClose={() => {
+              setShowMobileSim(false);
+              if (liff.isInClient()) {
+                liff.closeWindow();
+              }
+            }}
+            onDisasterReport={handleDisasterReport}
+            onSubmitReport={async (data) => {
+              if (data.id) {
+                await handleWorkReportSubmit([data.id], {
+                  ...data,
+                  status: RepairStatus.CLOSED,
+                  isWorkFinished: true,
+                  completionDate: data.completionDate
+                }, true);
+              } else {
+                await handleAddRequest({ ...data, isVerified: false });
+              }
+              if (liff.isInClient()) {
+                setTimeout(() => liff.closeWindow(), 2000);
+              }
+            }}
+          />
+        </div>
+        {Modals}
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    if (publicView === 'privacy') return <div className="bg-slate-950 min-h-screen"><PrivacyPolicy onBack={() => setPublicView(null)} /></div>;
+    if (publicView === 'terms') return <div className="bg-slate-950 min-h-screen"><TermsOfService onBack={() => setPublicView(null)} /></div>;
+    return (
+      <div className="bg-slate-950 min-h-screen">
+        <Login onLogin={handleLogin} language={language} onLanguageChange={setLanguage} onShowPrivacy={() => setPublicView('privacy')} onShowTerms={() => setPublicView('terms')} onShowStorage={() => setShowStorageSettings(true)} />
+        {Modals}
+      </div>
+    );
+  }
+
+  return (
+    <Layout
+      activeTab={activeTab}
+      setActiveTab={handleTabChangeRequest}
+      onSimulateVolunteer={() => setShowMobileSim(true)}
+      onLogout={handleLogout}
+      hasPermission={hasPermission}
+      currentUser={currentUser}
+      currentRole={currentRole}
+    >
+      {renderContent()}
+      {Modals}
     </Layout>
   );
 };
