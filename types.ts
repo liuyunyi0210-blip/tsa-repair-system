@@ -185,6 +185,7 @@ export interface Equipment {
   warrantyYears: number;
   photoUrl?: string;
   createdAt: string;
+  isScrapped?: boolean;
 }
 
 export enum EquipmentChangeType {
@@ -196,9 +197,14 @@ export interface EquipmentChange {
   id: string;
   type: EquipmentChangeType;
   equipmentId: string;
+  equipmentName: string;
   date: string;
   reason: string;
   reporter: string;
+  fromHall?: string;
+  toHall?: string;
+  fromLocation?: string;
+  toLocation?: string;
 }
 
 export enum ContractStatus {

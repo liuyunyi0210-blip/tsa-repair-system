@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   PackagePlus,
   RefreshCw,
@@ -38,6 +39,7 @@ const EquipmentManagement: React.FC<EquipmentManagementProps> = ({ onDirtyChange
   const [prefilledData, setPrefilledData] = useState<Partial<Equipment> | null>(null);
   const [initialChangeMode, setInitialChangeMode] = useState<'TRANSFER' | 'SCRAP'>('TRANSFER');
   const [showQrModal, setShowQrModal] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const translations = {
     [Language.ZH]: {
@@ -211,44 +213,301 @@ const EquipmentManagement: React.FC<EquipmentManagementProps> = ({ onDirtyChange
     );
   };
 
-  const ListView = () => (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4"><h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><Search className="text-slate-700" /> {t.listTitle}</h2><button onClick={() => setView('HOME')} className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all"><ArrowLeft size={18} /> {t.cancel}</button></div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {equipments.map(eq => (
-          <div key={eq.id} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-6 hover:shadow-md transition-shadow">
-            <div className="w-full sm:w-32 h-32 bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-300 relative overflow-hidden group">{eq.photoUrl ? <img src={eq.photoUrl} className="w-full h-full object-cover" /> : <ImageIcon size={40} className="opacity-20" />}</div>
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between"><span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{eq.id}</span><span className={`flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-lg ${isWarrantyValid(eq.purchaseDate, eq.warrantyYears) ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{isWarrantyValid(eq.purchaseDate, eq.warrantyYears) ? t.warrantyOk : t.warrantyEnd}</span></div>
-              <h3 className="text-lg font-black text-slate-900 leading-none">{eq.productName} <span className="text-slate-400 font-medium text-sm">({eq.model})</span></h3>
-              <p className="text-xs font-medium text-slate-500">{eq.hallName} • {eq.location}</p>
-              <div className="pt-2 flex flex-wrap gap-2">
-                <button onClick={() => { setPrefilledData(eq); setInitialChangeMode('TRANSFER'); setView('CHANGE'); }} className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg hover:bg-amber-100">{t.transfer}</button>
-                <button onClick={() => { setPrefilledData(eq); setInitialChangeMode('SCRAP'); setView('CHANGE'); }} className="text-[10px] font-black text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">{t.scrap}</button>
-                <button onClick={() => setShowQrModal(eq.id)} className="text-[10px] font-black text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg hover:bg-slate-200">{t.qrBtn}</button>
+  const ChangeForm = () => {
+    const [mode, setMode] = useState<'TRANSFER' | 'SCRAP'>(initialChangeMode);
+    const [form, setForm] = useState({
+      reason: '',
+      reporter: '',
+      targetHallName: mode === 'TRANSFER' ? (prefilledData?.hallName || '') : '',
+      targetLocation: mode === 'TRANSFER' ? (prefilledData?.location || '') : ''
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!prefilledData?.id) return;
+
+      const newChange: EquipmentChange = {
+        id: crypto.randomUUID(),
+        type: mode === 'TRANSFER' ? EquipmentChangeType.TRANSFER : EquipmentChangeType.SCRAP,
+        equipmentId: prefilledData.id,
+        equipmentName: prefilledData.productName || '',
+        date: new Date().toISOString(),
+        reason: form.reason,
+        reporter: form.reporter,
+        fromHall: prefilledData.hallName,
+        fromLocation: prefilledData.location,
+        toHall: mode === 'TRANSFER' ? form.targetHallName : undefined,
+        toLocation: mode === 'TRANSFER' ? form.targetLocation : undefined
+      };
+
+      await saveChange([newChange, ...changes]);
+
+      if (mode === 'SCRAP') {
+        const updatedEquips = equipments.map(eq =>
+          eq.id === prefilledData.id ? { ...eq, isScrapped: true } : eq
+        );
+        await saveEquip(updatedEquips);
+      } else {
+        const updatedEquips = equipments.map(eq =>
+          eq.id === prefilledData.id ? { ...eq, hallName: form.targetHallName, location: form.targetLocation } : eq
+        );
+        await saveEquip(updatedEquips);
+      }
+
+      setView('LIST');
+    };
+
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-10 pb-20">
+        <div className="bg-white p-8 rounded-[40px] border border-slate-200 shadow-xl space-y-8">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-6">
+            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+              {mode === 'TRANSFER' ? <RefreshCw className="text-amber-500" /> : <Trash2 className="text-rose-500" />}
+              {mode === 'TRANSFER' ? t.transfer : t.scrap} - {prefilledData?.productName}
+            </h2>
+            <button onClick={() => setView('LIST')} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X /></button>
+          </div>
+
+          <div className="flex gap-4 p-1 bg-slate-100 rounded-2xl w-fit">
+            <button
+              onClick={() => setMode('TRANSFER')}
+              className={`px-6 py-2 rounded-xl font-black text-sm transition-all ${mode === 'TRANSFER' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500'}`}
+            >
+              {t.transfer}
+            </button>
+            <button
+              onClick={() => setMode('SCRAP')}
+              className={`px-6 py-2 rounded-xl font-black text-sm transition-all ${mode === 'SCRAP' ? 'bg-white shadow-sm text-rose-600' : 'text-slate-500'}`}
+            >
+              {t.scrap}
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {mode === 'TRANSFER' && (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">目的會館 *</label>
+                    <select
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl font-bold"
+                      value={form.targetHallName}
+                      onChange={e => setForm({ ...form, targetHallName: e.target.value })}
+                      required
+                    >
+                      {halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">新位置 *</label>
+                    <input
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl font-bold"
+                      value={form.targetLocation}
+                      onChange={e => setForm({ ...form, targetLocation: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase">{t.reason} *</label>
+                <textarea
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl font-bold min-h-[100px]"
+                  value={form.reason}
+                  onChange={e => setForm({ ...form, reason: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase">{t.reporter} *</label>
+                <input
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl font-bold"
+                  value={form.reporter}
+                  onChange={e => setForm({ ...form, reporter: e.target.value })}
+                />
               </div>
             </div>
-          </div>
-        ))}
-        {equipments.length === 0 && <div className="lg:col-span-2 py-20 text-center text-slate-300 font-bold">{t.noData}</div>}
-      </div>
-      {showQrModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white p-8 rounded-[40px] shadow-2xl max-w-sm w-full text-center space-y-6">
-            <div className="flex justify-between items-center mb-4"><h3 className="text-xl font-black text-slate-900">{t.qrPrint}</h3><button onClick={() => setShowQrModal(null)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X /></button></div>
-            <div className="bg-slate-50 p-6 rounded-3xl flex flex-col items-center gap-4"><QrCode size={200} /><div className="space-y-1"><p className="text-[10px] font-black text-indigo-600">{showQrModal}</p></div></div>
-            <button className="w-full bg-indigo-600 text-white font-black py-4 rounded-3xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all" onClick={() => window.print()}><Printer size={18} /> {t.qrBtn}</button>
-          </div>
+
+            <div className="pt-6 flex gap-4">
+              <button type="submit" className={`flex-1 text-white font-black py-4 rounded-3xl shadow-xl transition-all ${mode === 'TRANSFER' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-rose-600 hover:bg-rose-700'}`}>
+                {mode === 'TRANSFER' ? '確認移轉' : '確認報廢'}
+              </button>
+              <button type="button" onClick={() => setView('LIST')} className="px-10 bg-white text-slate-500 font-bold py-4 rounded-3xl border border-slate-200">
+                {t.cancel}
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </div>
+    );
+  };
+
+  const HistoryView = () => (
+    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><History className="text-emerald-500" /> {t.historyTitle}</h2>
+        <button onClick={() => setView('HOME')} className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all"><ArrowLeft size={18} /> {t.cancel}</button>
+      </div>
+
+      <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                {t.historyHeader.map((h, i) => (
+                  <th key={i} className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {changes.map((change) => (
+                <tr key={change.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-bold text-slate-900">{new Date(change.date).toLocaleDateString()}</div>
+                    <div className="text-[10px] text-slate-400">{new Date(change.date).toLocaleTimeString()}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black ${change.type === EquipmentChangeType.TRANSFER ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'}`}>
+                      {change.type === EquipmentChangeType.TRANSFER ? t.transfer : t.scrap}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-bold text-slate-900">{change.equipmentName}</div>
+                    <div className="text-[10px] text-slate-400">{change.equipmentId}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-slate-600">{change.fromHall || '-'}</div>
+                    <div className="text-[10px] text-slate-400">{change.fromLocation}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-slate-600">{change.toHall || '-'}</div>
+                    <div className="text-[10px] text-slate-400">{change.toLocation}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-700">{change.reporter}</td>
+                </tr>
+              ))}
+              {changes.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-20 text-center text-slate-300 font-bold">尚無異動紀錄</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
+
+  const ListView = () => {
+    const filteredEquipments = useMemo(() => {
+      return equipments
+        .filter(eq => !eq.isScrapped)
+        .filter(eq =>
+          eq.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          eq.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          eq.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          eq.hallName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          eq.location.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [equipments, searchQuery]);
+
+    const qrValue = useMemo(() => {
+      if (!showQrModal) return '';
+      const eq = equipments.find(e => e.id === showQrModal);
+      if (!eq) return '';
+      // 包含基本資訊的 JSON 字串，手機掃描後可以看到
+      return JSON.stringify({
+        id: eq.id,
+        name: eq.productName,
+        model: eq.model,
+        hall: eq.hallName,
+        loc: eq.location
+      }, null, 2);
+    }, [showQrModal, equipments]);
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><Search className="text-slate-700" /> {t.listTitle}</h2>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="搜尋設施、編號或會館..."
+                className="pl-12 pr-4 py-2 bg-white border border-slate-200 rounded-xl w-64 focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-sm"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <button onClick={() => setView('HOME')} className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all font-bold text-sm"><ArrowLeft size={18} /> {t.cancel}</button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {filteredEquipments.map(eq => (
+            <div key={eq.id} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-6 hover:shadow-md transition-shadow">
+              <div className="w-full sm:w-32 h-32 bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-300 relative overflow-hidden group">
+                {eq.photoUrl ? <img src={eq.photoUrl} className="w-full h-full object-cover" /> : <ImageIcon size={40} className="opacity-20" />}
+              </div>
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{eq.id}</span>
+                  <span className={`flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-lg ${isWarrantyValid(eq.purchaseDate, eq.warrantyYears) ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                    {isWarrantyValid(eq.purchaseDate, eq.warrantyYears) ? t.warrantyOk : t.warrantyEnd}
+                  </span>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 leading-none">{eq.productName} <span className="text-slate-400 font-medium text-sm">({eq.model})</span></h3>
+                <p className="text-xs font-medium text-slate-500">{eq.hallName} • {eq.location}</p>
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <button onClick={() => { setPrefilledData(eq); setInitialChangeMode('TRANSFER'); setView('CHANGE'); }} className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg hover:bg-amber-100">{t.transfer}</button>
+                  <button onClick={() => { setPrefilledData(eq); setInitialChangeMode('SCRAP'); setView('CHANGE'); }} className="text-[10px] font-black text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">{t.scrap}</button>
+                  <button onClick={() => setShowQrModal(eq.id)} className="text-[10px] font-black text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg hover:bg-slate-200">{t.qrBtn}</button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {filteredEquipments.length === 0 && <div className="lg:col-span-2 py-20 text-center text-slate-300 font-bold">{t.noData}</div>}
+        </div>
+
+        {showQrModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white p-8 rounded-[40px] shadow-2xl max-w-sm w-full text-center space-y-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-black text-slate-900">{t.qrPrint}</h3>
+                <button onClick={() => setShowQrModal(null)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X /></button>
+              </div>
+              <div className="bg-white p-6 rounded-3xl flex flex-col items-center gap-4 border border-slate-100 shadow-inner">
+                <QRCodeSVG
+                  value={qrValue}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                />
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-indigo-600">{showQrModal}</p>
+                  <p className="text-[12px] font-bold text-slate-500">{equipments.find(e => e.id === showQrModal)?.productName}</p>
+                </div>
+              </div>
+              <button
+                className="w-full bg-indigo-600 text-white font-black py-4 rounded-3xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg"
+                onClick={() => window.print()}
+              >
+                <Printer size={18} /> {t.qrBtn}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   switch (view) {
     case 'ADD': return <AddForm />;
     case 'LIST': return <ListView />;
-    case 'HISTORY': return <div className="p-20 text-center">異動歷史功能開發中</div>;
-    case 'CHANGE': return <div className="p-20 text-center">異動編輯功能開發中</div>;
+    case 'HISTORY': return <HistoryView />;
+    case 'CHANGE': return <ChangeForm />;
     default: return <Home />;
   }
 };
