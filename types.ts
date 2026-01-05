@@ -113,6 +113,14 @@ export interface RepairRequest {
   isWorkFinished?: boolean;
   completionDate?: string;
   photoUrls?: string[];
+  photoMetadata?: {
+    timestamp?: string;
+    location?: {
+      latitude: number;
+      longitude: number;
+      address?: string;
+    };
+  }[];
   isPaymentSent?: boolean;
   isNoPaymentRequired?: boolean;
   paymentDate?: string;

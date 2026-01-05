@@ -220,13 +220,30 @@ const RequestDetail: React.FC<RequestDetailProps> = ({ request, onClose, onUpdat
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {request.photoUrls.map((url, i) => (
-                    <div
-                      key={i}
-                      className="aspect-square rounded-2xl overflow-hidden border border-slate-200 cursor-pointer hover:shadow-lg transition-all active:scale-95 group relative"
-                      onClick={() => setSelectedPhotos(request.photoUrls || [])}
-                    >
-                      <img src={url} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                    <div key={i} className="space-y-1">
+                      <div
+                        className="aspect-square rounded-2xl overflow-hidden border border-slate-200 cursor-pointer hover:shadow-lg transition-all active:scale-95 group relative"
+                        onClick={() => setSelectedPhotos(request.photoUrls || [])}
+                      >
+                        <img src={url} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                      </div>
+                      {request.photoMetadata?.[i] && (
+                        <div className="text-[10px] text-slate-400 font-bold px-1">
+                          {request.photoMetadata[i].timestamp && (
+                            <div className="flex items-center gap-1">
+                              <Calendar size={10} />
+                              {new Date(request.photoMetadata[i].timestamp!).toLocaleString()}
+                            </div>
+                          )}
+                          {request.photoMetadata[i].location && (
+                            <div className="flex items-center gap-1 truncate">
+                              <MapPin size={10} />
+                              {request.photoMetadata[i].location!.latitude.toFixed(6)}, {request.photoMetadata[i].location!.longitude.toFixed(6)}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -232,6 +232,7 @@ class StorageService {
       } catch (error) {
         console.error(`Gist 儲存失敗 (${key})，改用 localStorage:`, error);
         localStorage.setItem(key, JSON.stringify(data));
+        throw error;
       }
     } else {
       try {

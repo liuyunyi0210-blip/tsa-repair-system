@@ -189,6 +189,9 @@ const App: React.FC = () => {
     };
     loadData();
 
+    // 暴露重新整理功能
+    (window as any).refreshData = loadData;
+
     // 初始化 LIFF
     const initLiff = async () => {
       try {
@@ -328,7 +331,8 @@ const App: React.FC = () => {
       updatedAt: new Date().toISOString(),
       isDeleted: false,
       isVerified: data.isVerified ?? (data.type === OrderType.ROUTINE),
-      photoUrls: data.photoUrls || []
+      photoUrls: data.photoUrls || [],
+      photoMetadata: data.photoMetadata || []
     };
 
     await saveRequests([newReq, ...requests]);
@@ -408,13 +412,17 @@ const App: React.FC = () => {
       hallsStatus: updatedHallsStatus
     };
 
-    const updatedDisasters = disasterReports.map(d => d.id === disasterId ? updatedDisaster : d);
-    setDisasterReports(updatedDisasters);
-    await storageService.saveDisasterReports(updatedDisasters);
+    try {
+      const updatedDisasters = disasterReports.map(d => d.id === disasterId ? updatedDisaster : d);
+      setDisasterReports(updatedDisasters);
+      await storageService.saveDisasterReports(updatedDisasters);
 
-    // 重新載入以確保資料同步
-    const reloadedDisasters = await storageService.loadDisasterReports();
-    if (reloadedDisasters) setDisasterReports(reloadedDisasters);
+      // 重新載入以確保資料同步
+      const reloadedDisasters = await storageService.loadDisasterReports();
+      if (reloadedDisasters) setDisasterReports(reloadedDisasters);
+    } catch (err: any) {
+      alert(`災害回報儲存失敗：${err.message || '未知錯誤'}。您的資料已暫存於本機，但可能未同步至雲端。`);
+    }
   };
 
   const renderContent = () => {

@@ -457,7 +457,15 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <button onClick={() => { setActiveForm('NONE'); setRepairImages([]); }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
             <ArrowLeft size={20} />
           </button>
-          <h3 className="text-lg font-black text-slate-800">會館線上報修</h3>
+          <div className="flex flex-col">
+            <h3 className="text-lg font-black text-slate-800">會館線上報修</h3>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${storageService.getStorageType() === 'gist' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className="text-[10px] font-bold text-slate-400">
+                {storageService.getStorageType() === 'gist' ? '雲端同步中' : '僅儲存於本機'}
+              </span>
+            </div>
+          </div>
         </div>
         <button onClick={() => { setActiveForm('NONE'); setRepairImages([]); }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
           <X size={20} />
@@ -675,7 +683,15 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
             <ArrowLeft size={20} />
           </button>
-          <h3 className="text-lg font-black text-slate-800">修繕完工回報</h3>
+          <div className="flex flex-col">
+            <h3 className="text-lg font-black text-slate-800">修繕完工回報</h3>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${storageService.getStorageType() === 'gist' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className="text-[10px] font-bold text-slate-400">
+                {storageService.getStorageType() === 'gist' ? '雲端同步中' : '僅儲存於本機'}
+              </span>
+            </div>
+          </div>
         </div>
         <button onClick={() => {
           setActiveForm('NONE');

@@ -18,7 +18,8 @@ import {
   Hammer,
   Briefcase,
   Calendar,
-  FileSignature
+  FileSignature,
+  RefreshCw
 } from 'lucide-react';
 import { User, Role } from '../types';
 
@@ -99,8 +100,8 @@ const Layout: React.FC<LayoutProps> = ({
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
             >
               {item.icon}
@@ -151,6 +152,16 @@ const Layout: React.FC<LayoutProps> = ({
                 {currentRole?.name || 'System Operator'}
               </p>
             </div>
+            <button
+              onClick={() => (window as any).refreshData?.()}
+              className="p-2.5 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all flex items-center gap-2 group"
+              title="同步雲端資料"
+            >
+              <div className="group-active:animate-spin">
+                <RefreshCw size={18} />
+              </div>
+              <span className="text-xs font-black uppercase hidden lg:inline">同步資料</span>
+            </button>
             <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black shadow-sm">
               {currentUser?.name ? currentUser.name.charAt(0) : 'TSA'}
             </div>

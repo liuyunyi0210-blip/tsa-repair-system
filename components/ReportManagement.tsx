@@ -106,7 +106,7 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                 )}
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
                 <MapPin size={14} className="text-slate-300" />
@@ -117,7 +117,7 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                 <span className="truncate">{report.reporter}</span>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-2 text-[10px] font-black text-slate-400">
                 <Calendar size={12} />
@@ -133,7 +133,7 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                 </span>
               )}
             </div>
-            
+
             <div className="pt-3 border-t border-slate-100">
               {showTrash ? (
                 <div className="flex items-center justify-end gap-2">
@@ -363,7 +363,7 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
               {verifyFormData && (
                 <div className="space-y-4 p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
                   <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4">核實資訊補充</h4>
-                  
+
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">工單標題 *</label>
                     <input
@@ -385,8 +385,8 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                           value={verifyFormData.category}
                           onChange={e => {
                             const newCategory = e.target.value as Category;
-                            setVerifyFormData(prev => prev ? { 
-                              ...prev, 
+                            setVerifyFormData(prev => prev ? {
+                              ...prev,
                               category: newCategory,
                               title: `${newCategory} - ${selectedReport.hallName} 報修`
                             } : null);
@@ -434,8 +434,26 @@ const ReportManagement: React.FC<ReportManagementProps> = ({ requests, onVerify,
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">現場照片 ({selectedReport.photoUrls.length})</label>
                   <div className="grid grid-cols-3 gap-3">
                     {selectedReport.photoUrls.map((url, i) => (
-                      <div key={i} className="aspect-square rounded-xl overflow-hidden border border-slate-100 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setSelectedPhotos(selectedReport.photoUrls || [])}>
-                        <img src={url} className="w-full h-full object-cover" />
+                      <div key={i} className="space-y-1">
+                        <div className="aspect-square rounded-xl overflow-hidden border border-slate-100 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setSelectedPhotos(selectedReport.photoUrls || [])}>
+                          <img src={url} className="w-full h-full object-cover" />
+                        </div>
+                        {selectedReport.photoMetadata?.[i] && (
+                          <div className="text-[10px] text-slate-400 font-bold px-1">
+                            {selectedReport.photoMetadata[i].timestamp && (
+                              <div className="flex items-center gap-1">
+                                <Calendar size={10} />
+                                {new Date(selectedReport.photoMetadata[i].timestamp!).toLocaleString()}
+                              </div>
+                            )}
+                            {selectedReport.photoMetadata[i].location && (
+                              <div className="flex items-center gap-1 truncate">
+                                <MapPin size={10} />
+                                {selectedReport.photoMetadata[i].location!.latitude.toFixed(6)}, {selectedReport.photoMetadata[i].location!.longitude.toFixed(6)}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
