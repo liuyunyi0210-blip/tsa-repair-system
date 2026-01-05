@@ -151,8 +151,8 @@ const HallManagement: React.FC = () => {
     };
 
     return (
-      <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div className="bg-white w-full max-w-4xl rounded-[40px] p-10 space-y-8 shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 md:p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="bg-white w-full max-w-4xl rounded-[32px] md:rounded-[40px] p-6 md:p-10 space-y-6 md:space-y-8 shadow-2xl animate-in zoom-in-95 max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-start border-b border-slate-100 pb-4 gap-4">
             <div className="flex-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">會館名稱</label>
@@ -239,23 +239,23 @@ const HallManagement: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div><h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3"><Building2 className="text-indigo-600" /> 會館資料管理</h1></div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setShowDeleted(!showDeleted)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black transition-all ${showDeleted ? 'bg-rose-500 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 shadow-sm'}`}>
-            <Trash2 size={18} /> {showDeleted ? '返回列表' : '回收桶'}
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <button onClick={() => setShowDeleted(!showDeleted)} className={`flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-2xl text-[10px] md:text-xs font-black transition-all ${showDeleted ? 'bg-rose-500 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 shadow-sm'}`}>
+            <Trash2 size={16} md:size={18} /> {showDeleted ? '返回列表' : '回收桶'}
           </button>
-          <button onClick={() => { setIsSelectMode(!isSelectMode); setSelectedIds(new Set()); }} className={`px-6 py-3 rounded-2xl text-xs font-black transition-all ${isSelectMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 shadow-sm'}`}>
+          <button onClick={() => { setIsSelectMode(!isSelectMode); setSelectedIds(new Set()); }} className={`px-4 md:px-6 py-2.5 md:py-3 rounded-2xl text-[10px] md:text-xs font-black transition-all ${isSelectMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 shadow-sm'}`}>
             {isSelectMode ? '結束選擇' : '進入勾選模式'}
           </button>
-          <button onClick={handleResetData} className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl text-xs font-black shadow-sm hover:bg-slate-200 transition-all" title="同步最新的 44 間會館資料">
-            <RefreshCw size={18} /> 重設為預設資料
+          <button onClick={handleResetData} className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-slate-100 text-slate-600 rounded-2xl text-[10px] md:text-xs font-black shadow-sm hover:bg-slate-200 transition-all" title="同步最新的 44 間會館資料">
+            <RefreshCw size={16} md:size={18} /> 重設資料
           </button>
-          <button onClick={() => setEditingHallId('NEW_HALL')} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:brightness-110 transition-all">
-            <Plus size={18} /> 新增資料
+          <button onClick={() => setEditingHallId('NEW_HALL')} className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-indigo-600 text-white rounded-2xl text-[10px] md:text-xs font-black shadow-lg hover:brightness-110 transition-all">
+            <Plus size={16} md:size={18} /> 新增
           </button>
-          <button onClick={() => setShowExportModal(true)} className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl font-black shadow-lg">
-            <Download size={18} /> 自訂匯出資料
+          <button onClick={() => setShowExportModal(true)} className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-emerald-600 text-white rounded-2xl text-[10px] md:text-xs font-black shadow-lg">
+            <Download size={16} md:size={18} /> 匯出
           </button>
         </div>
       </div>

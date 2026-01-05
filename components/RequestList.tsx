@@ -258,7 +258,72 @@ const RequestList: React.FC<RequestListProps> = ({
       </div>
 
       <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile View: Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredRequests.map((req) => {
+            const isFinished = req.status === RepairStatus.CLOSED;
+            const canSelect = !isFinished;
+            return (
+              <div
+                key={req.id}
+                onClick={() => onView(req.id)}
+                className={`p-6 space-y-4 active:bg-slate-50 transition-all ${isFinished ? 'opacity-50' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-black text-slate-900 truncate">{req.title}</span>
+                      {req.type === OrderType.ROUTINE && <span className="text-[8px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 border border-purple-100 uppercase font-black shrink-0">{t.routine}</span>}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">#{req.id} • {req.reporter}</span>
+                  </div>
+                  <div
+                    className="shrink-0"
+                    onClick={(e) => {
+                      if (canSelect) toggleSelection(req.id, e as any);
+                      else e.stopPropagation();
+                    }}
+                  >
+                    <div className={selectedIds.has(req.id) ? 'text-indigo-600' : canSelect ? 'text-slate-200' : 'text-slate-100'}>
+                      {selectedIds.has(req.id) ? <CheckSquare size={24} /> : <Square size={24} />}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-slate-50 rounded-lg text-slate-500">
+                      <Building2 size={14} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-600">{req.hallName}</span>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${STATUS_CONFIG[req.status].color}`}>
+                    {getStatusLabel(req.status)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {CATEGORY_ICONS[req.category]}
+                    <span className="text-[10px] font-black text-slate-500 uppercase">{req.category}</span>
+                  </div>
+                  {req.photoUrls && req.photoUrls.length > 0 && (
+                    <div
+                      className="flex items-center gap-1 text-xs font-bold text-indigo-500"
+                      onClick={(e) => { e.stopPropagation(); setSelectedPhotos(req.photoUrls || []); }}
+                    >
+                      <ImageIcon size={12} />
+                      <span>{req.photoUrls.length}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
@@ -316,8 +381,8 @@ const RequestList: React.FC<RequestListProps> = ({
               })}
             </tbody>
           </table>
-          {filteredRequests.length === 0 && <div className="py-20 text-center text-slate-300 font-black">{t.noData}</div>}
         </div>
+        {filteredRequests.length === 0 && <div className="py-20 text-center text-slate-300 font-black">{t.noData}</div>}
       </div>
 
       {selectedIds.size > 0 && (

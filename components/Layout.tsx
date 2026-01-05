@@ -1,7 +1,8 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ClipboardList,
+  Menu,
+  X as CloseIcon,
   Settings,
   LogOut,
   Wrench,
@@ -44,6 +45,8 @@ const Layout: React.FC<LayoutProps> = ({
   currentUser,
   currentRole
 }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const t = {
     title: 'TSA會館設施維護系統',
     dashboard: '首頁',
@@ -85,20 +88,37 @@ const Layout: React.FC<LayoutProps> = ({
     : allMenuItems;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <aside className="hidden md:flex flex-col w-72 bg-slate-900 text-white shrink-0">
-        <div className="p-6 flex items-center gap-3 shrink-0">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <Wrench size={24} className="text-white" />
+    <div className="flex h-screen overflow-hidden bg-slate-50 relative">
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Desktop & Mobile */}
+      <aside className={`fixed inset-y-0 left-0 z-[110] md:relative md:flex flex-col w-72 bg-slate-900 text-white shrink-0 transition-transform duration-300 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-6 flex items-center justify-between md:justify-start gap-3 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-600 p-2 rounded-lg">
+              <Wrench size={24} className="text-white" />
+            </div>
+            <span className="font-bold text-lg tracking-tight leading-tight">{t.title}</span>
           </div>
-          <span className="font-bold text-lg tracking-tight leading-tight">{t.title}</span>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden p-2 text-slate-400 hover:text-white">
+            <CloseIcon size={24} />
+          </button>
         </div>
 
         <nav className="flex-1 px-4 py-4 overflow-y-auto scrollbar-hide space-y-1">
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -111,7 +131,10 @@ const Layout: React.FC<LayoutProps> = ({
 
           <div className="pt-4 border-t border-slate-800 mt-4">
             <button
-              onClick={() => setActiveTab('settings')}
+              onClick={() => {
+                setActiveTab('settings');
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white'
                 }`}
             >
@@ -123,7 +146,10 @@ const Layout: React.FC<LayoutProps> = ({
 
         <div className="p-6 border-t border-slate-800">
           <button
-            onClick={onSimulateVolunteer}
+            onClick={() => {
+              onSimulateVolunteer();
+              setIsMobileMenuOpen(false);
+            }}
             className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs transition-all mb-4 border border-white/5"
           >
             <Smartphone size={14} /> {t.volunteer}
@@ -137,14 +163,17 @@ const Layout: React.FC<LayoutProps> = ({
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 text-slate-500 hover:bg-slate-50 rounded-lg">
+              <Menu size={24} />
+            </button>
+            <span className="text-xs font-black text-slate-400 uppercase tracking-widest truncate">
               {menuItems.find(m => m.id === activeTab)?.label || activeTab}
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="text-right hidden sm:block">
               <p className="text-xs font-black text-slate-900">
                 {currentUser?.name || t.admin}
               </p>
@@ -154,7 +183,7 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
             <button
               onClick={() => (window as any).refreshData?.()}
-              className="p-2.5 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all flex items-center gap-2 group"
+              className="p-2 md:p-2.5 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all flex items-center gap-2 group"
               title="同步雲端資料"
             >
               <div className="group-active:animate-spin">
@@ -162,7 +191,7 @@ const Layout: React.FC<LayoutProps> = ({
               </div>
               <span className="text-xs font-black uppercase hidden lg:inline">同步資料</span>
             </button>
-            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black shadow-sm">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black shadow-sm text-sm shrink-0">
               {currentUser?.name ? currentUser.name.charAt(0) : 'TSA'}
             </div>
           </div>

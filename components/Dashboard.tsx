@@ -168,53 +168,82 @@ const Dashboard: React.FC<DashboardProps> = ({ requests, monthlyReports = [], la
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                <th className="px-4 py-4">{t.hallName}</th>
-                {HEALTH_CHECK_CONFIG.map(facility => (
-                  <th key={facility.key} className="px-4 py-4 text-center">
-                    <div className="flex flex-col items-center gap-1">
-                      {facility.icon}
-                      <span>{facility.label}</span>
-                    </div>
-                  </th>
-                ))}
-                <th className="px-4 py-4 text-right">{t.manage}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {halls.map(hall => (
-                <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
-                      <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
-                    </div>
-                  </td>
+        <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
+          {/* Mobile View: Cards */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {halls.map(hall => (
+              <div key={hall.id} className="p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
+                  <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
                   {HEALTH_CHECK_CONFIG.map(facility => {
                     const status = getHallFacilityStatus(hall.name, facility.key as Category);
                     return (
-                      <td key={facility.key} className="px-4 py-4">
-                        <div className="flex justify-center">
-                          <div className={`w-4 h-4 rounded-full border-2 ${status === 'GREEN' ? 'bg-emerald-500 border-emerald-100 shadow-sm shadow-emerald-200' :
-                            status === 'YELLOW' ? 'bg-amber-500 border-amber-100' :
-                              'bg-rose-500 border-rose-100 animate-pulse'
-                            }`}></div>
-                        </div>
-                      </td>
+                      <div key={facility.key} className="flex flex-col items-center gap-1 p-2 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="text-slate-400">{facility.icon}</div>
+                        <div className={`w-2.5 h-2.5 rounded-full ${status === 'GREEN' ? 'bg-emerald-500 shadow-sm shadow-emerald-200' :
+                          status === 'YELLOW' ? 'bg-amber-500' :
+                            'bg-rose-500 animate-pulse'
+                          }`}></div>
+                      </div>
                     );
                   })}
-                  <td className="px-4 py-4 text-right">
-                    <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                      <ChevronRight size={18} />
-                    </button>
-                  </td>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop View: Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                  <th className="px-4 py-4">{t.hallName}</th>
+                  {HEALTH_CHECK_CONFIG.map(facility => (
+                    <th key={facility.key} className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {facility.icon}
+                        <span>{facility.label}</span>
+                      </div>
+                    </th>
+                  ))}
+                  <th className="px-4 py-4 text-right">{t.manage}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {halls.map(hall => (
+                  <tr key={hall.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 rounded-lg text-slate-500"><Building2 size={16} /></div>
+                        <span className="font-bold text-slate-900 text-sm">{hall.name}</span>
+                      </div>
+                    </td>
+                    {HEALTH_CHECK_CONFIG.map(facility => {
+                      const status = getHallFacilityStatus(hall.name, facility.key as Category);
+                      return (
+                        <td key={facility.key} className="px-4 py-4">
+                          <div className="flex justify-center">
+                            <div className={`w-4 h-4 rounded-full border-2 ${status === 'GREEN' ? 'bg-emerald-500 border-emerald-100 shadow-sm shadow-emerald-200' :
+                              status === 'YELLOW' ? 'bg-amber-500 border-amber-100' :
+                                'bg-rose-500 border-rose-100 animate-pulse'
+                              }`}></div>
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-4 text-right">
+                      <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                        <ChevronRight size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

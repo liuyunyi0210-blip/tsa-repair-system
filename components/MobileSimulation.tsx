@@ -128,6 +128,9 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   const REPORTER_MAX_LENGTH = 50; // 完工表單使用
   const DESCRIPTION_MAX_LENGTH = 500;
 
+  // 災害回報類別
+  const STORAGE_CATEGORIES = ['空調', '機電', '給排水', '土建', '消防', '其他'];
+
   // 獲取當前地理位置
   const getCurrentLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
     return new Promise((resolve) => {
@@ -498,7 +501,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <X size={20} />
         </button>
       </div>
-      <form onSubmit={handleRepairSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 pb-32 custom-scrollbar">
+      <form onSubmit={handleRepairSubmit} className="p-5 md:p-8 space-y-6 overflow-y-auto overflow-x-hidden flex-1 pb-32 custom-scrollbar">
         <div className="space-y-1">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">選擇會館</label>
           <div className="relative">
@@ -515,13 +518,13 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
 
         <div className="space-y-1">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">回報類別</label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {Object.values(Category).map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setRepairFormData(prev => ({ ...prev, category: cat }))}
-                className={`px-3 py-3 rounded-xl text-[11px] font-black transition-all ${repairFormData.category === cat
+                className={`px-2 py-3 rounded-xl text-[10px] md:text-[11px] font-black transition-all truncate ${repairFormData.category === cat
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
                   }`}
@@ -707,7 +710,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <Send size={18} /> 送出報修資料
         </button>
       </form>
-    </div>
+    </div >
   );
 
   // 完工回報表單 JSX
@@ -756,7 +759,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <X size={20} />
         </button>
       </div>
-      <form onSubmit={handleFinishSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 pb-32 custom-scrollbar">
+      <form onSubmit={handleFinishSubmit} className="p-5 md:p-8 space-y-6 overflow-y-auto overflow-x-hidden flex-1 pb-32 custom-scrollbar">
         {unfinishedRequests.length === 0 ? (
           <div className="text-center py-12 space-y-4">
             <div className="p-6 bg-slate-50 rounded-2xl inline-block">
@@ -1048,7 +1051,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
           <X size={20} />
         </button>
       </div>
-      <form onSubmit={handleDisasterSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 pb-32 custom-scrollbar">
+      <form onSubmit={handleDisasterSubmit} className="p-5 md:p-8 space-y-6 overflow-y-auto overflow-x-hidden flex-1 pb-32 custom-scrollbar">
         {!activeDisaster ? (
           <div className="text-center py-12 space-y-4">
             <div className="p-6 bg-slate-50 rounded-2xl inline-block">
@@ -1077,7 +1080,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                   value={disasterFormData.hallName}
                   onChange={e => setDisasterFormData(prev => ({ ...prev, hallName: e.target.value }))}
                 >
-                  {MOCK_HALLS.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+                  {halls.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
               </div>
@@ -1091,7 +1094,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                     key={status}
                     type="button"
                     onClick={() => setDisasterFormData(prev => ({ ...prev, status }))}
-                    className={`px-4 py-3 rounded-2xl font-black transition-all ${disasterFormData.status === status
+                    className={`px-2 py-3 rounded-2xl text-[11px] md:text-sm font-black transition-all truncate ${disasterFormData.status === status
                       ? status === HallSecurityStatus.SAFE
                         ? 'bg-emerald-600 text-white shadow-lg'
                         : status === HallSecurityStatus.LIGHT
@@ -1101,6 +1104,25 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                       }`}
                   >
                     {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">狀況類別 *</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {STORAGE_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setDisasterFormData(prev => ({ ...prev, category: cat }))}
+                    className={`px-2 py-3 rounded-xl text-[10px] md:text-[11px] font-black transition-all truncate ${disasterFormData.category === cat
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                      }`}
+                  >
+                    {cat}
                   </button>
                 ))}
               </div>
@@ -1315,7 +1337,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
   );
 
   return (
-    <div className="fixed inset-0 z-[200] bg-slate-50 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[200] bg-slate-50 flex flex-col overflow-hidden w-full max-w-full">
       {/* 頂部導覽列 */}
       <div className="h-16 bg-indigo-700 flex items-center justify-between px-6 text-white shrink-0 shadow-lg">
         <div className="flex items-center gap-4">

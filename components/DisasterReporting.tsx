@@ -169,102 +169,153 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-slate-200"></div><span className="text-[10px] font-black text-slate-500">{t.statusNone}</span></div>
           </div>
         </div>
-        <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-left min-w-[1000px]">
-            <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-4 whitespace-nowrap">{t.hallNameHeader}</th>
-                <th className="px-6 py-4 whitespace-nowrap">{t.statusHeader}</th>
-                <th className="px-6 py-4 whitespace-nowrap">回報類別</th>
-                <th className="px-6 py-4 whitespace-nowrap">{t.remarkHeader}</th>
-                <th className="px-6 py-4 whitespace-nowrap">現場照片</th>
-                <th className="px-6 py-4 whitespace-nowrap">{t.reporterHeader}</th>
-                <th className="px-6 py-4 whitespace-nowrap">{t.reportedAtLabel}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {selectedReport.hallsStatus.map((h) => (
-                <tr key={h.hallId} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <span className="font-black text-slate-800 text-base">{h.hallName}</span>
-                  </td>
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <span className={`px-3 py-1.5 rounded-full text-[11px] font-black ${h.status === HallSecurityStatus.SAFE
-                      ? 'bg-emerald-50 text-emerald-600'
-                      : h.status === HallSecurityStatus.LIGHT
-                        ? 'bg-amber-50 text-amber-600'
-                        : h.status === HallSecurityStatus.HEAVY
-                          ? 'bg-rose-50 text-rose-600'
-                          : 'bg-slate-50 text-slate-400'
-                      }`}>{h.status}</span>
-                  </td>
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <span className="font-bold text-slate-700">{h.category || '一般狀況'}</span>
-                  </td>
-                  <td className="px-6 py-5">
-                    <p className="text-sm text-slate-600 font-medium max-w-md">{h.remark || t.remarkEmpty}</p>
-                  </td>
-                  <td className="px-6 py-5">
-                    {h.photoUrls && h.photoUrls.length > 0 ? (
-                      <div className="flex flex-wrap gap-2 max-w-[200px]">
-                        {h.photoUrls.map((url, i) => (
-                          <div key={i} className="relative group">
-                            <img
-                              src={url}
-                              className="w-12 h-12 object-cover rounded-xl cursor-pointer border-2 border-slate-100 hover:border-indigo-500 transition-all"
-                              onClick={() => setSelectedPhoto(url)}
-                            />
-                            {h.photoMetadata && h.photoMetadata[i] && (
-                              <div className="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-slate-900 text-white text-[8px] rounded-lg whitespace-nowrap z-20">
-                                {h.photoMetadata[i].timestamp && <div>時間: {new Date(h.photoMetadata[i].timestamp).toLocaleString()}</div>}
-                                {h.photoMetadata[i].location && <div>地點: {h.photoMetadata[i].location.latitude.toFixed(4)}, {h.photoMetadata[i].location.longitude.toFixed(4)}</div>}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1 text-slate-300">
-                        <Camera size={16} className="opacity-50" />
-                        <span className="text-[10px] font-bold">無照片</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-5">
-                    {h.reporter ? (
-                      <div className="space-y-1.5 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-400 font-bold">{t.reporterLabel}:</span>
-                          <span className="text-slate-700 font-black">{h.reporter}</span>
-                        </div>
-                        {h.position && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400 font-bold">{t.positionLabel}:</span>
-                            <span className="text-slate-700 font-black">{h.position}</span>
-                          </div>
-                        )}
-                        {h.phone && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400 font-bold">{t.phoneLabel}:</span>
-                            <span className="text-slate-700 font-black">{h.phone}</span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-slate-300 text-sm italic">尚未回報</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    {h.reportedAt ? (
-                      <span className="text-sm text-slate-500 font-medium">{new Date(h.reportedAt).toLocaleString()}</span>
-                    ) : (
-                      <span className="text-slate-300 text-sm">-</span>
-                    )}
-                  </td>
+        <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
+          {/* Mobile Detail View: Cards */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {selectedReport.hallsStatus.map((h) => (
+              <div key={h.hallId} className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-slate-900 text-lg">{h.hallName}</span>
+                  <span className={`px-3 py-1.5 rounded-full text-[11px] font-black ${h.status === HallSecurityStatus.SAFE
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : h.status === HallSecurityStatus.LIGHT
+                      ? 'bg-amber-50 text-amber-600'
+                      : h.status === HallSecurityStatus.HEAVY
+                        ? 'bg-rose-50 text-rose-600'
+                        : 'bg-slate-50 text-slate-400'
+                    }`}>{h.status}</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="bg-slate-50 p-4 rounded-2xl">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">回報類別 / 備註</label>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-bold text-indigo-600">{h.category || '一般狀況'}</span>
+                      <p className="text-sm font-medium text-slate-600">{h.remark || t.remarkEmpty}</p>
+                    </div>
+                  </div>
+
+                  {h.photoUrls && h.photoUrls.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {h.photoUrls.map((url, i) => (
+                        <img
+                          key={i}
+                          src={url}
+                          className="w-16 h-16 object-cover rounded-xl border border-slate-100"
+                          onClick={() => setSelectedPhoto(url)}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4 pb-2">
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t.reporterLabel}</label>
+                      <span className="text-sm font-black text-slate-700 block truncate">{h.reporter || '-'}</span>
+                    </div>
+                    <div className="text-right">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">回報時間</label>
+                      <span className="text-[10px] font-bold text-slate-500 block">{h.reportedAt ? new Date(h.reportedAt).toLocaleDateString() : '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Detail View: Table - Optimized for one-page view */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left table-fixed">
+              <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+                <tr>
+                  <th className="px-4 py-4 w-[120px] lg:w-[150px]">{t.hallNameHeader}</th>
+                  <th className="px-4 py-4 w-[110px] lg:w-[130px]">{t.statusHeader}</th>
+                  <th className="px-4 py-4">{t.remarkHeader}</th>
+                  <th className="px-4 py-4 w-[110px] lg:w-[130px]">現場照片</th>
+                  <th className="px-4 py-4 w-[160px] lg:w-[200px]">{t.reporterHeader}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {selectedReport.hallsStatus.map((h) => (
+                  <tr key={h.hallId} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-5">
+                      <span className="font-black text-slate-800 text-sm lg:text-base break-words">{h.hallName}</span>
+                    </td>
+                    <td className="px-4 py-5">
+                      <div className="flex flex-col gap-1.5">
+                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black w-fit whitespace-nowrap ${h.status === HallSecurityStatus.SAFE
+                          ? 'bg-emerald-50 text-emerald-600'
+                          : h.status === HallSecurityStatus.LIGHT
+                            ? 'bg-amber-50 text-amber-600'
+                            : h.status === HallSecurityStatus.HEAVY
+                              ? 'bg-rose-50 text-rose-600'
+                              : 'bg-slate-50 text-slate-400'
+                          }`}>{h.status}</span>
+                        <span className="text-[11px] font-bold text-slate-400 truncate" title={h.category || '一般狀況'}>
+                          {h.category || '一般狀況'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-5">
+                      <p className="text-sm text-slate-600 font-medium line-clamp-3 hover:line-clamp-none transition-all cursor-default" title={h.remark || t.remarkEmpty}>
+                        {h.remark || t.remarkEmpty}
+                      </p>
+                    </td>
+                    <td className="px-4 py-5">
+                      {h.photoUrls && h.photoUrls.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {h.photoUrls.slice(0, 3).map((url, i) => (
+                            <div key={i} className="relative group">
+                              <img
+                                src={url}
+                                className="w-8 h-8 lg:w-10 lg:h-10 object-cover rounded-lg cursor-pointer border border-slate-100 hover:border-indigo-500 transition-all"
+                                onClick={() => setSelectedPhoto(url)}
+                              />
+                            </div>
+                          ))}
+                          {h.photoUrls.length > 3 && (
+                            <div
+                              className="w-8 h-8 lg:w-10 lg:h-10 bg-slate-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer"
+                              onClick={() => setSelectedPhoto(h.photoUrls![0])}
+                            >
+                              +{h.photoUrls.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-slate-300">
+                          <Camera size={14} className="opacity-40" />
+                          <span className="text-[10px] font-bold">無</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-5">
+                      {h.reporter ? (
+                        <div className="space-y-1">
+                          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-2">
+                            <span className="text-slate-800 font-black text-xs lg:text-sm whitespace-nowrap">{h.reporter}</span>
+                            <span className="text-slate-400 font-bold text-[10px] truncate">{h.position}</span>
+                          </div>
+                          {h.reportedAt && (
+                            <div className="text-[10px] text-slate-400 font-bold whitespace-nowrap">
+                              {new Date(h.reportedAt).toLocaleString(undefined, {
+                                month: 'numeric',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300 text-xs italic">尚未回報</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
@@ -290,71 +341,109 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
           </button>
         </div>
       </div>
-      <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-x-auto">
-        <table className="w-full text-left min-w-[800px]">
-          <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
-            <tr>
-              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerType}</th>
-              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerName}</th>
-              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerTime}</th>
-              <th className="px-4 md:px-8 py-5 whitespace-nowrap">{t.headerProgress}</th>
-              <th className="px-4 md:px-8 py-5 text-right whitespace-nowrap">{t.actionView}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {reports.map(r => {
-              // 只計算有實際回報的會館
-              // 檢查條件：有回報時間（reportedAt）或有回報人資訊（reporter）
-              // 這樣可以兼容舊資料（只有 reporter）和新資料（有 reportedAt）
-              const reportedCount = r.hallsStatus.filter(h => {
-                const hasReportedAt = h.reportedAt && h.reportedAt.trim() !== '';
-                const hasReporter = h.reporter && h.reporter.trim() !== '';
-                const hasStatus = h.status && h.status !== HallSecurityStatus.NONE;
-                // 只要有回報時間，或者（有回報人且狀態不是「尚未回報」），就視為已回報
-                return hasReportedAt || (hasReporter && hasStatus);
-              }).length;
-              const progress = r.hallsStatus.length > 0 ? (reportedCount / r.hallsStatus.length) * 100 : 0;
-              return (
-                <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-4 md:px-8 py-5 whitespace-nowrap">
-                    <span className="px-3 py-1 rounded-xl text-[10px] font-black text-white bg-indigo-500 whitespace-nowrap">{r.type}</span>
-                  </td>
-                  <td className="px-4 md:px-8 py-5 font-black text-slate-900 text-lg whitespace-nowrap">{r.name}</td>
-                  <td className="px-4 md:px-8 py-5 text-sm font-medium text-slate-500 whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
-                  <td className="px-4 md:px-8 py-5 whitespace-nowrap">
-                    <div className="flex items-center gap-2 min-w-[120px]">
-                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full">
-                        <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+      <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
+        {/* Mobile View: Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {reports.map((r) => {
+            const reportedCount = r.hallsStatus.filter(h => {
+              const hasReportedAt = h.reportedAt && h.reportedAt.trim() !== '';
+              const hasReporter = h.reporter && h.reporter.trim() !== '';
+              const hasStatus = h.status && h.status !== HallSecurityStatus.NONE;
+              return hasReportedAt || (hasReporter && hasStatus);
+            }).length;
+            const progress = r.hallsStatus.length > 0 ? (reportedCount / r.hallsStatus.length) * 100 : 0;
+            return (
+              <div key={r.id} className="p-6 space-y-4 active:bg-slate-50 transition-all" onClick={async () => {
+                const saved = await storageService.loadDisasterReports();
+                if (saved) {
+                  const updated = saved.find(report => report.id === r.id);
+                  setSelectedReport(updated || r);
+                } else {
+                  setSelectedReport(r);
+                }
+                setView('DETAIL');
+              }}>
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 rounded-xl text-[10px] font-black text-white bg-indigo-500">{r.type}</span>
+                  <span className="text-[10px] font-bold text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</span>
+                </div>
+                <h3 className="font-black text-slate-900 text-xl">{r.name}</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full">
+                    <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                  </div>
+                  <span className="text-xs font-black text-slate-500">{reportedCount}/{r.hallsStatus.length}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left table-fixed">
+            <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+              <tr>
+                <th className="px-4 md:px-6 py-5 w-[100px] lg:w-[120px]">{t.headerType}</th>
+                <th className="px-4 md:px-6 py-5">{t.headerName}</th>
+                <th className="px-4 md:px-6 py-5 w-[140px] lg:w-[180px]">{t.headerTime}</th>
+                <th className="px-4 md:px-6 py-5 w-[120px] lg:w-[150px]">{t.headerProgress}</th>
+                <th className="px-4 md:px-6 py-5 text-right w-[80px] lg:w-[120px]">{t.actionView}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {reports.map(r => {
+                // 只計算有實際回報的會館
+                const reportedCount = r.hallsStatus.filter(h => {
+                  const hasReportedAt = h.reportedAt && h.reportedAt.trim() !== '';
+                  const hasReporter = h.reporter && h.reporter.trim() !== '';
+                  const hasStatus = h.status && h.status !== HallSecurityStatus.NONE;
+                  return hasReportedAt || (hasReporter && hasStatus);
+                }).length;
+                const progress = r.hallsStatus.length > 0 ? (reportedCount / r.hallsStatus.length) * 100 : 0;
+                return (
+                  <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-4 md:px-6 py-5">
+                      <span className="px-3 py-1 rounded-xl text-[10px] font-black text-white bg-indigo-500 whitespace-nowrap">{r.type}</span>
+                    </td>
+                    <td className="px-4 md:px-6 py-5">
+                      <div className="font-black text-slate-900 text-base lg:text-lg truncate" title={r.name}>{r.name}</div>
+                    </td>
+                    <td className="px-4 md:px-6 py-5 text-xs lg:text-sm font-medium text-slate-500 whitespace-nowrap">{new Date(r.createdAt).toLocaleString()}</td>
+                    <td className="px-4 md:px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full">
+                          <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 whitespace-nowrap">{reportedCount}/{r.hallsStatus.length}</span>
                       </div>
-                      <span className="text-[10px] font-black text-slate-400">{reportedCount}/{r.hallsStatus.length}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 md:px-8 py-5 text-right whitespace-nowrap">
-                    <button
-                      onClick={async () => {
-                        // 在切換視圖前重新載入資料以確保顯示最新資訊
-                        const saved = await storageService.loadDisasterReports();
-                        if (saved) {
-                          const updated = saved.find(report => report.id === r.id);
-                          setSelectedReport(updated || r);
-                        } else {
-                          setSelectedReport(r);
-                        }
-                        setView('DETAIL');
-                      }}
-                      className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-white text-indigo-600 font-black rounded-2xl border border-indigo-100 shadow-sm hover:bg-indigo-50 transition-all text-sm md:text-base"
-                    >
-                      <Eye size={16} className="md:hidden" />
-                      <span className="hidden md:inline">{t.actionView}</span>
-                      <span className="md:hidden">檢視</span>
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {reports.length === 0 && <tr><td colSpan={5} className="px-8 py-24 text-center text-slate-300 font-black">{t.noData}</td></tr>}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-4 md:px-6 py-5 text-right">
+                      <button
+                        onClick={async () => {
+                          const saved = await storageService.loadDisasterReports();
+                          if (saved) {
+                            const updated = saved.find(report => report.id === r.id);
+                            setSelectedReport(updated || r);
+                          } else {
+                            setSelectedReport(r);
+                          }
+                          setView('DETAIL');
+                        }}
+                        className="inline-flex items-center gap-2 px-3 lg:px-6 py-2 bg-white text-indigo-600 font-black rounded-2xl border border-indigo-100 shadow-sm hover:bg-indigo-50 transition-all text-sm"
+                      >
+                        <Eye size={16} className="lg:hidden" />
+                        <span className="hidden lg:inline">{t.actionView}</span>
+                        <span className="lg:hidden">檢視</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {reports.length === 0 && <tr><td colSpan={5} className="px-8 py-24 text-center text-slate-300 font-black">{t.noData}</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
