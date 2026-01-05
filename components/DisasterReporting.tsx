@@ -175,6 +175,7 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
               <tr>
                 <th className="px-6 py-4 whitespace-nowrap">{t.hallNameHeader}</th>
                 <th className="px-6 py-4 whitespace-nowrap">{t.statusHeader}</th>
+                <th className="px-6 py-4 whitespace-nowrap">回報類別</th>
                 <th className="px-6 py-4 whitespace-nowrap">{t.remarkHeader}</th>
                 <th className="px-6 py-4 whitespace-nowrap">現場照片</th>
                 <th className="px-6 py-4 whitespace-nowrap">{t.reporterHeader}</th>
@@ -196,6 +197,9 @@ const DisasterReporting: React.FC<DisasterReportingProps> = ({ onDirtyChange, on
                           ? 'bg-rose-50 text-rose-600'
                           : 'bg-slate-50 text-slate-400'
                       }`}>{h.status}</span>
+                  </td>
+                  <td className="px-6 py-5 whitespace-nowrap">
+                    <span className="font-bold text-slate-700">{h.category || '一般狀況'}</span>
                   </td>
                   <td className="px-6 py-5">
                     <p className="text-sm text-slate-600 font-medium max-w-md">{h.remark || t.remarkEmpty}</p>

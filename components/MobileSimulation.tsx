@@ -41,7 +41,8 @@ interface MobileSimulationProps {
     position: string,
     phone: string,
     photoUrls?: string[],
-    photoMetadata?: any[]
+    photoMetadata?: any[],
+    category?: string
   ) => void;
   activeDisaster?: DisasterReport | null;
   requests?: RepairRequest[];
@@ -107,6 +108,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
     hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
     status: HallSecurityStatus.SAFE,
     remark: '',
+    category: '空調',
     reporter: '',
     position: '',
     phone: ''
@@ -434,7 +436,8 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         disasterImages.map(img => ({
           timestamp: img.timestamp,
           location: img.location
-        }))
+        })),
+        disasterFormData.category
       );
       alert('災害回報已提交！感謝您的回報。');
       setActiveForm('NONE');
@@ -442,6 +445,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
         hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
         status: HallSecurityStatus.SAFE,
         remark: '',
+        category: '空調',
         reporter: '',
         position: '',
         phone: ''
@@ -1015,6 +1019,7 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
             hallName: halls.length > 0 ? halls[0].name : (MOCK_HALLS[0].name),
             status: HallSecurityStatus.SAFE,
             remark: '',
+            category: '空調',
             reporter: '',
             position: '',
             phone: ''
@@ -1159,6 +1164,25 @@ const MobileSimulation: React.FC<MobileSimulationProps> = ({ onClose, onSubmitRe
                   <X size={12} /> {disasterErrors.phone}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">回報類別</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {['空調', '機電', '消防', 'AED', '弱電', '衛生系統', '飲水機', '園藝', '裝潢', '其他'].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setDisasterFormData(prev => ({ ...prev, category: cat }))}
+                    className={`px-3 py-3 rounded-xl text-[11px] font-black transition-all ${disasterFormData.category === cat
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                      }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-1">

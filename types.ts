@@ -241,6 +241,7 @@ export interface HallDisasterStatus {
   hallName: string;
   status: HallSecurityStatus;
   remark?: string;
+  category?: string;
   reporter?: string;
   position?: string;
   phone?: string;
