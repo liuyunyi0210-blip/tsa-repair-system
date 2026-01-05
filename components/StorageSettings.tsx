@@ -8,7 +8,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Key,
-  Info
+  Info,
+  Copy
 } from 'lucide-react';
 import { Language } from '../types';
 import { storageService } from '../services/storageService';
@@ -230,20 +231,64 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
                         </div>
                       </div>
 
-                      {gistId && (
-                        <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-2">
-                            Gist ID (選填)
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-bold text-slate-700">
+                            Gist ID (跨裝置同步必填)
                           </label>
+                          {gistToken && !gistId && (
+                            <button
+                              onClick={async () => {
+                                setTesting(true);
+                                try {
+                                  const res = await fetch('https://api.github.com/gists', {
+                                    headers: { 'Authorization': `token ${gistToken}` }
+                                  });
+                                  const gists = await res.json();
+                                  const tsaGist = gists.find((g: any) => g.description === 'TSA 會館設施維護系統資料');
+                                  if (tsaGist) {
+                                    setGistId(tsaGist.id);
+                                    setStatus({ type: 'success', message: '已找到現有雲端資料庫！' });
+                                  } else {
+                                    setStatus({ type: 'error', message: '找不到現有資料庫，請手動輸入或儲存以建立新庫。' });
+                                  }
+                                } catch (e) {
+                                  setStatus({ type: 'error', message: '搜尋失敗' });
+                                } finally {
+                                  setTesting(false);
+                                }
+                              }}
+                              className="text-[10px] font-black text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded border border-indigo-200"
+                            >
+                              自動搜尋現有資料庫
+                            </button>
+                          )}
+                        </div>
+                        <div className="relative">
                           <input
                             type="text"
                             value={gistId}
                             onChange={(e) => setGistId(e.target.value)}
-                            placeholder="已有 Gist ID 可填入"
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            placeholder="請輸入現有 Gist ID 或留空以建立新的"
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-mono text-xs pr-12"
                           />
+                          {gistId && (
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(gistId);
+                                alert('Gist ID 已複製！');
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                              title="複製 ID"
+                            >
+                              <Copy size={18} />
+                            </button>
+                          )}
                         </div>
-                      )}
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          提示：手機端必須與後台使用「同一個 Gist ID」才能看到彼此的資料。
+                        </p>
+                      </div>
 
                       <button
                         onClick={handleTest}
@@ -271,8 +316,8 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({ language, isOpen, onC
 
           {status.type && (
             <div className={`flex items-center gap-2 p-4 rounded-xl ${status.type === 'success'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-rose-50 text-rose-700 border border-rose-200'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : 'bg-rose-50 text-rose-700 border border-rose-200'
               }`}>
               {status.type === 'success' ? (
                 <CheckCircle2 size={20} />
